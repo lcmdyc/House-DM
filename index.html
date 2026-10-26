@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRPG 模组 · DM 工具</title>
+<style>
+  :root{--bg:#1b1a22;--panel:#25242e;--card:#2e2d39;--line:#3d3b4d;--text:#e8e6f0;--mute:#9b98ad;--accent:#d9a441;--clue:#4aa8d8;--item:#8bc34a;--skill:#b27cd8;--danger:#e0605e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  header h1{font-size:16px;margin:0 8px 0 0;color:var(--accent)}
+  header input.title{background:transparent;border:1px solid transparent;color:var(--text);font-size:16px;font-weight:bold;padding:2px 6px;border-radius:4px;width:200px}
+  header input.title:hover,header input.title:focus{border-color:var(--line)}
+  .spacer{flex:1}
+  button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#222;border-color:var(--accent);font-weight:bold}
+  button.danger{color:var(--danger)}
+  button.on{background:var(--accent);color:#222}
+  main{flex:1;display:flex;min-height:0}
+  #mapWrap{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:20px 20px}
+  #mapWrap.dragging{cursor:grabbing}
+  #grid{position:absolute;left:0;top:0;display:grid;gap:14px;width:max-content;will-change:transform}
+  #centerBtn{position:absolute;left:14px;bottom:14px;z-index:5;background:var(--panel);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  #stripOpen{position:absolute;left:14px;top:14px;z-index:5;background:var(--panel);box-shadow:0 2px 8px rgba(0,0,0,.4);display:none}
+  #panHint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:12px;color:var(--mute);pointer-events:none}
+  .cell{width:130px;height:100px;position:relative}
+  .room{width:100%;height:100%;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .room:hover{border-color:var(--accent)}
+  .room.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,164,65,.25)}
+  .room .name{font-weight:bold;word-break:break-all;overflow:hidden;max-height:2.8em;line-height:1.4}
+  .room .stat{font-size:11px;color:var(--mute)}
+  .room .pl{display:flex;flex-wrap:wrap;gap:2px;max-height:38px;overflow:hidden}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:10px;font-style:normal;font-weight:bold;color:#111;border:1px solid rgba(0,0,0,.35)}
+  .room .link{position:absolute;background:var(--accent);opacity:.6}
+  .link.r{right:-16px;top:50%;width:16px;height:3px}
+  .link.b{bottom:-16px;left:50%;width:3px;height:16px}
+  .add{position:absolute;width:22px;height:22px;border-radius:50%;padding:0;background:var(--accent);color:#222;border:none;font-weight:bold;line-height:22px;z-index:2;display:none}
+  body.edit .cell:hover .add{display:block}
+  .add.t{top:-11px;left:calc(50% - 11px)}.add.bm{bottom:-11px;left:calc(50% - 11px)}
+  .add.l{left:-11px;top:calc(50% - 11px)}.add.r{right:-11px;top:calc(50% - 11px)}
+  #strip{width:210px;flex:none;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+  #strip.hide{display:none}
+  .sthead{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:bold;color:var(--accent)}
+  .sthead button{padding:1px 7px;font-size:12px}
+  .pc{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer}
+  .pc:hover{border-color:var(--accent)}
+  .pc .pn{font-weight:bold;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc .cn{font-size:11px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc select.prm{margin-top:3px;padding:1px 4px;font-size:11px;color:var(--mute)}
+  .pc .as{display:grid;grid-template-columns:1fr 1fr;gap:1px 10px;margin-top:4px;font-size:12px}
+  .pc .as span{display:flex;justify-content:space-between;gap:4px;min-width:0}
+  .pc .as i{font-style:normal;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc .as b{color:var(--accent)}
+  .pc .as .z b{color:var(--mute);font-weight:normal}
+  .chkrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .chkrow input{width:16px;height:16px}
+  #side{width:420px;max-width:100%;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:none;padding:14px}
+  #side.open{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px}
+  .card h3{margin:0 0 6px;font-size:13px;color:var(--accent);display:flex;align-items:center;justify-content:space-between}
+  textarea,input[type=text],input[type=number],select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+  textarea{resize:vertical;min-height:70px}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
+  input[type=color]{width:34px;height:30px;padding:1px;flex:none;background:var(--bg);border:1px solid var(--line);border-radius:6px;cursor:pointer}
+  label.s{font-size:12px;color:var(--mute);display:block;margin:6px 0 2px}
+  .sidehead{display:flex;gap:6px;margin-bottom:12px}
+  .sidehead input{font-size:16px;font-weight:bold}
+  .here{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+  .here span{display:inline-flex;align-items:center;gap:4px}
+  .item{border-left:4px solid var(--item);background:var(--panel);border-radius:6px;padding:8px;margin-top:8px;transition:opacity .2s}
+  .item.clue{border-left-color:var(--clue)}
+  .item.skill{border-left-color:var(--skill)}
+  .item.consumed{opacity:.4;filter:grayscale(.7);border-left-color:var(--line)}
+  .item .row{display:flex;gap:6px;align-items:center}
+  .item.compact{padding:6px 8px;margin-top:6px;cursor:pointer}
+  .item.compact:hover{background:#2b2a35}
+  .item.compact .row{align-items:flex-start}
+  .item.compact .memo{flex:1;min-width:0;line-height:1.35;word-break:break-all}
+  .item.compact .memo b{font-size:14px}
+  .item.compact .memo .cd{display:block;font-size:12px;color:var(--mute)}
+  .item.compact .copyi{font-size:11px;color:var(--mute);white-space:nowrap;margin-top:2px}
+  .item.compact .status{margin-top:5px;padding-top:5px}
+  .item.compact .pbtn{padding:1px 7px;font-size:11px}
+  .item.compact .cbtn{padding:1px 8px;font-size:11px}
+  .tag{font-size:11px;padding:1px 8px;border-radius:10px;color:#111;font-weight:bold;cursor:pointer;white-space:nowrap;border:none}
+  .tag.clue{background:var(--clue)}.tag.item{background:var(--item)}.tag.skill{background:var(--skill)}
+  .tag.static{cursor:inherit}
+  .status{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .pbtn{padding:2px 9px;border-radius:12px;font-size:12px;background:transparent;color:var(--mute)}
+  .pbtn.on{background:var(--accent);color:#222;border-color:var(--accent);font-weight:bold}
+  .cbtn{margin-left:auto;padding:2px 10px;border-radius:12px;font-size:12px;color:var(--danger);border-color:var(--danger);background:transparent}
+  .cbtn.on{background:var(--danger);color:#fff}
+  .hint{color:var(--mute);font-size:12px}
+  .empty{text-align:center;padding:40px 60px;color:var(--mute)}
+  #toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);background:var(--accent);color:#222;padding:6px 16px;border-radius:20px;font-weight:bold;font-size:13px;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
+  #toast.show{opacity:1}
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:18px;width:360px}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .prow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .prow span{width:20px;color:var(--mute);flex:none}
+  .prow select{width:130px;flex:none}
+  #playersBox{max-height:55vh;overflow:auto;padding-right:4px}
+  .tabs{display:flex;gap:6px;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px;align-items:center;flex-wrap:wrap}
+  .tabs button.on{font-weight:bold}
+  .ptool{display:flex;gap:6px;margin-bottom:8px;align-items:center}
+  .ptool input{flex:1}.ptool select{width:auto}
+  .sec{margin:12px 0 4px;font-size:12px;color:var(--accent);font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+  .sec.un{color:var(--clue)}
+  .prow2{background:var(--card);border-left:4px solid var(--item);border-radius:6px;padding:6px 8px;margin-bottom:6px}
+  .prow2.clue{border-left-color:var(--clue)}
+  .prow2.consumed{opacity:.45}
+  .prow2 .l1{display:flex;gap:6px;align-items:center}
+  .prow2 .l1 select{width:150px;flex:none}
+  .prow2 .l2{display:flex;gap:6px;margin-top:4px}
+  .prow2 .l2 input{font-size:12px;padding:3px 6px}
+  .mini{font-size:11px;color:var(--mute);white-space:nowrap}
+  .bgwrap{display:flex;gap:14px}
+  .bgnav{width:120px;flex:none;display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}
+  .bgnav button{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bgmain{flex:1;min-width:0;overflow:auto;max-height:70vh;padding-right:4px}
+  .bgmain .nm{font-size:18px;font-weight:bold;margin-bottom:10px}
+  .goal{display:flex;gap:8px;align-items:flex-start;margin-top:8px;background:var(--panel);border-left:4px solid var(--accent);border-radius:6px;padding:8px}
+  .goal textarea{min-height:44px}
+  .goal.done{opacity:.5;border-left-color:var(--line)}
+  .goal.done textarea{text-decoration:line-through}
+  .goal input[type=checkbox]{margin-top:8px;width:16px;height:16px;flex:none}
+  .divider{display:flex;align-items:center;gap:10px;margin:16px 0 10px;color:var(--mute);font-size:12px}
+  .divider::before,.divider::after{content:"";flex:1;border-top:1px dashed var(--line)}
+  .divider b{color:var(--text);font-size:14px}
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+  .cf{display:flex;align-items:center;gap:6px}
+  .cf>span{width:34px;flex:none;color:var(--mute);font-size:13px}
+  .ptsbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;background:var(--panel);border-radius:6px;padding:6px 10px}
+  .ptsbar input{width:64px;text-align:center}
+  .remain{margin-left:auto;font-weight:bold}
+  .remain.ok{color:var(--item)}.remain.zero{color:var(--accent)}.remain.over{color:var(--danger)}
+  .attr{display:flex;align-items:center;gap:4px}
+  .attr .an{width:64px;flex:none;padding:4px 6px;background:transparent;border-color:transparent;color:var(--text)}
+  .attr .an:hover,.attr .an:focus{border-color:var(--line);background:var(--bg)}
+  .attr .av{width:52px;text-align:center;padding:4px 2px}
+  .attr button{padding:1px 8px}
+  .attr .x{padding:1px 5px;font-size:11px;opacity:.5}.attr .x:hover{opacity:1}
+  input[type=number]::-webkit-inner-spin-button{opacity:.4}
+  #dayBtn{border-color:var(--accent);color:var(--accent);font-weight:bold}
+  .daynav button{display:flex;justify-content:space-between;gap:6px;align-items:center}
+  .daynav button.cur{border-color:var(--accent)}
+  .dtag{font-size:10px;opacity:.9}
+  .dayhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .dayhead .nm{font-size:18px;font-weight:bold;margin-right:auto}
+  .badge2{font-size:11px;padding:1px 8px;border-radius:10px;background:var(--line)}
+  .badge2.cur{background:var(--accent);color:#222;font-weight:bold}
+  .ev{background:var(--card);border-left:4px solid var(--accent);border-radius:6px;padding:8px;margin-bottom:8px}
+  .ev .r1{display:flex;gap:6px;align-items:center}
+  .ev .r1 input[type=checkbox]{width:16px;height:16px;flex:none}
+  .ev .tm{width:96px;flex:none}
+  .ev textarea{min-height:44px;margin-top:6px}
+  .ev.done{opacity:.5;border-left-color:var(--line)}
+  .ev.done .tt{text-decoration:line-through}
+  /* 日志 */
+  #logList{overflow:auto;max-height:64vh}
+  .lg{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-left:4px solid var(--line);background:var(--card);border-radius:6px;margin-bottom:4px;font-size:13px}
+  .lg.item{border-left-color:var(--item)}.lg.attr{border-left-color:var(--skill)}.lg.move{border-left-color:var(--clue)}.lg.day{border-left-color:var(--accent);background:#33301f}
+  .lg .ld{font-size:11px;color:var(--accent);white-space:nowrap;flex:none;width:44px}
+  .lg .lt{font-size:11px;color:var(--mute);white-space:nowrap;flex:none;width:38px}
+  .lg .lx{flex:1;word-break:break-all}
+  .lg .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+</style>
+</head>
+<body class="edit">
+<header>
+  <h1>🎲 模组 DM 工具</h1>
+  <input class="title" id="modTitle" placeholder="模组名称">
+  <div class="spacer"></div>
+  <button id="dayBtn" onclick="openDays()" title="查看 / 编辑日程">📅 Day 1</button>
+  <button id="endDayBtn" class="primary" onclick="endDay()">Day 1 结束 ▶</button>
+  <button id="modeBtn" class="on" onclick="toggleMode()" title="切换编辑 / 带团模式">✏️ 编辑模式</button>
+  <button onclick="openBg()">🧑‍🎤 玩家背景</button>
+  <button id="playersBtn" onclick="openPlayers()">👥 玩家</button>
+  <button onclick="openSummary()">📦 物资总览</button>
+  <button onclick="openLog()">📜 日志</button>
+  <button onclick="exportData()">导出</button>
+  <button onclick="document.getElementById('imp').click()">导入</button>
+  <input type="file" id="imp" accept=".json" hidden onchange="importData(event)">
+  <button class="danger" onclick="resetAll()">重置</button>
+</header>
+<main>
+  <aside id="strip"></aside>
+  <div id="mapWrap">
+    <div id="grid"></div>
+    <button id="stripOpen" title="展开玩家属性栏" onclick="setStrip(true)">▶ 玩家属性</button>
+    <button id="centerBtn" title="把整张地图移回画布中央" onclick="centerView()">🎯 居中视图</button>
+    <div id="panHint">按住空白处或房间拖动 · 滚轮平移</div>
+  </div>
+  <aside id="side"></aside>
+</main>
+<div id="toast"></div>
+
+<dialog id="playersDlg" style="width:500px;max-width:95vw">
+  <h3 style="margin-top:0">玩家名单 <span class="hint" id="plCount"></span></h3>
+  <div class="hint" style="margin-bottom:6px">每行：代表色 · 名字 · 所在房间</div>
+  <div id="playersBox"></div>
+  <div style="display:flex;justify-content:space-between;margin-top:10px">
+    <button onclick="addPlayer()">＋ 新增玩家</button>
+    <button class="primary" onclick="closePlayers()">完成</button>
+  </div>
+</dialog>
+
+<dialog id="stripDlg">
+  <h3 style="margin-top:0">属性栏显示设置</h3>
+  <div class="hint" style="margin-bottom:6px">勾选的属性会显示在地图左侧的玩家小视窗里。</div>
+  <div style="display:flex;gap:6px;margin-bottom:6px">
+    <button onclick="stripAll(true)">全选</button>
+    <button onclick="stripAll(false)">全不选</button>
+  </div>
+  <div id="stripCfgBox" style="max-height:50vh;overflow:auto"></div>
+  <div style="text-align:right;margin-top:10px"><button class="primary" onclick="document.getElementById('stripDlg').close()">完成</button></div>
+</dialog>
+
+<dialog id="dayDlg" style="width:880px;max-width:95vw;max-height:90vh">
+  <div class="tabs">
+    <b style="color:var(--accent)">📅 日程</b>
+    <div class="spacer"></div>
+    <button onclick="document.getElementById('dayDlg').close()">关闭</button>
+  </div>
+  <div class="bgwrap">
+    <div class="bgnav daynav" id="dayNav"></div>
+    <div class="bgmain" id="dayMain"></div>
+  </div>
+</dialog>
+
+<dialog id="bgDlg" style="width:880px;max-width:95vw;max-height:90vh">
+  <div class="tabs">
+    <b style="color:var(--accent)">🧑‍🎤 玩家背景</b>
+    <div class="spacer"></div>
+    <button onclick="document.getElementById('bgDlg').close()">关闭</button>
+  </div>
+  <div class="bgwrap">
+    <div class="bgnav" id="bgNav"></div>
+    <div class="bgmain" id="bgMain"></div>
+  </div>
+</dialog>
+
+<dialog id="sumDlg" style="width:760px;max-width:95vw;max-height:88vh">
+  <div class="tabs">
+    <b style="color:var(--accent)">🗃 物资池总览 / 分配</b>
+    <div class="spacer"></div>
+    <button onclick="document.getElementById('sumDlg').close()">关闭</button>
+  </div>
+  <div class="ptool">
+    <input type="text" id="poolQ" placeholder="搜索名称 / 描述 / 条件…" oninput="poolQ=this.value;renderPool()">
+    <select id="poolT" onchange="poolT=this.value;renderPool()">
+      <option value="">全部类型</option><option value="clue">仅线索</option><option value="item">仅道具</option>
+    </select>
+    <button class="primary" onclick="addPoolItem()">＋ 新物资</button>
+  </div>
+  <div class="hint" style="margin-bottom:4px">「未分配」是还没放进任何房间的物资。用右侧下拉框可把物资快速移入任意房间，或移回未分配。获取记录请看顶部「📜 日志」。</div>
+  <div id="poolList" style="overflow:auto;max-height:60vh"></div>
+</dialog>
+
+<dialog id="logDlg" style="width:760px;max-width:95vw;max-height:90vh">
+  <div class="tabs">
+    <b style="color:var(--accent)">📜 日志</b>
+    <span id="logTabs" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    <div class="spacer"></div>
+    <button onclick="copyLog()">📋 复制</button>
+    <button class="danger" onclick="clearLog()">清空</button>
+    <button onclick="document.getElementById('logDlg').close()">关闭</button>
+  </div>
+  <div id="logList"></div>
+</dialog>
+
+<script>
+const KEY='trpg_module_v1';
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ===== 如需发布带有预置内容的模组，把导出的 JSON 粘贴到这里替换 DEFAULT_DATA =====
+const DEFAULT_DATA=null;
+
+const PALETTE=['#e0605e','#e8a13a','#e6d24a','#8bc34a','#4cc9a0','#4aa8d8','#6c7be0','#b27cd8','#e37bb6','#9b8b7a','#ff8a5c','#7fd0e0'];
+const INFO_FIELDS=[['name','姓名'],['gender','性别'],['age','年龄'],['job','职业'],['religion','宗教'],['zodiac','星座']];
+const blankCard=()=>({info:{name:'',gender:'',age:'',job:'',religion:'',zodiac:''},vals:{},items:'',other:''});
+const blankBg=(i=0)=>({identity:'',skills:[],goals:[],card:blankCard(),color:PALETTE[i%PALETTE.length],roomId:''});
+const newDay=()=>({id:uid(),ended:false,events:[]});
+const defaultCfg=()=>({points:40,attrs:['力量','技巧','敏捷','勇气','观察','理智','口才'].map(n=>({id:uid(),name:n,show:true}))});
+function blankRoom(x,y,name){return{id:uid(),x,y,name:name||'新房间',desc:'',dm:'',poolNote:'',items:[]}}
+function blankData(){return{title:'我的原创模组',players:Array.from({length:7},(_,i)=>'玩家'+(i+1)),rooms:[],pool:[],cardCfg:defaultCfg(),bg:Array.from({length:7},(_,i)=>blankBg(i)),days:[newDay()],curDay:0,ui:{strip:true,showChar:true},log:[]}}
+function fixItem(i){
+if(!Array.isArray(i.owners)){i.owners=(i.owner!==undefined&&i.owner!=='')?[+i.owner]:[]}
+delete i.owner;delete i.obtained;
+}
+function migrate(d){
+if(!Array.isArray(d.players)||!d.players.length)d.players=blankData().players;
+if(!Array.isArray(d.pool))d.pool=[];
+if(!Array.isArray(d.bg))d.bg=[];
+if(!Array.isArray(d.log))d.log=[];
+if(!d.cardCfg||!Array.isArray(d.cardCfg.attrs))d.cardCfg=defaultCfg();
+if(typeof d.cardCfg.points!=='number')d.cardCfg.points=40;
+d.cardCfg.attrs.forEach(a=>{if(typeof a.show!=='boolean')a.show=true});
+d.ui=Object.assign({strip:true,showChar:true},d.ui||{});
+if(!Array.isArray(d.days)||!d.days.length)d.days=[newDay()];
+d.days.forEach(x=>{if(!Array.isArray(x.events))x.events=[];if(!x.id)x.id=uid()});
+if(!(d.curDay>=0&&d.curDay<d.days.length))d.curDay=0;
+d.players.forEach((_,i)=>{
+  const b=d.bg[i]||(d.bg[i]=blankBg(i));
+  if(!Array.isArray(b.skills))b.skills=[];
+  if(!Array.isArray(b.goals))b.goals=[];
+  if(typeof b.identity!=='string')b.identity='';
+  if(typeof b.color!=='string'||!b.color)b.color=PALETTE[i%PALETTE.length];
+  if(!d.rooms.some(r=>r.id===b.roomId))b.roomId='';
+  if(!b.card)b.card=blankCard();
+  const c=b.card;
+  c.info=Object.assign(blankCard().info,c.info||{});
+  if(!c.vals||typeof c.vals!=='object')c.vals={};
+  if(typeof c.items!=='string')c.items='';
+  if(typeof c.other!=='string')c.other='';
+});
+d.bg.length=d.players.length;
+const n=d.players.length;
+const fixAll=i=>{fixItem(i);i.owners=i.owners.filter(o=>o>=0&&o<n)};
+d.rooms.forEach(r=>r.items.forEach(fixAll));
+d.pool.forEach(fixAll);
+return d;
+}
+let D=load();let sel=null;let edit=true;let poolQ='',poolT='';
+
+function load(){
+try{const s=localStorage.getItem(KEY);if(s)return migrate(JSON.parse(s))}catch(e){}
+return migrate(DEFAULT_DATA?JSON.parse(JSON.stringify(DEFAULT_DATA)):blankData());
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(D));renderStrip()}
+const room=id=>D.rooms.find(r=>r.id===id);
+const at=(x,y)=>D.rooms.find(r=>r.x===x&&r.y===y);
+const isGot=i=>i.owners.length>0||i.consumed;
+const newItem=()=>({id:uid(),type:'item',name:'',desc:'',cond:'',owners:[],consumed:false});
+const rname=id=>id?((room(id)||{}).name||'未命名'):'未定位';
+const pcolor=i=>(D.bg[i]&&D.bg[i].color)||'#888';
+
+function findItem(id){
+let l=D.pool.find(i=>i.id===id);if(l)return{item:l,list:D.pool,rid:''};
+for(const r of D.rooms){const it=r.items.find(i=>i.id===id);if(it)return{item:it,list:r.items,rid:r.id}}
+return null;
+}
+
+// ===== 日志 =====
+function addLog(type,text,color=''){
+D.log.push({id:uid(),ts:Date.now(),day:D.curDay+1,type,text,color});
+if(D.log.length>2000)D.log.splice(0,D.log.length-2000);
+if(document.getElementById('logDlg').open)renderLog();
+}
+let logF='all';
+const LOG_TYPES=[['all','全部'],['item','📦 物品'],['attr','📊 属性'],['move','🚶 移动'],['day','🚩 日程']];
+const logTime=ts=>new Date(ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
+const logFiltered=()=>D.log.filter(e=>logF==='all'||e.type===logF);
+function openLog(){renderLog();document.getElementById('logDlg').showModal()}
+function renderLog(){
+document.getElementById('logTabs').innerHTML=LOG_TYPES.map(([k,l])=>
+  `<button class="${logF===k?'on':''}" onclick="logF='${k}';renderLog()">${l}</button>`).join('');
+const list=logFiltered().slice().reverse();
+document.getElementById('logList').innerHTML=list.length?list.map(e=>
+  `<div class="lg ${e.type}"><span class="ld">Day ${e.day}</span><span class="lt">${logTime(e.ts)}</span>
+    <span class="lx">${e.color?`<i class="cdot" style="background:${e.color}"></i>`:''}${esc(e.text)}</span></div>`).join('')
+  :'<p class="hint">暂无记录。给玩家分配物资、改属性、换房间时会自动记录。</p>';
+}
+function copyLog(){
+const t=logFiltered().map(e=>`[Day ${e.day} ${logTime(e.ts)}] ${e.text}`).join('\n');
+if(!t){toast('没有可复制的记录');return}
+copyText(t).then(ok=>ok?toast('📋 已复制日志'):prompt('请手动复制：',t));
+}
+function clearLog(){
+if(!confirm('清空全部日志？此操作无法撤销。'))return;
+D.log=[];save();renderLog();
+}
+
+// ===== 提示 / 复制 =====
+let toastT;
+function toast(msg){
+const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1600);
+}
+function copyText(text){
+const fallback=()=>{
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0';
+  document.body.appendChild(ta);ta.select();
+  let ok=false;try{ok=document.execCommand('copy')}catch(_){}
+  ta.remove();return ok;
+};
+if(navigator.clipboard&&window.isSecureContext){
+  return navigator.clipboard.writeText(text).then(()=>true,()=>fallback());
+}
+return Promise.resolve(fallback());
+}
+function copyDesc(id){
+const i=getItem(id);
+if(!i.desc.trim()){toast('这张卡没有描述');return}
+copyText(i.desc).then(ok=>toast(ok?'📋 已复制描述':'复制失败，请手动复制'));
+}
+
+// ===== 玩家位置 =====
+function roomSel(cur){
+return `<option value="">📍 未定位</option>`+D.rooms.map(r=>
+  `<option value="${r.id}" ${r.id===cur?'selected':''}>${esc(r.name)||'未命名'} (${r.x},${r.y})</option>`).join('');
+}
+function setPlayerRoom(i,rid){
+const old=D.bg[i].roomId||'';
+if(old===rid)return;
+D.bg[i].roomId=rid;
+addLog('move',`${pname(i)}：${rname(old)} → ${rname(rid)}`,pcolor(i));
+save();renderMap();renderSide();
+}
+const chipHtml=i=>`<i class="chip" style="background:${pcolor(i)}" title="${esc(pname(i))}">${esc([...pname(i)][0]||'?')}</i>`;
+const playersIn=rid=>D.players.map((_,i)=>i).filter(i=>D.bg[i].roomId===rid);
+
+// ===== 左侧玩家属性栏 =====
+function renderStrip(){
+const s=document.getElementById('strip');if(!s||!D)return;
+s.classList.toggle('hide',!D.ui.strip);
+document.getElementById('stripOpen').style.display=D.ui.strip?'none':'block';
+if(!D.ui.strip)return;
+const attrs=D.cardCfg.attrs.filter(a=>a.show);
+const cards=D.players.map((p,i)=>{
+  const b=D.bg[i];if(!b)return'';
+  const cn=D.ui.showChar&&b.card.info.name?`<div class="cn">${esc(b.card.info.name)}</div>`:'';
+  const as=attrs.map(a=>{const v=+b.card.vals[a.id]||0;
+    return `<span class="${v?'':'z'}"><i>${esc(a.name)}</i><b>${v}</b></span>`}).join('');
+  return `<div class="pc" style="border-left-color:${b.color}" title="点击查看 ${esc(pname(i))} 的背景和车卡" onclick="bgSel=${i};openBg()">
+    <div class="pn">${esc(pname(i))}</div>${cn}
+    <select class="prm" title="所在房间" onclick="event.stopPropagation()" onchange="setPlayerRoom(${i},this.value)">${roomSel(b.roomId)}</select>
+    ${attrs.length?`<div class="as">${as}</div>`:''}
+  </div>`}).join('');
+s.innerHTML=`<div class="sthead"><span style="margin-right:auto">👥 玩家属性</span>
+    <button title="设置显示哪些属性" onclick="openStripCfg()">⚙</button>
+    <button title="收起" onclick="setStrip(false)">◀</button></div>
+  ${attrs.length?'':'<div class="hint">没有选择任何属性，点 ⚙ 设置</div>'}${cards}`;
+}
+function setStrip(v){D.ui.strip=v;save()}
+function openStripCfg(){renderStripCfg();document.getElementById('stripDlg').showModal()}
+function renderStripCfg(){
+document.getElementById('stripCfgBox').innerHTML=
+  `<label class="chkrow"><input type="checkbox" ${D.ui.showChar?'checked':''} onchange="D.ui.showChar=this.checked;save()"><span>显示角色姓名（车卡里填写的）</span></label>`+
+  D.cardCfg.attrs.map(a=>`<label class="chkrow"><input type="checkbox" ${a.show?'checked':''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name)||'（未命名）'}</span></label>`).join('');
+}
+function attrShow(id,v){D.cardCfg.attrs.find(a=>a.id===id).show=v;save()}
+function stripAll(v){D.cardCfg.attrs.forEach(a=>a.show=v);save();renderStripCfg()}
+
+// ===== 画布平移 / 居中 =====
+const wrap=document.getElementById('mapWrap'),grid=document.getElementById('grid');
+const CELL_W=130+14,CELL_H=100+14;
+let pan={x:0,y:0},lastMin=null;
+function applyPan(){
+grid.style.transform=`translate(${pan.x}px,${pan.y}px)`;
+wrap.style.backgroundPosition=`${pan.x}px ${pan.y}px`;
+}
+function centerView(){
+pan.x=Math.round((wrap.clientWidth-grid.offsetWidth)/2);
+pan.y=Math.round((wrap.clientHeight-grid.offsetHeight)/2);
+applyPan();
+}
+let drag=null,moved=false;
+wrap.addEventListener('pointerdown',e=>{
+if(e.button!==0||e.target.closest('.add,#centerBtn,#stripOpen'))return;
+drag={sx:e.clientX,sy:e.clientY,px:pan.x,py:pan.y};moved=false;
+});
+window.addEventListener('pointermove',e=>{
+if(!drag)return;
+const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+if(!moved&&Math.hypot(dx,dy)<5)return;
+moved=true;wrap.classList.add('dragging');
+pan.x=drag.px+dx;pan.y=drag.py+dy;applyPan();
+});
+window.addEventListener('pointerup',()=>{drag=null;wrap.classList.remove('dragging')});
+window.addEventListener('pointercancel',()=>{drag=null;wrap.classList.remove('dragging')});
+wrap.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
+wrap.addEventListener('wheel',e=>{
+e.preventDefault();
+pan.x-=e.shiftKey&&!e.deltaX?e.deltaY:e.deltaX;
+pan.y-=e.shiftKey&&!e.deltaX?0:e.deltaY;
+applyPan();
+},{passive:false});
+
+// ===== 地图 =====
+function renderMap(){
+if(!D.rooms.length){
+  grid.style.display='block';
+  grid.innerHTML='<div class="empty"><p>地图还是空的</p><button class="primary" onclick="addFirst()">＋ 创建第一个房间</button></div>';
+  lastMin=null;centerView();return;
+}
+grid.style.display='grid';
+const xs=D.rooms.map(r=>r.x),ys=D.rooms.map(r=>r.y);
+const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+grid.style.gridTemplateColumns=`repeat(${maxX-minX+1},130px)`;
+let h='';
+for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
+  const r=at(x,y);
+  if(!r){h+='<div class="cell"></div>';continue}
+  const total=r.items.length,got=r.items.filter(isGot).length;
+  const here=playersIn(r.id);
+  const btn=(cls,dx,dy)=>at(x+dx,y+dy)?'':`<button class="add ${cls}" title="向此方向新增房间" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
+  h+=`<div class="cell">
+    <div class="room ${sel===r.id?'sel':''}" onclick="select('${r.id}')">
+      ${at(x+1,y)?'<i class="link r"></i>':''}${at(x,y+1)?'<i class="link b"></i>':''}
+      <div class="name">${esc(r.name)||'未命名'}</div>
+      <div class="pl">${here.map(chipHtml).join('')}</div>
+      <div class="stat">${total?`📦 ${got}/${total}`:'—'}</div>
+    </div>
+    ${btn('t',0,-1)}${btn('bm',0,1)}${btn('l',-1,0)}${btn('r',1,0)}
+  </div>`;
+}
+grid.innerHTML=h;
+if(!lastMin){lastMin={x:minX,y:minY};centerView()}
+else{
+  pan.x-=(lastMin.x-minX)*CELL_W;pan.y-=(lastMin.y-minY)*CELL_H;
+  lastMin={x:minX,y:minY};applyPan();
+}
+}
+function addFirst(){const r=blankRoom(0,0,'入口');D.rooms.push(r);save();select(r.id);centerView()}
+function addRoom(id,dx,dy){
+const r=room(id);if(at(r.x+dx,r.y+dy))return;
+const n=blankRoom(r.x+dx,r.y+dy);D.rooms.push(n);save();select(n.id);
+}
+function delRoom(id){
+const r=room(id);
+if(!confirm('确定删除该房间？'+(r.items.length?'\n房间内的物资不会丢失，会回到「未分配」物资池。':'')+(playersIn(id).length?'\n房间里的玩家会变成「未定位」。':'')))return;
+D.pool.push(...r.items);
+D.bg.forEach(b=>{if(b.roomId===id)b.roomId=''});
+D.rooms=D.rooms.filter(x=>x.id!==id);sel=null;save();renderMap();renderSide();
+}
+function select(id){sel=id;renderMap();renderSide()}
+function toggleMode(){
+edit=!edit;document.body.classList.toggle('edit',edit);
+const b=document.getElementById('modeBtn');b.classList.toggle('on',edit);
+b.textContent=edit?'✏️ 编辑模式':'🎮 带团模式';
+renderSide();
+}
+
+// ===== 侧边栏 =====
+function renderSide(){
+const s=document.getElementById('side');
+const r=room(sel);
+if(!r){s.classList.remove('open');s.innerHTML='';return}
+s.classList.add('open');
+const keep=s.scrollTop;
+const sorted=[...r.items.filter(i=>!i.consumed),...r.items.filter(i=>i.consumed)];
+const here=playersIn(r.id);
+s.innerHTML=`
+<div class="sidehead">
+  <input type="text" value="${esc(r.name)}" placeholder="房间名" oninput="upd('name',this.value)">
+  ${edit?`<button class="danger" onclick="delRoom('${r.id}')">删除</button>`:''}
+  <button onclick="select(null)">✕</button>
+</div>
+<div class="card"><h3>📍 此处玩家 <span class="hint">在左侧玩家栏或「👥 玩家」里改位置</span></h3>
+  <div class="here">${here.length?here.map(i=>`<span>${chipHtml(i)}${esc(pname(i))}</span>`).join(''):'<span class="hint">暂无玩家</span>'}</div></div>
+<div class="card"><h3>📖 房间描述 <span class="hint">可念给玩家</span></h3>
+  <textarea oninput="upd('desc',this.value)" placeholder="写下对这个房间的描述…">${esc(r.desc)}</textarea></div>
+<div class="card"><h3>🔒 DM 专属内容 <span class="hint">仅 DM 可见</span></h3>
+  <textarea oninput="upd('dm',this.value)" placeholder="陷阱、NPC、隐藏机关、遭遇、注意事项…">${esc(r.dm)}</textarea></div>
+<div class="card"><h3>🎒 物资池
+    ${edit?'<button class="primary" onclick="addItem()">＋ 添加物资</button>':'<span class="hint">点击卡片复制描述</span>'}</h3>
+  <label class="s">整体判定条件 / 备注</label>
+  <textarea style="min-height:50px" oninput="upd('poolNote',this.value)" placeholder="如：搜索检定 DC12；每人限搜一次…">${esc(r.poolNote)}</textarea>
+  <div id="items">${sorted.map(edit?itemHtml:itemCompact).join('')||'<p class="hint">暂无物资</p>'}</div>
+</div>`;
+s.scrollTop=keep;
+}
+function upd(k,v){const r=room(sel);r[k]=v;save();if(k==='name')renderMap()}
+function pbtnsHtml(i){
+return D.players.map((p,idx)=>{
+  const on=i.owners.includes(idx),c=pcolor(idx);
+  const st=on?`background:${c};border-color:${c};color:#111`:`border-color:${c}88`;
+  return `<button class="pbtn ${on?'on':''}" style="${st}" onclick="toggleOwner('${i.id}',${idx})">${esc(pname(idx))}</button>`}).join('');
+}
+function itemHtml(i){
+const t=i.type==='clue';
+return `<div class="item ${t?'clue':''} ${i.consumed?'consumed':''}">
+  <div class="row">
+    <button class="tag ${i.type}" title="点击切换类型" onclick="itemType('${i.id}')">${t?'线索':'道具'}</button>
+    <input type="text" value="${esc(i.name)}" placeholder="物资名称" oninput="itemUpd('${i.id}','name',this.value)">
+    <button class="danger" onclick="delItem('${i.id}')">🗑</button>
+  </div>
+  <label class="s">描述</label>
+  <textarea style="min-height:48px" oninput="itemUpd('${i.id}','desc',this.value)">${esc(i.desc)}</textarea>
+  <label class="s">获取条件</label>
+  <textarea style="min-height:40px" oninput="itemUpd('${i.id}','cond',this.value)" placeholder="如：侦查 DC15 / 打开保险箱">${esc(i.cond)}</textarea>
+  <div class="status">
+    ${pbtnsHtml(i)}
+    <button class="cbtn ${i.consumed?'on':''}" onclick="toggleConsumed('${i.id}')">${i.consumed?'已消耗':'消耗'}</button>
+  </div>
+</div>`;
+}
+function itemCompact(i){
+const t=i.type==='clue';
+return `<div class="item compact ${t?'clue':''} ${i.consumed?'consumed':''}" title="点击复制描述" onclick="copyDesc('${i.id}')">
+  <div class="row">
+    <span class="tag static ${i.type}">${t?'线索':'道具'}</span>
+    <div class="memo"><b>${esc(i.name)||'（未命名）'}</b>${i.cond?`<span class="cd">${esc(i.cond)}</span>`:''}</div>
+    <span class="copyi">📋</span>
+  </div>
+  <div class="status" onclick="event.stopPropagation()">
+    ${pbtnsHtml(i)}
+    <button class="cbtn ${i.consumed?'on':''}" onclick="toggleConsumed('${i.id}')">${i.consumed?'已消耗':'消耗'}</button>
+  </div>
+</div>`;
+}
+const getItem=id=>findItem(id).item;
+function addItem(){room(sel).items.push(newItem());save();renderSide();renderMap()}
+function delItem(id){const r=room(sel);r.items=r.items.filter(i=>i.id!==id);save();renderSide();renderMap()}
+function itemType(id){const i=getItem(id);i.type=i.type==='clue'?'item':'clue';save();renderSide()}
+function itemUpd(id,k,v){getItem(id)[k]=v;save()}
+function toggleOwner(id,idx){
+const f=findItem(id),i=f.item;
+const had=i.owners.includes(idx);
+i.owners=had?i.owners.filter(x=>x!==idx):[...i.owners,idx].sort((a,b)=>a-b);
+addLog('item',`${pname(idx)} ${had?'失去 / 交还':'获得'}「${i.name||'未命名'}」（${i.type==='clue'?'线索':'道具'}，来自 ${rname(f.rid)==='未定位'?'未分配':rname(f.rid)}）`,pcolor(idx));
+save();renderSide();renderMap();
+}
+function toggleConsumed(id){
+const i=getItem(id);i.consumed=!i.consumed;
+addLog('item',`「${i.name||'未命名'}」${i.consumed?'已消耗':'恢复为未消耗'}`);
+save();renderSide();renderMap();
+}
+
+// ===== 日程 =====
+let dayView=D.curDay;
+const dayDlg=document.getElementById('dayDlg');
+function updateDayBar(){
+document.getElementById('dayBtn').textContent='📅 Day '+(D.curDay+1);
+document.getElementById('endDayBtn').textContent='Day '+(D.curDay+1)+' 结束 ▶';
+}
+function openDays(){dayView=D.curDay;renderDays();dayDlg.showModal()}
+function renderDays(){
+if(dayView>=D.days.length)dayView=D.days.length-1;
+const nav=document.getElementById('dayNav');
+nav.innerHTML=D.days.map((d,i)=>{
+  const n=d.events.length,dn=d.events.filter(e=>e.done).length;
+  return `<button class="${i===dayView?'on':''} ${i===D.curDay?'cur':''}" onclick="dayView=${i};renderDays()">
+    <span>Day ${i+1}</span><span class="dtag">${i===D.curDay?'🚩':d.ended?'✔':''}${n?` ${dn}/${n}`:''}</span></button>`}).join('')+
+  `<button onclick="addDay()">＋ 新增一天</button>`;
+const d=D.days[dayView],isCur=dayView===D.curDay;
+const keep=document.getElementById('dayMain').scrollTop;
+const evs=d.events.map(e=>`<div class="ev ${e.done?'done':''}">
+    <div class="r1">
+      <input type="checkbox" title="标记为已发生 / 已完成" ${e.done?'checked':''} onchange="evDone('${e.id}',this.checked)">
+      <input type="text" class="tm" value="${esc(e.time)}" placeholder="时间" title="如：清晨 / 08:00 / 午夜" oninput="evUpd('${e.id}','time',this.value)">
+      <input type="text" class="tt" value="${esc(e.title)}" placeholder="事件标题" oninput="evUpd('${e.id}','title',this.value)">
+      <button onclick="evMove('${e.id}',-1)" title="上移">↑</button>
+      <button onclick="evMove('${e.id}',1)" title="下移">↓</button>
+      <button class="danger" onclick="evDel('${e.id}')">🗑</button>
+    </div>
+    <textarea placeholder="事件详情 / 触发条件 / 后续影响…" oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
+  </div>`).join('')||'<p class="hint">这一天还没有事件，点击下方「＋ 添加事件」</p>';
+document.getElementById('dayMain').innerHTML=`
+  <div class="dayhead">
+    <span class="nm">Day ${dayView+1}</span>
+    ${isCur?'<span class="badge2 cur">当前日</span>':d.ended?'<span class="badge2">已结束</span>':'<span class="badge2">未开始</span>'}
+    ${isCur?`<button class="primary" onclick="endDay()">Day ${dayView+1} 结束 ▶</button>`:`<button onclick="setCur(${dayView})">设为当前日</button>`}
+    ${D.days.length>1?`<button class="danger" onclick="delDay()">删除这一天</button>`:''}
+  </div>
+  ${evs}
+  <button class="primary" onclick="evAdd()">＋ 添加事件</button>`;
+document.getElementById('dayMain').scrollTop=keep;
+updateDayBar();
+}
+const evGet=id=>D.days[dayView].events.find(e=>e.id===id);
+function evAdd(){D.days[dayView].events.push({id:uid(),time:'',title:'',detail:'',done:false});save();renderDays()}
+function evDel(id){const d=D.days[dayView];d.events=d.events.filter(e=>e.id!==id);save();renderDays()}
+function evUpd(id,k,v){evGet(id)[k]=v;save()}
+function evDone(id,v){evGet(id).done=v;save();renderDays()}
+function evMove(id,dir){
+const a=D.days[dayView].events,i=a.findIndex(e=>e.id===id),j=i+dir;
+if(j<0||j>=a.length)return;
+[a[i],a[j]]=[a[j],a[i]];save();renderDays();
+}
+function addDay(){D.days.push(newDay());dayView=D.days.length-1;save();renderDays()}
+function delDay(){
+const d=D.days[dayView];
+if(!confirm(`删除 Day ${dayView+1}${d.events.length?`（含 ${d.events.length} 个事件）`:''}？后面的天数会自动前移编号。`))return;
+D.days.splice(dayView,1);
+if(dayView<D.curDay)D.curDay--;
+else if(dayView===D.curDay)D.curDay=Math.min(D.curDay,D.days.length-1);
+dayView=Math.min(dayView,D.days.length-1);
+save();renderDays();
+}
+function setCur(i){
+D.curDay=i;D.days[i].ended=false;dayView=i;save();renderDays();toast('当前日：Day '+(i+1));
+}
+function endDay(){
+const i=D.curDay,d=D.days[i];
+const undone=d.events.filter(e=>!e.done);
+if(!confirm(`确认结束 Day ${i+1}？`+(undone.length?`\n还有 ${undone.length} 个事件未完成。`:'')))return;
+let carry=false;
+if(undone.length)carry=confirm(`把这 ${undone.length} 个未完成事件顺延到 Day ${i+2}？\n\n确定 = 顺延　取消 = 保留在 Day ${i+1}`);
+addLog('day',`—— Day ${i+1} 结束 ——`);
+d.ended=true;
+if(i===D.days.length-1)D.days.push(newDay());
+const next=D.days[i+1];
+if(carry){d.events=d.events.filter(e=>e.done);next.events.unshift(...undone)}
+D.curDay=i+1;dayView=D.curDay;save();
+if(dayDlg.open)renderDays();else updateDayBar();
+toast(`Day ${i+1} 已结束，进入 Day ${i+2}`);
+}
+
+// ===== 玩家（可增删）=====
+function updatePlayerBar(){
+document.getElementById('playersBtn').textContent=`👥 玩家(${D.players.length})`;
+}
+function openPlayers(){renderPlayers();document.getElementById('playersDlg').showModal()}
+function renderPlayers(){
+document.getElementById('plCount').textContent=`共 ${D.players.length} 人`;
+document.getElementById('playersBox').innerHTML=D.players.map((p,i)=>
+  `<div class="prow"><span>${i+1}</span>
+    <input type="color" value="${D.bg[i].color}" title="代表色" oninput="D.bg[${i}].color=this.value;save();renderMap();renderSide()">
+    <input type="text" value="${esc(p)}" placeholder="玩家${i+1}" oninput="D.players[${i}]=this.value;save();renderMap()">
+    <select title="所在房间" onchange="setPlayerRoom(${i},this.value)">${roomSel(D.bg[i].roomId)}</select>
+    <button class="danger" title="删除该玩家" onclick="delPlayer(${i})" ${D.players.length<=1?'disabled style="opacity:.3;cursor:not-allowed"':''}>🗑</button>
+  </div>`).join('');
+}
+function addPlayer(){
+const n=D.players.length;
+D.players.push('玩家'+(n+1));
+D.bg.push(blankBg(n));
+save();renderPlayers();updatePlayerBar();renderSide();
+const b=document.getElementById('playersBox');b.scrollTop=b.scrollHeight;
+const ins=b.querySelectorAll('input[type=text]');if(ins.length)ins[ins.length-1].select();
+}
+function delPlayer(i){
+if(D.players.length<=1){toast('至少保留 1 名玩家');return}
+if(!confirm(`删除「${pname(i)}」？\n该玩家的背景和车卡会一并删除，已分配给 TA 的物资会变回未分配状态。`))return;
+D.players.splice(i,1);
+D.bg.splice(i,1);
+const fix=it=>{it.owners=it.owners.filter(o=>o!==i).map(o=>o>i?o-1:o)};
+D.rooms.forEach(r=>r.items.forEach(fix));
+D.pool.forEach(fix);
+if(bgSel>i)bgSel--;
+if(bgSel>=D.players.length)bgSel=D.players.length-1;
+save();renderPlayers();updatePlayerBar();renderSide();renderMap();
+}
+function closePlayers(){document.getElementById('playersDlg').close();renderSide()}
+
+// ===== 玩家背景 =====
+let bgSel=0;
+const bgDlg=document.getElementById('bgDlg');
+bgDlg.addEventListener('close',()=>{renderSide()});
+function openBg(){if(bgSel>=D.players.length)bgSel=0;renderBg();if(!bgDlg.open)bgDlg.showModal()}
+function pname(i){return D.players[i]||('玩家'+(i+1))}
+const cardUsed=c=>D.cardCfg.attrs.reduce((s,a)=>s+(+c.vals[a.id]||0),0);
+function renderBg(){
+const keep=document.getElementById('bgMain').scrollTop;
+document.getElementById('bgNav').innerHTML=D.players.map((p,i)=>
+  `<button id="bgn${i}" class="${i===bgSel?'on':''}" style="border-left:4px solid ${pcolor(i)}" onclick="bgSel=${i};renderBg()">${i+1}. ${esc(pname(i))}</button>`).join('');
+const b=D.bg[bgSel],c=b.card,cfg=D.cardCfg;
+const sk=b.skills.map(s=>`<div class="item ${s.type}">
+    <div class="row">
+      <button class="tag ${s.type}" title="点击切换：技能 / 道具" onclick="skType('${s.id}')">${s.type==='skill'?'技能':'道具'}</button>
+      <input type="text" value="${esc(s.name)}" placeholder="${s.type==='skill'?'技能名称':'道具名称'}" oninput="skUpd('${s.id}','name',this.value)">
+      <button class="danger" onclick="skDel('${s.id}')">🗑</button>
+    </div>
+    <textarea style="min-height:44px;margin-top:6px" placeholder="效果 / 使用条件 / 次数限制…" oninput="skUpd('${s.id}','desc',this.value)">${esc(s.desc)}</textarea>
+  </div>`).join('')||'<p class="hint">暂无，点击右上角添加</p>';
+const gl=b.goals.map(g=>`<div class="goal ${g.done?'done':''}">
+    <input type="checkbox" title="标记为已达成" ${g.done?'checked':''} onchange="goalDone('${g.id}',this.checked)">
+    <textarea placeholder="例如：找到失踪的弟弟；不能让任何人知道你的真实身份…" oninput="goalUpd('${g.id}',this.value)">${esc(g.text)}</textarea>
+    <button class="danger" onclick="goalDel('${g.id}')">🗑</button>
+  </div>`).join('')||'<p class="hint">暂无，点击右上角添加</p>';
+const used=cardUsed(c),remain=cfg.points-used;
+const info=INFO_FIELDS.map(([k,l])=>
+  `<label class="cf"><span>${l}</span><input type="text" value="${esc(c.info[k])}" oninput="D.bg[bgSel].card.info.${k}=this.value;save()"></label>`).join('');
+const attrs=cfg.attrs.map(a=>`<div class="attr">
+    <input type="text" class="an" value="${esc(a.name)}" title="属性名（所有玩家共用）" oninput="attrName('${a.id}',this.value)">
+    <button onclick="attrStep('${a.id}',-1)">−</button>
+    <input type="number" class="av" min="0" value="${+c.vals[a.id]||0}" onchange="attrSet('${a.id}',this.value)">
+    <button onclick="attrStep('${a.id}',1)">＋</button>
+    <button class="x danger" title="删除此属性（所有玩家）" onclick="attrDel('${a.id}')">✕</button>
+  </div>`).join('');
+document.getElementById('bgMain').innerHTML=`
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+    <input type="color" value="${b.color}" title="代表色" oninput="D.bg[bgSel].color=this.value;save();renderMap()" onchange="renderBg()">
+    <input type="text" class="nm" style="margin:0" value="${esc(D.players[bgSel])}" placeholder="角色 / 玩家名" oninput="D.players[bgSel]=this.value;save();renderMap();document.getElementById('bgn'+bgSel).textContent=(bgSel+1)+'. '+pname(bgSel)">
+    <select style="width:160px;flex:none" title="所在房间" onchange="setPlayerRoom(bgSel,this.value)">${roomSel(b.roomId)}</select>
+  </div>
+
+  <div class="divider"><b>📜 模组预设</b><span>由作者设定，玩家不可改</span></div>
+  <div class="card"><h3>🪪 身份描述 <span class="hint">预设的身份、出身、与其他人的关系</span></h3>
+    <textarea style="min-height:110px" oninput="D.bg[bgSel].identity=this.value;save()" placeholder="这个角色在剧本中是谁？">${esc(b.identity)}</textarea></div>
+  <div class="card"><h3>🧰 技能 / 道具 <button class="primary" onclick="skAdd()">＋ 添加</button></h3>${sk}</div>
+  <div class="card"><h3>🎯 角色目的 <button class="primary" onclick="goalAdd()">＋ 添加</button></h3>${gl}</div>
+
+  <div class="divider"><b>📝 玩家车卡</b><span>由玩家自己填写</span></div>
+  <div class="card"><h3>基础信息</h3><div class="cgrid">${info}</div></div>
+  <div class="card"><h3>📊 属性分配 <button onclick="attrAdd()">＋ 新属性</button></h3>
+    <div class="ptsbar">
+      <span>可分配属性点数</span><input type="number" min="0" value="${cfg.points}" title="所有玩家共用" onchange="cfgPoints(this.value)"><span>点</span>
+      <span class="mini">已用 ${used}</span>
+      <span class="remain ${remain<0?'over':remain===0?'zero':'ok'}">剩余 ${remain}</span>
+    </div>
+    <div class="cgrid">${attrs}</div>
+    <div class="hint" style="margin-top:6px">总点数、属性名称和数量对全部玩家通用；点数用完后无法继续增加。属性数值的每次变化都会记入「📜 日志」。</div>
+  </div>
+  <div class="card"><h3>🎒 随身物品</h3>
+    <textarea oninput="D.bg[bgSel].card.items=this.value;save()" placeholder="玩家自带的物品…">${esc(c.items)}</textarea></div>
+  <div class="card"><h3>🎭 其他背景 <span class="hint">性格、外貌、经历等</span></h3>
+    <textarea style="min-height:110px" oninput="D.bg[bgSel].card.other=this.value;save()" placeholder="性格、外貌、习惯、个人经历…">${esc(c.other)}</textarea></div>
+  <div style="text-align:right"><button onclick="copyBg()">📋 复制为文本（发给玩家）</button></div>`;
+document.getElementById('bgMain').scrollTop=keep;
+}
+const bgSk=id=>D.bg[bgSel].skills.find(s=>s.id===id);
+const bgGl=id=>D.bg[bgSel].goals.find(g=>g.id===id);
+function skAdd(){D.bg[bgSel].skills.push({id:uid(),type:'skill',name:'',desc:''});save();renderBg()}
+function skDel(id){const b=D.bg[bgSel];b.skills=b.skills.filter(s=>s.id!==id);save();renderBg()}
+function skType(id){const s=bgSk(id);s.type=s.type==='skill'?'item':'skill';save();renderBg()}
+function skUpd(id,k,v){bgSk(id)[k]=v;save()}
+function goalAdd(){D.bg[bgSel].goals.push({id:uid(),text:'',done:false});save();renderBg()}
+function goalDel(id){const b=D.bg[bgSel];b.goals=b.goals.filter(g=>g.id!==id);save();renderBg()}
+function goalUpd(id,v){bgGl(id).text=v;save()}
+function goalDone(id,v){bgGl(id).done=v;save();renderBg()}
+
+function attrSet(id,v){
+const c=D.bg[bgSel].card;
+v=Math.max(0,Math.floor(+v)||0);
+const old=+c.vals[id]||0;
+const others=cardUsed(c)-old;
+const max=Math.max(0,D.cardCfg.points-others);
+if(v>max){v=max;toast('属性点不够了')}
+c.vals[id]=v;
+if(v!==old){
+  const a=D.cardCfg.attrs.find(a=>a.id===id);
+  addLog('attr',`${pname(bgSel)} 的「${a.name}」 ${old} → ${v}（${v>old?'+':''}${v-old}）`,pcolor(bgSel));
+}
+save();renderBg();
+}
+function attrStep(id,d){attrSet(id,(+D.bg[bgSel].card.vals[id]||0)+d)}
+function attrName(id,v){D.cardCfg.attrs.find(a=>a.id===id).name=v;save()}
+function attrAdd(){D.cardCfg.attrs.push({id:uid(),name:'新属性',show:true});save();renderBg()}
+function attrDel(id){
+if(!confirm('删除这个属性？所有玩家的该项数值都会清除。'))return;
+D.cardCfg.attrs=D.cardCfg.attrs.filter(a=>a.id!==id);
+D.bg.forEach(b=>delete b.card.vals[id]);save();renderBg();
+}
+function cfgPoints(v){D.cardCfg.points=Math.max(0,Math.floor(+v)||0);save();renderBg()}
+
+function copyBg(){
+const b=D.bg[bgSel],c=b.card,cfg=D.cardCfg;
+const t=`【${pname(bgSel)}】\n\n■ 身份\n${b.identity||'（无）'}\n\n■ 技能 / 道具\n`+
+  (b.skills.length?b.skills.map(s=>`· [${s.type==='skill'?'技能':'道具'}] ${s.name}：${s.desc}`).join('\n'):'（无）')+
+  `\n\n■ 目的\n`+(b.goals.length?b.goals.map((g,i)=>`${i+1}. ${g.text}`).join('\n'):'（无）')+
+  `\n\n■ 基础信息\n`+INFO_FIELDS.map(([k,l])=>`${l}：${c.info[k]||'-'}`).join('　')+
+  `\n\n■ 属性（共 ${cfg.points} 点，剩余 ${cfg.points-cardUsed(c)}）\n`+cfg.attrs.map(a=>`${a.name} ${+c.vals[a.id]||0}`).join('　')+
+  `\n\n■ 随身物品\n${c.items||'（无）'}\n\n■ 其他背景\n${c.other||'（无）'}`;
+copyText(t).then(ok=>ok?toast('📋 已复制'):prompt('请手动复制：',t));
+}
+
+// ===== 物资总览 =====
+function openSummary(){renderPool();document.getElementById('sumDlg').showModal()}
+function roomOpts(cur){
+return `<option value="">📥 未分配</option>`+D.rooms.map(r=>
+  `<option value="${r.id}" ${r.id===cur?'selected':''}>${esc(r.name)||'未命名'} (${r.x},${r.y})</option>`).join('');
+}
+function poolRow(i,rid){
+const st=i.consumed?'已消耗':i.owners.length?'已给 '+i.owners.map(n=>esc(pname(n))).join('、'):'';
+return `<div class="prow2 ${i.type==='clue'?'clue':''} ${i.consumed?'consumed':''}">
+  <div class="l1">
+    <button class="tag ${i.type}" onclick="poolType('${i.id}')" title="点击切换类型">${i.type==='clue'?'线索':'道具'}</button>
+    <input type="text" value="${esc(i.name)}" placeholder="物资名称" oninput="poolUpd('${i.id}','name',this.value)">
+    ${st?`<span class="mini">${st}</span>`:''}
+    <select onchange="moveItem('${i.id}',this.value)" title="分配到房间">${roomOpts(rid)}</select>
+    <button class="danger" onclick="poolDel('${i.id}')">🗑</button>
+  </div>
+  <div class="l2">
+    <input type="text" value="${esc(i.desc)}" placeholder="描述" oninput="poolUpd('${i.id}','desc',this.value)">
+    <input type="text" value="${esc(i.cond)}" placeholder="获取条件" oninput="poolUpd('${i.id}','cond',this.value)">
+  </div>
+</div>`;
+}
+function renderPool(){
+const q=poolQ.trim().toLowerCase();
+const ok=i=>(!poolT||i.type===poolT)&&(!q||[i.name,i.desc,i.cond].some(s=>String(s||'').toLowerCase().includes(q)));
+const groups=[{rid:'',name:'📥 未分配',list:D.pool,un:true},...D.rooms.map(r=>({rid:r.id,name:'🚪 '+(r.name||'未命名'),list:r.items}))];
+let total=0,h='';
+groups.forEach(g=>{
+  const shown=g.list.filter(ok);total+=g.list.length;
+  if(!shown.length&&!g.un)return;
+  h+=`<div class="sec ${g.un?'un':''}"><span>${esc(g.name)}（${g.list.length}）</span></div>`;
+  h+=shown.length?shown.map(i=>poolRow(i,g.rid)).join(''):'<p class="hint" style="margin:2px 0 6px">暂无</p>';
+});
+document.getElementById('poolList').innerHTML=total?h:h+'<p class="hint">还没有任何物资。点击右上「＋ 新物资」先创建一批，再分配到房间。</p>';
+}
+function addPoolItem(){D.pool.push(newItem());save();poolQ='';poolT='';
+document.getElementById('poolQ').value='';document.getElementById('poolT').value='';
+renderPool();document.getElementById('poolList').scrollTop=0;
+}
+function moveItem(id,to){
+const f=findItem(id);if(!f)return;
+f.list.splice(f.list.indexOf(f.item),1);
+(to===''?D.pool:room(to).items).push(f.item);
+save();renderMap();renderSide();renderPool();
+}
+function poolUpd(id,k,v){findItem(id).item[k]=v;save();renderSide()}
+function poolType(id){const i=getItem(id);i.type=i.type==='clue'?'item':'clue';save();renderSide();renderPool()}
+function poolDel(id){
+if(!confirm('确定删除这件物资？'))return;
+const f=findItem(id);f.list.splice(f.list.indexOf(f.item),1);
+save();renderMap();renderSide();renderPool();
+}
+
+// ===== 导入导出 =====
+document.getElementById('modTitle').value=D.title;
+document.getElementById('modTitle').oninput=e=>{D.title=e.target.value;save();document.title=D.title+' · DM 工具'};
+function exportData(){
+const a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));
+a.download=(D.title||'module')+'.json';a.click();
+}
+function importData(e){
+const f=e.target.files[0];if(!f)return;
+const rd=new FileReader();
+rd.onload=()=>{try{
+  const d=JSON.parse(rd.result);if(!Array.isArray(d.rooms))throw 0;
+  D=migrate(d);sel=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
+  document.getElementById('modTitle').value=D.title||'';renderMap();renderSide();updateDayBar();updatePlayerBar();
+}catch(_){alert('文件格式不正确')}};
+rd.readAsText(f);e.target.value='';
+}
+function resetAll(){
+if(!confirm('将清空全部内容（建议先导出备份），确定吗？'))return;
+D=migrate(DEFAULT_DATA?JSON.parse(JSON.stringify(DEFAULT_DATA)):blankData());sel=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
+document.getElementById('modTitle').value=D.title;renderMap();renderSide();updateDayBar();updatePlayerBar();
+}
+renderStrip();renderMap();updateDayBar();updatePlayerBar();
+</script>
+</body>
+</html>
