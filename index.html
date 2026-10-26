@@ -26,20 +26,26 @@
   #stripOpen{position:absolute;left:14px;top:14px;z-index:5;background:var(--panel);box-shadow:0 2px 8px rgba(0,0,0,.4);display:none}
   #panHint{position:absolute;right:14px;bottom:14px;z-index:5;font-size:12px;color:var(--mute);pointer-events:none}
   .cell{width:130px;height:100px;position:relative}
-  .room{width:100%;height:100%;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:6px 8px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .room{width:100%;height:100%;background:var(--card);border:2px solid var(--line);border-radius:8px;padding:20px 20px 18px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
   .room:hover{border-color:var(--accent)}
   .room.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,164,65,.25)}
-  .room .name{font-weight:bold;word-break:break-all;overflow:hidden;max-height:2.8em;line-height:1.4}
+  .room .name{font-weight:bold;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
   .room .stat{font-size:11px;color:var(--mute)}
   .room .pl{display:flex;flex-wrap:wrap;gap:2px;max-height:38px;overflow:hidden}
   .chip{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:10px;font-style:normal;font-weight:bold;color:#111;border:1px solid rgba(0,0,0,.35)}
-  .room .link{position:absolute;background:var(--accent);opacity:.6}
-  .link.r{right:-16px;top:50%;width:16px;height:3px}
-  .link.b{bottom:-16px;left:50%;width:3px;height:16px}
-  .add{position:absolute;width:22px;height:22px;border-radius:50%;padding:0;background:var(--accent);color:#222;border:none;font-weight:bold;line-height:22px;z-index:2;display:none}
+  /* 门标记：房间卡片内侧，各边居中 */
+  .dr{display:inline-block;width:16px;height:16px;border-radius:4px;font-size:10px;line-height:14px;text-align:center;font-weight:bold;font-style:normal;color:#111;border:1px solid rgba(0,0,0,.5);flex:none}
+  .dr.door{background:var(--accent)}.dr.open{background:#cfcfd8}.dr.lock{background:var(--danger);color:#fff}.dr.out,.dr.in{background:var(--clue)}
+  .cell>.dr{position:absolute;z-index:3;pointer-events:none}
+  .cell>.dr.N{top:4px;left:calc(50% - 8px)}.cell>.dr.S{bottom:4px;left:calc(50% - 8px)}
+  .cell>.dr.E{right:4px;top:calc(50% - 8px)}.cell>.dr.W{left:4px;top:calc(50% - 8px)}
+  .add{position:absolute;width:22px;height:22px;border-radius:50%;padding:0;background:var(--accent);color:#222;border:none;font-weight:bold;line-height:22px;z-index:4;display:none}
   body.edit .cell:hover .add{display:block}
   .add.t{top:-11px;left:calc(50% - 11px)}.add.bm{bottom:-11px;left:calc(50% - 11px)}
   .add.l{left:-11px;top:calc(50% - 11px)}.add.r{right:-11px;top:calc(50% - 11px)}
+  .drow{display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:13px}
+  .drow>b{width:24px;flex:none;color:var(--mute)}
+  .drow select{width:150px;flex:none}
   #strip{width:210px;flex:none;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
   #strip.hide{display:none}
   .sthead{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:bold;color:var(--accent)}
@@ -168,11 +174,10 @@
   .lg .lt{font-size:11px;color:var(--mute);white-space:nowrap;flex:none;width:38px}
   .lg .lx{flex:1;word-break:break-all}
   .lg .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
-  /* 手册导出 */
-  .hbopts{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px}
+  .hbopts{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:13px}
   .hbopts label{display:flex;align-items:center;gap:6px;cursor:pointer}
   .hbopts input{width:15px;height:15px}
-  #hbFrame{width:100%;height:68vh;border:1px solid var(--line);border-radius:6px;background:#fff}
+  #hbFrame{width:100%;height:62vh;border:1px solid var(--line);border-radius:6px;background:#fff}
 </style>
 </head>
 <body class="edit">
@@ -187,7 +192,7 @@
   <button id="playersBtn" onclick="openPlayers()">👥 玩家</button>
   <button onclick="openSummary()">📦 物资总览</button>
   <button onclick="openLog()">📜 日志</button>
-  <button class="primary" onclick="openHandbook()" title="生成可打印的带团手册">📖 导出手册</button>
+  <button class="primary" onclick="openHandbook()" title="生成可打印的带团手册 / 玩家发放版">📖 导出手册</button>
   <button onclick="exportData()" title="导出 JSON 备份文件，可再导入">导出备份</button>
   <button onclick="document.getElementById('imp').click()">导入</button>
   <input type="file" id="imp" accept=".json" hidden onchange="importData(event)">
@@ -279,21 +284,30 @@
   <div id="logList"></div>
 </dialog>
 
-<dialog id="hbDlg" style="width:960px;max-width:96vw;max-height:94vh">
+<dialog id="hbDlg" style="width:980px;max-width:96vw;max-height:95vh">
   <div class="tabs">
-    <b style="color:var(--accent)">📖 带团手册预览</b>
+    <button id="hbTabDm" class="on" onclick="setHbMode('dm')">📖 DM 带团手册</button>
+    <button id="hbTabPl" onclick="setHbMode('pl')">🧾 玩家发放版</button>
     <div class="spacer"></div>
     <button class="primary" onclick="printHandbook()">🖨 打印 / 另存为 PDF</button>
     <button onclick="downloadHandbook()">⬇ 下载 HTML</button>
     <button onclick="document.getElementById('hbDlg').close()">关闭</button>
   </div>
-  <div class="hbopts">
+  <div class="hbopts" id="hbOptDm">
     <label><input type="checkbox" id="hbDM" checked onchange="refreshHandbook()">DM 专属内容</label>
     <label><input type="checkbox" id="hbPl" checked onchange="refreshHandbook()">玩家角色页（背景 + 车卡）</label>
-    <label><input type="checkbox" id="hbSt" onchange="refreshHandbook()">带上当前进度（玩家位置、已获取、已填写的车卡数值）</label>
+    <label><input type="checkbox" id="hbSt" onchange="refreshHandbook()">带上当前进度（位置、已获取、已填数值）</label>
+  </div>
+  <div class="hbopts" id="hbOptPl" style="display:none">
+    <label><input type="checkbox" id="hpBg" checked onchange="refreshHandbook()">包含预设背景（身份 / 技能 / 目的）</label>
+    <label><input type="checkbox" id="hpFill" onchange="refreshHandbook()">预填已有车卡数值（不勾选＝空白车卡）</label>
+    <label><input type="checkbox" id="hpSplit" onchange="refreshHandbook()">背景在正面、车卡在背面（每人 2 页）</label>
+  </div>
+  <div class="hbopts">
+    <label><input type="checkbox" id="hbDup" checked onchange="refreshHandbook()">双面打印优化（章节 / 每位玩家从右页开始，装订侧加宽，带页码）</label>
   </div>
   <iframe id="hbFrame" title="手册预览"></iframe>
-  <div class="hint" style="margin-top:6px">打印时在浏览器打印窗口里选择「A4」，建议关闭「页眉和页脚」。选「另存为 PDF」即可得到电子版。</div>
+  <div class="hint" style="margin-top:6px">打印窗口里选择「A4」，建议关闭「页眉和页脚」，并勾选「双面打印」。每个房间固定从新页开始。</div>
 </dialog>
 
 <script>
@@ -306,11 +320,20 @@ const DEFAULT_DATA=null;
 
 const PALETTE=['#e0605e','#e8a13a','#e6d24a','#8bc34a','#4cc9a0','#4aa8d8','#6c7be0','#b27cd8','#e37bb6','#9b8b7a','#ff8a5c','#7fd0e0'];
 const INFO_FIELDS=[['name','姓名'],['gender','性别'],['age','年龄'],['job','职业'],['religion','宗教'],['zodiac','星座']];
+// 门：N/E/S/W 四个方向；单向门以「本房间」为参照
+const SIDES=[['N','北',0,-1],['E','东',1,0],['S','南',0,1],['W','西',-1,0]];
+const OPP={N:'S',S:'N',E:'W',W:'E'};
+const sideOf=(dx,dy)=>SIDES.find(s=>s[2]===dx&&s[3]===dy)[0];
+const DOOR_T={door:'双向门',open:'敞开通道',lock:'锁住的门',out:'单向门 · 只能出',in:'单向门 · 只能进'};
+const DOOR_S={door:'门',open:'通道',lock:'锁门',out:'单向出',in:'单向进'};
+const ARW={out:{N:'↑',E:'→',S:'↓',W:'←'},in:{N:'↓',E:'←',S:'↑',W:'→'}};
+const doorSym=(t,s)=>t==='door'?'门':t==='open'?'通':t==='lock'?'锁':ARW[t][s];
+
 const blankCard=()=>({info:{name:'',gender:'',age:'',job:'',religion:'',zodiac:''},vals:{},items:'',other:''});
 const blankBg=(i=0)=>({identity:'',skills:[],goals:[],card:blankCard(),color:PALETTE[i%PALETTE.length],roomId:''});
 const newDay=()=>({id:uid(),ended:false,events:[]});
 const defaultCfg=()=>({points:40,attrs:['力量','技巧','敏捷','勇气','观察','理智','口才'].map(n=>({id:uid(),name:n,show:true}))});
-function blankRoom(x,y,name){return{id:uid(),x,y,name:name||'新房间',desc:'',dm:'',poolNote:'',items:[]}}
+function blankRoom(x,y,name){return{id:uid(),x,y,name:name||'新房间',desc:'',dm:'',poolNote:'',items:[],doors:{}}}
 function blankData(){return{title:'我的原创模组',players:Array.from({length:7},(_,i)=>'玩家'+(i+1)),rooms:[],pool:[],cardCfg:defaultCfg(),bg:Array.from({length:7},(_,i)=>blankBg(i)),days:[newDay()],curDay:0,ui:{strip:true,showChar:true},log:[]}}
 function fixItem(i){
 if(!Array.isArray(i.owners)){i.owners=(i.owner!==undefined&&i.owner!=='')?[+i.owner]:[]}
@@ -328,6 +351,18 @@ d.ui=Object.assign({strip:true,showChar:true},d.ui||{});
 if(!Array.isArray(d.days)||!d.days.length)d.days=[newDay()];
 d.days.forEach(x=>{if(!Array.isArray(x.events))x.events=[];if(!x.id)x.id=uid()});
 if(!(d.curDay>=0&&d.curDay<d.days.length))d.curDay=0;
+// 旧存档没有门：把原来相邻的房间自动开成双向门，保持原有连通
+d.rooms.forEach(r=>{
+  if(!r.doors||typeof r.doors!=='object'){
+    r.doors={};
+    SIDES.forEach(([s,,dx,dy])=>{if(d.rooms.some(o=>o.x===r.x+dx&&o.y===r.y+dy))r.doors[s]={t:'door',note:''}});
+  }
+  Object.keys(r.doors).forEach(s=>{
+    const x=r.doors[s];
+    if(!OPP[s]||!x||!DOOR_T[x.t])delete r.doors[s];
+    else if(typeof x.note!=='string')x.note='';
+  });
+});
 d.players.forEach((_,i)=>{
   const b=d.bg[i]||(d.bg[i]=blankBg(i));
   if(!Array.isArray(b.skills))b.skills=[];
@@ -511,6 +546,11 @@ applyPan();
 },{passive:false});
 
 // ===== 地图 =====
+function doorTitle(s,d){const l=SIDES.find(x=>x[0]===s)[1];return `${l}：${DOOR_T[d.t]}${d.note?'：'+d.note:''}`}
+function doorsHtml(r){
+return SIDES.filter(([s])=>r.doors[s]).map(([s])=>{const d=r.doors[s];
+  return `<i class="dr ${d.t} ${s}" title="${esc(doorTitle(s,d))}">${doorSym(d.t,s)}</i>`}).join('');
+}
 function renderMap(){
 if(!D.rooms.length){
   grid.style.display='block';
@@ -530,11 +570,11 @@ for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
   const btn=(cls,dx,dy)=>at(x+dx,y+dy)?'':`<button class="add ${cls}" title="向此方向新增房间" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
   h+=`<div class="cell">
     <div class="room ${sel===r.id?'sel':''}" onclick="select('${r.id}')">
-      ${at(x+1,y)?'<i class="link r"></i>':''}${at(x,y+1)?'<i class="link b"></i>':''}
       <div class="name">${esc(r.name)||'未命名'}</div>
       <div class="pl">${here.map(chipHtml).join('')}</div>
       <div class="stat">${total?`📦 ${got}/${total}`:'—'}</div>
     </div>
+    ${doorsHtml(r)}
     ${btn('t',0,-1)}${btn('bm',0,1)}${btn('l',-1,0)}${btn('r',1,0)}
   </div>`;
 }
@@ -548,7 +588,11 @@ else{
 function addFirst(){const r=blankRoom(0,0,'入口');D.rooms.push(r);save();select(r.id);centerView()}
 function addRoom(id,dx,dy){
 const r=room(id);if(at(r.x+dx,r.y+dy))return;
-const n=blankRoom(r.x+dx,r.y+dy);D.rooms.push(n);save();select(n.id);
+const n=blankRoom(r.x+dx,r.y+dy);
+// 新建房间时，与来源房间之间默认开一扇双向门，可在侧边栏修改
+r.doors[sideOf(dx,dy)]={t:'door',note:''};
+n.doors[OPP[sideOf(dx,dy)]]={t:'door',note:''};
+D.rooms.push(n);save();select(n.id);
 }
 function delRoom(id){
 const r=room(id);
@@ -563,6 +607,38 @@ edit=!edit;document.body.classList.toggle('edit',edit);
 const b=document.getElementById('modeBtn');b.classList.toggle('on',edit);
 b.textContent=edit?'✏️ 编辑模式':'🎮 带团模式';
 renderSide();
+}
+
+// ===== 门 =====
+function setDoor(s,t){
+const r=room(sel);
+if(!t)delete r.doors[s];
+else r.doors[s]={t,note:(r.doors[s]&&r.doors[s].note)||''};
+save();renderMap();renderSide();
+}
+function setDoorNote(s,v){const d=room(sel).doors[s];if(d){d.note=v;save()}}
+function doorLock(s){
+const d=room(sel).doors[s];if(!d)return;
+d.t=d.t==='lock'?'door':'lock';
+save();renderMap();renderSide();toast(d.t==='lock'?'🔒 已上锁':'🔓 已开锁');
+}
+function doorsCard(r){
+if(edit){
+  const rows=SIDES.map(([s,l,dx,dy])=>{
+    const d=r.doors[s],n=at(r.x+dx,r.y+dy);
+    return `<div class="drow"><b>${l}</b>
+      <select onchange="setDoor('${s}',this.value)"><option value="">▭ 墙（无门）</option>${Object.entries(DOOR_T).map(([k,v])=>`<option value="${k}" ${d&&d.t===k?'selected':''}>${v}</option>`).join('')}</select>
+      ${d?`<input type="text" value="${esc(d.note)}" placeholder="备注，如：通往地窖" oninput="setDoorNote('${s}',this.value)">`
+         :`<span class="hint">${n?'邻接：'+esc(n.name||'未命名'):'无邻接房间'}</span>`}</div>`}).join('');
+  return `<div class="card"><h3>🚪 门与通道 <span class="hint">不必连接房间 · 单向门以本房间为参照</span></h3>${rows}</div>`;
+}
+const list=SIDES.filter(([s])=>r.doors[s]).map(([s,l,dx,dy])=>{
+  const d=r.doors[s],n=at(r.x+dx,r.y+dy);
+  const dest=` ${d.t==='in'?'←':'→'} ${n?esc(n.name||'未命名'):'外部'}`;
+  return `<div class="drow"><i class="dr ${d.t}">${doorSym(d.t,s)}</i>
+    <span style="flex:1">${l} · ${DOOR_T[d.t]}${dest}${d.note?`<span class="hint">　${esc(d.note)}</span>`:''}</span>
+    ${d.t==='door'||d.t==='lock'?`<button onclick="doorLock('${s}')">${d.t==='lock'?'🔓 开锁':'🔒 上锁'}</button>`:''}</div>`}).join('');
+return `<div class="card"><h3>🚪 门与通道</h3>${list||'<span class="hint">这个房间没有门（封闭空间）</span>'}</div>`;
 }
 
 // ===== 侧边栏 =====
@@ -597,6 +673,7 @@ s.innerHTML=`
 <div class="card"><h3>📍 此处玩家 <span class="hint">在左侧玩家栏或「👥 玩家」里改位置</span></h3>
   <div class="here">${here.length?here.map(i=>`<span>${chipHtml(i)}${esc(pname(i))}</span>`).join(''):'<span class="hint">暂无玩家</span>'}</div></div>
 ${descCard(r)}
+${doorsCard(r)}
 <div class="card"><h3>🔒 DM 专属内容 <span class="hint">仅 DM 可见</span></h3>
   <textarea oninput="upd('dm',this.value)" placeholder="陷阱、NPC、隐藏机关、遭遇、注意事项…">${esc(r.dm)}</textarea></div>
 <div class="card"><h3>🎒 物资池
@@ -946,13 +1023,15 @@ const f=findItem(id);f.list.splice(f.list.indexOf(f.item),1);
 save();renderMap();renderSide();renderPool();
 }
 
-// ===== 导出手册（可打印）=====
+// ===== 导出手册 / 玩家发放版 =====
 const HB_CSS=`
 @page{size:A4;margin:16mm 15mm}
 *{box-sizing:border-box}
 body{margin:0;padding:14px;color:#1d1d1d;background:#fff;font:13px/1.65 "Songti SC","Noto Serif SC","Source Han Serif SC","SimSun","STSong",serif}
 h1,h2,h3,h4{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;margin:0}
-.pg{page-break-before:always}
+.pg,.rm,.player,.hp,.hpb{break-before:page;page-break-before:always}
+.ch{break-before:page;page-break-before:always}
+.f{break-before:auto!important;page-break-before:auto!important}
 .cover{height:240mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border:3px double #333;padding:20mm}
 .cover h1{font-size:40px;letter-spacing:6px;margin-bottom:14px}
 .cover .sub{font-size:18px;letter-spacing:8px;color:#444;margin-bottom:40px}
@@ -964,6 +1043,7 @@ table{width:100%;border-collapse:collapse;margin:6px 0 10px;font-size:12px}
 th,td{border:1px solid #666;padding:4px 7px;vertical-align:top;text-align:left}
 th{background:#eee;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-weight:bold;white-space:nowrap}
 td.c,th.c{text-align:center}
+tr{break-inside:avoid}
 .pre{white-space:pre-wrap;word-break:break-all}
 .box{display:inline-block;width:12px;height:12px;border:1.5px solid #222;vertical-align:-2px;margin-right:4px}
 .box.ck{background:#222}
@@ -971,71 +1051,99 @@ td.c,th.c{text-align:center}
 .tx{white-space:pre-wrap;word-break:break-all;border:1px solid #bbb;padding:6px 9px;min-height:30px;background:#fafafa}
 .tx.dm{border:1.5px dashed #222;background:#f3f3f3}
 .lb{font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:11px;font-weight:bold;color:#444;margin:8px 0 2px;letter-spacing:1px}
-.room{break-inside:avoid-page;margin-bottom:18px;padding-bottom:6px;border-bottom:1px dashed #aaa}
-.room h2{font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.rm h2{font-size:20px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .no{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 6px;border-radius:50%;background:#222;color:#fff;font-size:15px}
 .meta2{font-size:11.5px;color:#444;margin-bottom:4px}
-.map{display:grid;gap:6px;margin:10px 0}
-.mc{border:2px solid #222;min-height:62px;padding:4px 6px;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:11.5px;position:relative}
+.map{display:grid;gap:14px;margin:14px 8px}
+.mc{border:2px solid #222;min-height:84px;padding:20px 22px;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:11.5px;position:relative}
 .mc.e{border:1px dotted #ddd}
 .mc b{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#222;color:#fff;align-items:center;justify-content:center;font-size:11px;margin-right:4px}
 .mc .pl{margin-top:3px;font-size:10.5px;color:#444}
+.hd{position:absolute;width:16px;height:16px;border:1.5px solid #000;background:#fff;font:bold 10px/13px "PingFang SC","Microsoft YaHei",sans-serif;text-align:center;font-style:normal;color:#000}
+.hd.lock{background:#000;color:#fff}.hd.open{border-style:dashed}.hd.out,.hd.in{background:#ccc}
+.hd.N{top:3px;left:calc(50% - 8px)}.hd.S{bottom:3px;left:calc(50% - 8px)}.hd.E{right:3px;top:calc(50% - 8px)}.hd.W{left:3px;top:calc(50% - 8px)}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1px solid #333;margin-right:3px;vertical-align:0}
-.player{page-break-before:always}
-.player h2{font-size:20px;border-bottom:2px solid #222;padding-bottom:4px;margin-bottom:8px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.player h2,.hp h2,.hpb h2{font-size:20px;border-bottom:2px solid #222;padding-bottom:4px;margin-bottom:8px}
+.ph{display:flex;justify-content:space-between;font:11px "PingFang SC","Microsoft YaHei",sans-serif;color:#666;border-bottom:1px solid #aaa;margin-bottom:8px;padding-bottom:2px}
 .sheet td.k{background:#f0f0f0;width:16%;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-weight:bold;white-space:nowrap}
 .sheet td.v{width:34%;height:28px}
-.attr td{height:28px}
 .note{color:#666;font-size:11.5px}
 .toc td.n{width:36px;text-align:center}
 .tight{margin:0;padding-left:18px}
 `;
+const HB_DUP=`
+@page :right{margin:16mm 15mm 16mm 22mm}
+@page :left{margin:16mm 22mm 16mm 15mm}
+@page{@bottom-center{content:counter(page);font:10px sans-serif;color:#666}}
+body.dup .ch,body.dup .hp{break-before:right;page-break-before:right}
+body.dup .f{break-before:auto!important;page-break-before:auto!important}
+`;
+const typeL=t=>t==='clue'?'线索':t==='skill'?'技能':'道具';
+const hLines=n=>'<div class="ln"></div>'.repeat(n);
+const hTxt=(s,n=3,cls='')=>s&&String(s).trim()?`<div class="tx ${cls}">${esc(s)}</div>`:`<div>${hLines(n)}</div>`;
+const hBx=on=>`<i class="box ${on?'ck':''}"></i>`;
+
+function bgBlock(i,sv){
+const b=D.bg[i];
+return `<div class="lb">预设身份</div>${hTxt(b.identity,4)}
+  <div class="lb">技能 / 道具</div>`+
+  (b.skills.length?`<table><tr><th style="width:40px">类型</th><th style="width:22%">名称</th><th>效果 / 使用条件</th></tr>${b.skills.map(s=>`<tr><td>${typeL(s.type)}</td><td><b>${esc(s.name)}</b></td><td class="pre">${esc(s.desc)}</td></tr>`).join('')}</table>`:'<p class="note">（无）</p>')+
+  `<div class="lb">角色目的</div>`+
+  (b.goals.length?`<ul class="tight" style="list-style:none;padding:0">${b.goals.map(g=>`<li>${hBx(sv&&g.done)}<span class="pre">${esc(g.text)}</span></li>`).join('')}</ul>`:'<p class="note">（无）</p>');
+}
+function cardBlock(i,sv){
+const c=D.bg[i].card,cfg=D.cardCfg;
+let attrRows='';
+for(let k=0;k<cfg.attrs.length;k+=2){
+  const a=cfg.attrs[k],b2=cfg.attrs[k+1];
+  attrRows+=`<tr><td class="k">${esc(a.name)}</td><td class="v">${sv?(+c.vals[a.id]||0):''}</td>${b2?`<td class="k">${esc(b2.name)}</td><td class="v">${sv?(+c.vals[b2.id]||0):''}</td>`:'<td class="k"></td><td class="v"></td>'}</tr>`;
+}
+return `<h3 class="sub" style="margin-top:14px">车卡</h3>
+  <table class="sheet">${[0,2,4].map(k=>`<tr><td class="k">${INFO_FIELDS[k][1]}</td><td class="v">${sv?esc(c.info[INFO_FIELDS[k][0]]):''}</td><td class="k">${INFO_FIELDS[k+1][1]}</td><td class="v">${sv?esc(c.info[INFO_FIELDS[k+1][0]]):''}</td></tr>`).join('')}</table>
+  <div class="lb">可分配属性点数：${cfg.points} 点${sv?`（已用 ${cardUsed(c)}，剩余 ${cfg.points-cardUsed(c)}）`:''}</div>
+  <table class="sheet">${attrRows}</table>
+  <div class="lb">随身物品</div>${hTxt(sv?c.items:'',3)}
+  <div class="lb">其他背景（性格、外貌、经历）</div>${hTxt(sv?c.other:'',5)}`;
+}
+
 function hbHtml(o){
 const title=D.title||'未命名模组';
 const rooms=[...D.rooms].sort((a,b)=>a.y-b.y||a.x-b.x);
 const num=new Map(rooms.map((r,i)=>[r.id,i+1]));
 const pn=i=>esc(pname(i));
-const typeL=t=>t==='clue'?'线索':t==='skill'?'技能':'道具';
-const lines=n=>'<div class="ln"></div>'.repeat(n);
-const txt=(s,n=3,cls='')=>s&&String(s).trim()?`<div class="tx ${cls}">${esc(s)}</div>`:`<div>${lines(n)}</div>`;
-const bx=on=>`<i class="box ${on?'ck':''}"></i>`;
-const nbTxt=r=>[[0,-1,'北'],[0,1,'南'],[-1,0,'西'],[1,0,'东']].map(([dx,dy,l])=>{
-  const t=at(r.x+dx,r.y+dy);return t?`${l}：${num.get(t.id)} ${esc(t.name||'未命名')}`:''}).filter(Boolean).join('　');
+const doorList=r=>SIDES.filter(([s])=>r.doors[s]);
+const dShort=r=>doorList(r).map(([s,l,dx,dy])=>{const t=r.doors[s].t,n=at(r.x+dx,r.y+dy);
+  return `${l}${DOOR_S[t]}${t==='in'?'←':'→'}${n?num.get(n.id):'外'}`}).join('　')||'无';
 const today=new Date().toLocaleDateString('zh-CN');
 let h='';
 
-// 封面
 h+=`<section class="cover"><h1>${esc(title)}</h1><div class="sub">DM 带团手册</div>
   <div class="meta">玩家 ${D.players.length} 人　·　房间 ${D.rooms.length} 间　·　共 ${D.days.length} 天<br>
   物资 ${D.pool.length+D.rooms.reduce((s,r)=>s+r.items.length,0)} 件<br>印制日期：${today}</div>
   <div class="dm">${o.dm?'含 DM 专属内容，请勿向玩家展示':'玩家可阅读版本'}</div></section>`;
 
-// 目录与总览
-h+=`<section class="pg"><div class="part">目 录</div>
+h+=`<section class="ch"><div class="part">目 录</div>
   <table class="toc"><tr><th class="c">章节</th><th>内容</th></tr>
   <tr><td class="n">一</td><td>日程与事件</td></tr>
-  <tr><td class="n">二</td><td>地图总览与房间索引</td></tr>
-  <tr><td class="n">三</td><td>房间详解（场景、DM 备注、物资）</td></tr>
-  ${o.pl?'<tr><td class="n">四</td><td>玩家角色（预设背景 + 车卡）</td></tr>':''}
+  <tr><td class="n">二</td><td>地图总览（含门与通道）与房间索引</td></tr>
+  <tr><td class="n">三</td><td>房间详解（每间房独立一页：场景、门、DM 备注、物资）</td></tr>
+  ${o.pl?'<tr><td class="n">四</td><td>玩家角色（预设背景 + 车卡，每人一页）</td></tr>':''}
   <tr><td class="n">${o.pl?'五':'四'}</td><td>附录：物资总表、属性追踪表、笔记页</td></tr></table>
   <h3 class="sub">玩家一览</h3>
   <table><tr><th class="c">#</th><th>玩家</th><th>角色姓名</th><th>代表色</th>${o.st?'<th>当前位置</th>':''}</tr>
   ${D.players.map((_,i)=>`<tr><td class="c">${i+1}</td><td>${pn(i)}</td><td>${esc(D.bg[i].card.info.name)}</td>
     <td><i class="dot" style="background:${pcolor(i)}"></i>${pcolor(i)}</td>${o.st?`<td>${D.bg[i].roomId?num.get(D.bg[i].roomId)+' '+esc(rname(D.bg[i].roomId)):'—'}</td>`:''}</tr>`).join('')}</table></section>`;
 
-// 一、日程
-h+=`<section class="pg"><div class="part">一　日程与事件</div>`;
+h+=`<section class="ch"><div class="part">一　日程与事件</div>`;
 D.days.forEach((d,i)=>{
   h+=`<h3 class="sub">Day ${i+1}</h3><table><tr><th class="c" style="width:28px">✓</th><th style="width:70px">时间</th><th style="width:26%">事件</th><th>详情 / 触发条件</th></tr>`+
-    (d.events.length?d.events.map(e=>`<tr><td class="c">${bx(o.st&&e.done)}</td><td>${esc(e.time)}</td><td><b>${esc(e.title)||'（未命名）'}</b></td><td class="pre">${esc(e.detail)}</td></tr>`).join('')
+    (d.events.length?d.events.map(e=>`<tr><td class="c">${hBx(o.st&&e.done)}</td><td>${esc(e.time)}</td><td><b>${esc(e.title)||'（未命名）'}</b></td><td class="pre">${esc(e.detail)}</td></tr>`).join('')
     :`<tr><td colspan="4" class="note">（本日暂无预设事件）</td></tr>`)+
-    `<tr><td class="c">${bx(0)}</td><td></td><td></td><td></td></tr><tr><td class="c">${bx(0)}</td><td></td><td></td><td></td></tr></table>`;
+    `<tr><td class="c">${hBx(0)}</td><td></td><td></td><td></td></tr><tr><td class="c">${hBx(0)}</td><td></td><td></td><td></td></tr></table>`;
 });
 h+='</section>';
 
-// 二、地图
-h+=`<section class="pg"><div class="part">二　地图总览</div>`;
+h+=`<section class="ch"><div class="part">二　地图总览</div>`;
 if(!rooms.length)h+='<p class="note">尚未创建房间。</p>';
 else{
   const xs=rooms.map(r=>r.x),ys=rooms.map(r=>r.y);
@@ -1045,74 +1153,98 @@ else{
     const r=at(x,y);
     if(!r){h+='<div class="mc e"></div>';continue}
     const here=o.st?playersIn(r.id):[];
-    h+=`<div class="mc"><b>${num.get(r.id)}</b>${esc(r.name)||'未命名'}${here.length?`<div class="pl">${here.map(i=>`<i class="dot" style="background:${pcolor(i)}"></i>${pn(i)}`).join('　')}</div>`:''}</div>`;
+    h+=`<div class="mc"><b>${num.get(r.id)}</b>${esc(r.name)||'未命名'}${here.length?`<div class="pl">${here.map(i=>`<i class="dot" style="background:${pcolor(i)}"></i>${pn(i)}`).join('　')}</div>`:''}
+      ${doorList(r).map(([s])=>`<i class="hd ${r.doors[s].t} ${s}">${doorSym(r.doors[s].t,s)}</i>`).join('')}</div>`;
   }
-  h+='</div><p class="note">上北下南，左西右东；相邻格子之间相通。</p>';
-  h+=`<h3 class="sub">房间索引</h3><table><tr><th class="c">编号</th><th>房间</th><th>坐标</th><th>相邻房间</th><th class="c">物资</th></tr>`+
-    rooms.map(r=>`<tr><td class="c">${num.get(r.id)}</td><td><b>${esc(r.name)||'未命名'}</b></td><td>(${r.x},${r.y})</td><td>${nbTxt(r)||'—'}</td><td class="c">${r.items.length}</td></tr>`).join('')+'</table>';
+  h+=`</div><p class="note">上北下南，左西右东。房间内侧每条边正中的小方块即该方向的门：<b>门</b>＝双向门　<b>通</b>＝敞开通道（虚线）　<b>锁</b>＝锁住的门（黑底）　<b>箭头</b>＝单向门（灰底，箭头方向为通行方向）。没有标记的边是墙；门不一定通向另一个房间。</p>`;
+  h+=`<h3 class="sub">房间索引</h3><table><tr><th class="c">编号</th><th>房间</th><th>坐标</th><th>门与出口</th><th class="c">物资</th></tr>`+
+    rooms.map(r=>`<tr><td class="c">${num.get(r.id)}</td><td><b>${esc(r.name)||'未命名'}</b></td><td>(${r.x},${r.y})</td><td>${dShort(r)}</td><td class="c">${r.items.length}</td></tr>`).join('')+'</table>';
 }
 h+='</section>';
 
-// 三、房间详解
-h+=`<section class="pg"><div class="part">三　房间详解</div>`;
+h+=`<section class="ch"><div class="part">三　房间详解</div>`;
 if(!rooms.length)h+='<p class="note">尚未创建房间。</p>';
-rooms.forEach(r=>{
+rooms.forEach((r,idx)=>{
   const here=o.st?playersIn(r.id):[];
-  h+=`<div class="room"><h2><span class="no">${num.get(r.id)}</span>${esc(r.name)||'未命名'}</h2>
-    <div class="meta2">坐标 (${r.x},${r.y})　${nbTxt(r)}${here.length?`　｜　当前在此：${here.map(pn).join('、')}`:''}</div>
-    <div class="lb">场景描述（可念给玩家）</div>${txt(r.desc,3)}`;
-  if(o.dm)h+=`<div class="lb">🔒 DM 专属内容</div>${txt(r.dm,3,'dm')}`;
-  h+=`<div class="lb">物资判定 / 备注</div>${txt(r.poolNote,1)}`;
+  h+=`<div class="rm ${idx?'':'f'}"><h2><span class="no">${num.get(r.id)}</span>${esc(r.name)||'未命名'}</h2>
+    <div class="meta2">坐标 (${r.x},${r.y})${here.length?`　｜　当前在此：${here.map(pn).join('、')}`:''}</div>
+    <div class="lb">场景描述（可念给玩家）</div>${hTxt(r.desc,3)}`;
+  if(o.dm)h+=`<div class="lb">🔒 DM 专属内容</div>${hTxt(r.dm,3,'dm')}`;
+  h+=`<div class="lb">物资判定 / 备注</div>${hTxt(r.poolNote,1)}`;
+  h+=`<div class="lb">门与通道</div>`;
+  const dl=doorList(r);
+  h+=dl.length?`<table><tr><th style="width:44px">方位</th><th style="width:100px">类型</th><th style="width:30%">通往</th><th>备注</th></tr>`+
+    dl.map(([s,l,dx,dy])=>{const d=r.doors[s],n=at(r.x+dx,r.y+dy);
+      return `<tr><td>${l}</td><td>${DOOR_T[d.t]}</td><td>${d.t==='in'?'来自 ':''}${n?num.get(n.id)+' '+esc(n.name||'未命名'):'外部 / 未绘制区域'}</td><td class="pre">${esc(d.note)}</td></tr>`}).join('')+'</table>'
+    :'<p class="note">（没有门，封闭空间）</p>';
   h+=`<div class="lb">物资清单</div>`;
   if(r.items.length){
     h+=`<table><tr><th class="c" style="width:28px">✓</th><th style="width:40px">类型</th><th style="width:18%">名称</th><th>描述</th><th style="width:22%">获取条件</th><th style="width:16%">${o.st?'获得者':'获得者（手写）'}</th></tr>`+
-      r.items.map(i=>`<tr><td class="c">${bx(o.st&&isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name)||'（未命名）'}</b></td><td class="pre">${esc(i.desc)}</td><td class="pre">${esc(i.cond)}</td>
+      r.items.map(i=>`<tr><td class="c">${hBx(o.st&&isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name)||'（未命名）'}</b></td><td class="pre">${esc(i.desc)}</td><td class="pre">${esc(i.cond)}</td>
         <td>${o.st?(i.consumed?'已消耗 ':'')+i.owners.map(pn).join('、'):''}</td></tr>`).join('')+'</table>';
   }else h+='<p class="note">（此房间没有物资）</p>';
-  h+='<div class="lb">本房间记录</div>'+lines(2)+'</div>';
+  h+='<div class="lb">本房间记录</div>'+hLines(4)+'</div>';
 });
 h+='</section>';
 
-// 四、玩家
 if(o.pl){
-  h+=`<section><div class="part pg">四　玩家角色</div></section>`;
+  h+=`<section class="ch"><div class="part">四　玩家角色</div>`;
   D.players.forEach((_,i)=>{
-    const b=D.bg[i],c=b.card,cfg=D.cardCfg;
-    const sv=o.st;
-    h+=`<section class="player"><h2><i class="dot" style="background:${b.color};width:14px;height:14px"></i> ${pn(i)}${c.info.name&&sv?`　<span style="font-size:14px;font-weight:normal">（${esc(c.info.name)}）</span>`:''}</h2>
-      <div class="lb">预设身份</div>${txt(b.identity,4)}
-      <div class="lb">技能 / 道具</div>`;
-    h+=b.skills.length?`<table><tr><th style="width:40px">类型</th><th style="width:22%">名称</th><th>效果 / 使用条件</th></tr>${b.skills.map(s=>`<tr><td>${typeL(s.type)}</td><td><b>${esc(s.name)}</b></td><td class="pre">${esc(s.desc)}</td></tr>`).join('')}</table>`:'<p class="note">（无）</p>';
-    h+=`<div class="lb">角色目的</div>`+(b.goals.length?`<ul class="tight" style="list-style:none;padding:0">${b.goals.map(g=>`<li>${bx(sv&&g.done)}<span class="pre">${esc(g.text)}</span></li>`).join('')}</ul>`:'<p class="note">（无）</p>');
-    h+=`<h3 class="sub" style="margin-top:16px">车卡</h3>
-      <table class="sheet">${[0,2,4].map(k=>`<tr><td class="k">${INFO_FIELDS[k][1]}</td><td class="v">${sv?esc(c.info[INFO_FIELDS[k][0]]):''}</td><td class="k">${INFO_FIELDS[k+1][1]}</td><td class="v">${sv?esc(c.info[INFO_FIELDS[k+1][0]]):''}</td></tr>`).join('')}</table>
-      <div class="lb">可分配属性点数：${cfg.points} 点${sv?`（已用 ${cardUsed(c)}，剩余 ${cfg.points-cardUsed(c)}）`:''}</div>
-      <table class="attr sheet">${(()=>{let r='';for(let k=0;k<cfg.attrs.length;k+=2){const a=cfg.attrs[k],b2=cfg.attrs[k+1];
-        r+=`<tr><td class="k">${esc(a.name)}</td><td class="v">${sv?(+c.vals[a.id]||0):''}</td>${b2?`<td class="k">${esc(b2.name)}</td><td class="v">${sv?(+c.vals[b2.id]||0):''}</td>`:'<td class="k"></td><td class="v"></td>'}</tr>`}return r})()}</table>
-      <div class="lb">随身物品</div>${txt(sv?c.items:'',3)}
-      <div class="lb">其他背景（性格、外貌、经历）</div>${txt(sv?c.other:'',5)}
-    </section>`;
+    const b=D.bg[i],c=b.card;
+    h+=`<div class="player ${i?'':'f'}"><h2><i class="dot" style="background:${b.color};width:14px;height:14px"></i> ${pn(i)}${c.info.name&&o.st?`　<span style="font-size:14px;font-weight:normal">（${esc(c.info.name)}）</span>`:''}</h2>
+      ${bgBlock(i,o.st)}${cardBlock(i,o.st)}</div>`;
   });
+  h+='</section>';
 }
 
-// 附录
 const all=[...D.rooms.flatMap(r=>r.items.map(i=>({i,r}))),...D.pool.map(i=>({i,r:null}))];
-h+=`<section class="pg"><div class="part">${o.pl?'五':'四'}　附录</div>
+h+=`<section class="ch"><div class="part">${o.pl?'五':'四'}　附录</div>
   <h3 class="sub">A. 物资总表</h3>`;
 h+=all.length?`<table><tr><th class="c" style="width:28px">✓</th><th style="width:40px">类型</th><th style="width:20%">名称</th><th style="width:16%">所在房间</th><th>获取条件</th>${o.st?'<th>获得者</th>':''}</tr>`+
-  all.map(({i,r})=>`<tr><td class="c">${bx(o.st&&isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name)||'（未命名）'}</b></td><td>${r?num.get(r.id)+' '+esc(r.name):'未分配'}</td><td class="pre">${esc(i.cond)}</td>${o.st?`<td>${(i.consumed?'已消耗 ':'')+i.owners.map(pn).join('、')}</td>`:''}</tr>`).join('')+'</table>':'<p class="note">（暂无物资）</p>';
+  all.map(({i,r})=>`<tr><td class="c">${hBx(o.st&&isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name)||'（未命名）'}</b></td><td>${r?num.get(r.id)+' '+esc(r.name):'未分配'}</td><td class="pre">${esc(i.cond)}</td>${o.st?`<td>${(i.consumed?'已消耗 ':'')+i.owners.map(pn).join('、')}</td>`:''}</tr>`).join('')+'</table>':'<p class="note">（暂无物资）</p>';
 h+=`<h3 class="sub">B. 玩家属性追踪表</h3><p class="note">带团时在格子里手写当前数值，随时涂改。</p>
   <table><tr><th>玩家</th>${D.cardCfg.attrs.map(a=>`<th class="c">${esc(a.name)}</th>`).join('')}</tr>`+
   D.players.map((_,i)=>`<tr><td><i class="dot" style="background:${pcolor(i)}"></i>${pn(i)}</td>${D.cardCfg.attrs.map(a=>`<td class="c" style="height:30px">${o.st?(+D.bg[i].card.vals[a.id]||0):''}</td>`).join('')}</tr>`).join('')+'</table>';
 h+=`<h3 class="sub">C. 事件记录</h3><table><tr><th style="width:60px">Day</th><th style="width:70px">时间</th><th>事件 / 玩家行动 / 备注</th></tr>`+
   Array.from({length:14},()=>'<tr><td style="height:28px"></td><td></td><td></td></tr>').join('')+'</table></section>';
-h+=`<section class="pg"><div class="part">笔记</div>${lines(30)}</section>`;
+h+=`<section class="ch"><div class="part">笔记</div>${hLines(30)}</section>`;
 
-return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · DM 带团手册</title><style>${HB_CSS}</style></head><body>${h}</body></html>`;
+return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · DM 带团手册</title><style>${HB_CSS}${o.dup?HB_DUP:''}</style></head><body class="${o.dup?'dup':''}">${h}</body></html>`;
 }
-const hbOpts=()=>({dm:document.getElementById('hbDM').checked,pl:document.getElementById('hbPl').checked,st:document.getElementById('hbSt').checked});
-function openHandbook(){refreshHandbook();document.getElementById('hbDlg').showModal()}
-function refreshHandbook(){document.getElementById('hbFrame').srcdoc=hbHtml(hbOpts())}
+
+// 玩家发放版：每人一张（或正反两页）
+function hpHtml(o){
+const title=D.title||'未命名模组';
+const head=i=>`<div class="ph"><span>${esc(title)}</span><span>玩家角色卡</span></div>
+  <h2><i class="dot" style="background:${pcolor(i)};width:14px;height:14px"></i> ${esc(pname(i))}　<span style="font-size:13px;font-weight:normal">玩家姓名：${'＿'.repeat(6)}</span></h2>`;
+const pages=D.players.map((_,i)=>{
+  const bg=o.bg?bgBlock(i,false):'';
+  const card=cardBlock(i,o.fill);
+  if(o.bg&&o.split)
+    return `<section class="hp ${i?'':'f'}">${head(i)}<h3 class="sub">角色背景（请保密）</h3>${bg}</section>
+            <section class="hpb">${head(i)}${card}</section>`;
+  return `<section class="hp ${i?'':'f'}">${head(i)}${bg}${card}</section>`;
+}).join('');
+return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · 玩家发放版</title><style>${HB_CSS}${o.dup?HB_DUP:''}</style></head><body class="${o.dup?'dup':''}">${pages}</body></html>`;
+}
+
+let hbMode='dm';
+const hbOpts=()=>({
+dm:document.getElementById('hbDM').checked,pl:document.getElementById('hbPl').checked,st:document.getElementById('hbSt').checked,
+dup:document.getElementById('hbDup').checked,
+bg:document.getElementById('hpBg').checked,fill:document.getElementById('hpFill').checked,split:document.getElementById('hpSplit').checked
+});
+const hbBuild=()=>hbMode==='dm'?hbHtml(hbOpts()):hpHtml(hbOpts());
+function setHbMode(m){
+hbMode=m;
+document.getElementById('hbTabDm').classList.toggle('on',m==='dm');
+document.getElementById('hbTabPl').classList.toggle('on',m==='pl');
+document.getElementById('hbOptDm').style.display=m==='dm'?'flex':'none';
+document.getElementById('hbOptPl').style.display=m==='pl'?'flex':'none';
+refreshHandbook();
+}
+function openHandbook(){setHbMode(hbMode);document.getElementById('hbDlg').showModal()}
+function refreshHandbook(){document.getElementById('hbFrame').srcdoc=hbBuild()}
 function printHandbook(){
 const f=document.getElementById('hbFrame');
 try{f.contentWindow.focus();f.contentWindow.print()}
@@ -1120,8 +1252,8 @@ catch(e){toast('无法直接打印，请先「下载 HTML」后用浏览器打�
 }
 function downloadHandbook(){
 const a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([hbHtml(hbOpts())],{type:'text/html'}));
-a.download=(D.title||'module')+'-DM手册.html';a.click();
+a.href=URL.createObjectURL(new Blob([hbBuild()],{type:'text/html'}));
+a.download=(D.title||'module')+(hbMode==='dm'?'-DM手册.html':'-玩家发放版.html');a.click();
 }
 
 // ===== 导入导出 =====
