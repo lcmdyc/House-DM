@@ -1,2 +1,2 @@
-# The-Crow-s-House-DM
-适配《寄生者之间》的DM带团页。
+#House-DM
+适配原创pvp trpg模组《寄生者之间》的DM带团页。
