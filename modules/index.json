@@ -1,0 +1,13 @@
+[
+  {
+    "name": "示例模组：废弃医院",
+    "desc": "都市恐怖风格，玩家需要在废弃医院中寻找失踪的朋友，揭开背后的秘密。",
+    "players": "4-5人",
+    "duration": "约3小时",
+    "tags": ["恐怖", "都市", "解谜"],
+    "cover": "assets/covers/废弃医院.jpg",
+    "file": "modules/废弃医院.json",
+    "author": "lcmdyc",
+    "version": "1.0"
+  }
+]
