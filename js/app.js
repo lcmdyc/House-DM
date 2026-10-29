@@ -367,7 +367,7 @@ function descCard(r) {
   </div>`;
 }
 
-// ===== 强化版手柄拖拽重排（物资、实体、日程）=====
+// ===== 统一手柄拖拽重排（物资、实体、日程天、日程事件）=====
 let dragType = null;
 let dragSourceId = null;
 
@@ -377,7 +377,7 @@ function handleHandleDragStart(e, type, id) {
   e.stopPropagation();
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', String(id));
-  const card = e.target.closest('.item, .day-btn');
+  const card = e.target.closest('.item, .day-item, .ev');
   if (card) {
     setTimeout(() => card.classList.add('dragging'), 0);
   }
@@ -405,7 +405,7 @@ function handleCardDragLeave(e) {
 }
 
 function handleCardDragEnd(e) {
-  document.querySelectorAll('.item, .day-btn').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+  document.querySelectorAll('.item, .day-item, .ev').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
   dragType = null;
   dragSourceId = null;
 }
@@ -415,11 +415,11 @@ function handleCardDrop(e, type, targetId) {
   e.stopPropagation();
   const card = e.currentTarget;
   const isTop = card && card.classList.contains('drag-over-top');
-  document.querySelectorAll('.item, .day-btn').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+  document.querySelectorAll('.item, .day-item, .ev').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
 
   if (dragType !== type || String(dragSourceId) === String(targetId)) return;
 
-  // 日程拖拽重排
+  // 1. 日程列表拖拽重排
   if (type === 'day') {
     const fromIdx = +dragSourceId;
     const toRawIdx = +targetId;
@@ -432,14 +432,29 @@ function handleCardDrop(e, type, targetId) {
     toIdx = Math.max(0, Math.min(D.days.length, toIdx));
     D.days.splice(toIdx, 0, moved);
 
-    // 智能跟随当前进行日与视图日
     D.curDay = D.days.indexOf(curObj);
     dayView = D.days.indexOf(moved);
     save(); renderDays();
     return;
   }
 
-  // 房间物资与实体拖拽重排
+  // 2. 当日事件拖拽重排
+  if (type === 'event') {
+    const events = D.days[dayView].events;
+    const fromIdx = events.findIndex(ev => ev.id === dragSourceId);
+    if (fromIdx === -1) return;
+    const [moved] = events.splice(fromIdx, 1);
+    let toIdx = events.findIndex(ev => ev.id === targetId);
+    if (toIdx === -1) { events.push(moved); }
+    else {
+      if (!isTop) toIdx += 1;
+      events.splice(toIdx, 0, moved);
+    }
+    save(); renderDays();
+    return;
+  }
+
+  // 3. 房间物资与实体拖拽重排
   const r = room(sel); if (!r) return;
   const list = type === 'item' ? r.items : r.entities;
   const fromIdx = list.findIndex(x => x.id === dragSourceId);
@@ -729,7 +744,7 @@ function toggleConsumed(id) {
   save(); renderSide(); renderMap();
 }
 
-// ===== 日程（支持标题自定义与左侧手柄拖拽重排）=====
+// ===== 日程（支持标题自定义、左侧手柄拖拽、右侧事件手柄拖拽）=====
 const dayDlg = document.getElementById('dayDlg');
 function updateDayBar() {
   const curTitle = dayLabel(D.curDay);
@@ -737,12 +752,15 @@ function updateDayBar() {
   document.getElementById('endDayBtn').textContent = curTitle + ' 结束 ▶';
 }
 function openDays() { dayView = D.curDay; renderDays(); dayDlg.showModal(); }
+
 function renderDays() {
   if (dayView >= D.days.length) dayView = D.days.length - 1;
   const nav = document.getElementById('dayNav');
+
+  // 将 button 换成 div.day-item 避免浏览器拦截拖拽
   nav.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
-    return `<button class="day-btn ${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}"
+    return `<div class="day-item ${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}"
       data-id="${i}"
       ondragover="handleCardDragOver(event)"
       ondragleave="handleCardDragLeave(event)"
@@ -750,13 +768,21 @@ function renderDays() {
       onclick="dayView=${i};renderDays()">
       <span class="drag-handle" title="按住拖拽调整前后顺序" draggable="true" ondragstart="handleHandleDragStart(event,'day',${i})" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(dayLabel(i))}</span>
-      <span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span></button>`;
-  }).join('') + `<button onclick="addDay()">＋ 新增一天</button>`;
+      <span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span>
+    </div>`;
+  }).join('') + `<button onclick="addDay()" style="margin-top:4px">＋ 新增一天</button>`;
 
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
-  const evs = d.events.map(e => `<div class="ev ${e.done ? 'done' : ''}">
+
+  // 当日事件增加 ⠿ 拖拽把手
+  const evs = d.events.map(e => `<div class="ev ${e.done ? 'done' : ''}"
+      data-id="${e.id}"
+      ondragover="handleCardDragOver(event)"
+      ondragleave="handleCardDragLeave(event)"
+      ondrop="handleCardDrop(event,'event','${e.id}')">
       <div class="r1">
+        <span class="drag-handle" title="按住拖拽调整事件顺序" draggable="true" ondragstart="handleHandleDragStart(event,'event','${e.id}')" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>
         <input type="checkbox" title="标记为已完成" ${e.done ? 'checked' : ''} onchange="evDone('${e.id}',this.checked)">
         <input type="text" class="tm" value="${esc(e.time)}" placeholder="时间" oninput="evUpd('${e.id}','time',this.value)">
         <input type="text" class="tt" value="${esc(e.title)}" placeholder="事件标题" oninput="evUpd('${e.id}','title',this.value)">
@@ -788,9 +814,9 @@ function setDayTitle(i, val) {
   D.days[i].title = val.trim() || `Day ${i + 1}`;
   save();
   updateDayBar();
-  const navBtns = document.getElementById('dayNav').querySelectorAll('.day-btn');
-  if (navBtns[i]) {
-    const s = navBtns[i].querySelectorAll('span')[1];
+  const navItems = document.getElementById('dayNav').querySelectorAll('.day-item');
+  if (navItems[i]) {
+    const s = navItems[i].querySelectorAll('span')[1];
     if (s) s.textContent = dayLabel(i);
   }
 }
