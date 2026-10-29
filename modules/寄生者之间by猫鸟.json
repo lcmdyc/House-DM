@@ -1337,7 +1337,7 @@
           "zodiac": ""
         },
         "vals": {
-          "bykjset": 4
+          "bykjset": 0
         },
         "items": "",
         "other": ""
@@ -1499,7 +1499,9 @@
   "curDay": 1,
   "ui": {
     "strip": true,
-    "showChar": true
+    "showChar": true,
+    "npcVisible": [],
+    "npcStrip": true
   },
   "log": [
     {
@@ -1542,7 +1544,6 @@
       "text": "玩家1：熏黑的房间 → 真实-深渊",
       "color": "#e0605e"
     },
-    
     {
       "id": "1dpxerv",
       "ts": 1793282038519,
@@ -1550,6 +1551,77 @@
       "type": "move",
       "text": "玩家1：真实-深渊 → 未定位",
       "color": "#e0605e"
+    },
+    {
+      "id": "y8weizw",
+      "ts": 1793295949047,
+      "day": 2,
+      "type": "attr",
+      "text": "玩家1 的「力量」 4 → 3（-1）",
+      "color": "#e0605e"
+    },
+    {
+      "id": "jme2ioe",
+      "ts": 1793295949302,
+      "day": 2,
+      "type": "attr",
+      "text": "玩家1 的「力量」 3 → 2（-1）",
+      "color": "#e0605e"
+    },
+    {
+      "id": "nne1k3m",
+      "ts": 1793295949497,
+      "day": 2,
+      "type": "attr",
+      "text": "玩家1 的「力量」 2 → 1（-1）",
+      "color": "#e0605e"
+    },
+    {
+      "id": "0x1182f",
+      "ts": 1793295949880,
+      "day": 2,
+      "type": "attr",
+      "text": "玩家1 的「力量」 1 → 0（-1）",
+      "color": "#e0605e"
+    },
+    {
+      "id": "weck6qb",
+      "ts": 1793296022487,
+      "day": 2,
+      "type": "move",
+      "text": "[NPC]安奈林：未定位 → 墓地",
+      "color": "#b27cd8"
+    }
+  ],
+  "npcs": [
+    {
+      "id": "4o3yc69",
+      "name": "安奈林",
+      "category": "npc",
+      "disposition": "友好",
+      "color": "#b27cd8",
+      "roomId": "0a4v9wb",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "ph5jrta",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "n6d5vwh",
+          "name": "AC",
+          "val": "10"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "ruqddlg",
+          "trigger": "初次见面",
+          "line": ""
+        }
+      ]
     }
   ]
 }
