@@ -268,25 +268,18 @@ function copyNpcDesc(id) {
   copyText(n.desc).then(ok => toast(ok ? '📋 已复制描述' : '复制失败'));
 }
 
-// ─── 工作台：NPC 侧栏 ──────────────────────────────────────────
-function setNpcStrip(show) {
-  D.ui.npcStrip = show;
-  saveData(D);
-  renderNpcStrip();
-  setTimeout(() => {
-    if (typeof applyPan === 'function') applyPan();
-  }, 220); // 比 transition 的 0.2s 稍长
+// ─── 工作台：NPC 侧栏（固定展开，不可折叠） ───────────────────
+function setNpcStrip() {
+  // 固定展开版本，此函数保留为空防止旧调用报错
 }
 
+function setStrip() {
+  // 固定展开版本，此函数保留为空防止旧调用报错
+}
 
 function renderNpcStrip() {
   const s = document.getElementById('npcStrip'); if (!s || !D) return;
-  s.classList.toggle('hide', !D.ui.npcStrip);
-  const openBtn = document.getElementById('npcStripOpen');
-  if (openBtn) openBtn.style.display = D.ui.npcStrip ? 'none' : 'block';
-  if (!D.ui.npcStrip) return;
-
-  // 只显示被勾选的 NPC
+  // 固定展开，不切换 hide 类
   const visible = D.npcs.filter(n => D.ui.npcVisible.includes(n.id));
 
   const cards = visible.map(n => {
@@ -310,7 +303,6 @@ function renderNpcStrip() {
     <div class="sthead">
       <span style="margin-right:auto">👾 NPC</span>
       <button title="设置显示哪些NPC" onclick="openNpcStripCfg()">⚙</button>
-      <button title="收起" onclick="setNpcStrip(false)">◀</button>
     </div>
     ${visible.length ? cards :
       `<p class="hint" style="font-size:11px;text-align:center;margin-top:8px">
@@ -361,7 +353,7 @@ function npcStripCheckAll(val) {
   openNpcStripCfg();
 }
 
-// ─── 地图：NPC 头像注入（有 roomId 的 NPC 自动显示在地图上）────
+// ─── 地图：NPC 头像注入 ────────────────────────────────────────
 function injectNpcChips() {
   const visible = D.npcs.filter(n => n.roomId);
   const byRoom = {};
