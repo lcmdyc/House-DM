@@ -1024,12 +1024,18 @@ function renderAllViews() {
 // ===== 页面启动初始化 =====
 applyTheme(getStoredTheme());
 
-// 绑定主题按钮（只绑一次，不用 DOMContentLoaded，脚本已在 body 末尾）
+// 绑定主题按钮
 const _themeBtn = document.getElementById('themeBtn');
 if (_themeBtn) {
-  // 移除 HTML 里可能的 onclick，改为纯 JS 绑定
   _themeBtn.removeAttribute('onclick');
   _themeBtn.addEventListener('click', toggleTheme);
+}
+
+// 绑定联机按钮
+const _peerBtn = document.getElementById('peerBtn');
+if (_peerBtn) {
+  _peerBtn.removeAttribute('onclick');
+  _peerBtn.addEventListener('click', openP2PModal);
 }
 
 renderStrip();
