@@ -1080,3 +1080,11 @@ dialog::backdrop {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+/* ===== 房间玩家分配：在其他房间的玩家按钮 ===== */
+.pbtn-away {
+  opacity: 0.4;
+  font-style: italic;
+}
+.pbtn-away:hover {
+  opacity: 0.75;
+}
