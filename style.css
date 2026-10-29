@@ -1142,3 +1142,353 @@ dialog::backdrop {
   margin-top: 4px;
   width: 100%;
 }
+/* ===== 页签栏 ===== */
+#tabBar {
+  display: flex;
+  gap: 0;
+  background: var(--panel);
+  border-bottom: 2px solid var(--line);
+  padding: 0 14px;
+  flex: none;
+  z-index: 9;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 8px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+}
+.tab-btn:hover { color: var(--text); background: transparent; }
+.tab-btn.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+}
+
+/* ===== 页面容器 ===== */
+.tab-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ===== 工作台工具栏 ===== */
+#wbToolbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: none;
+}
+
+/* ===== 工作台主体 ===== */
+#wbMain {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ===== NPC 属性侧栏 ===== */
+#npcStrip {
+  width: 200px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+  overflow-y: auto;
+  flex: none;
+  z-index: 5;
+  transition: width .2s, padding .2s, margin .2s;
+}
+#npcStrip.hide {
+  width: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  overflow: hidden;
+}
+#npcStripOpen {
+  position: absolute;
+  top: 44px;
+  left: 10px;
+  z-index: 4;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--panel);
+  border-color: var(--line);
+  display: none;
+}
+
+/* NPC 卡片（复用 .pc 结构，加 .nc 区分颜色） */
+.nc {
+  background: var(--card);
+  border-radius: 4px;
+  border-left: 4px solid var(--npc);
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background .15s;
+}
+.nc:hover { background: var(--card-hover); }
+.nc .pn { font-weight: bold; font-size: 13px; }
+.nc .cn { font-size: 11px; color: var(--mute); }
+.nc select.prm {
+  font-size: 11px;
+  padding: 2px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 3px;
+  width: 100%;
+}
+.nc .as {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px 6px;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.nc .as span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--mute);
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: all .15s;
+}
+.nc .as span:hover {
+  background: rgba(178,124,216,.2);
+  color: var(--npc);
+  cursor: ns-resize;
+}
+.nc .as span b { color: var(--text); font-weight: normal; }
+.nc .as span.z b { opacity: .4; }
+
+/* NPC 在地图房间内的头像点 */
+.npc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  background: var(--npc);
+  border: 1.5px solid var(--bg);
+  cursor: default;
+  flex-shrink: 0;
+}
+
+/* ===== 资料库页 ===== */
+#libToolbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+.lib-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 5px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+  cursor: pointer;
+  transition: all .15s;
+}
+.lib-tab:hover { color: var(--text); background: var(--card); }
+.lib-tab.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb),.1);
+}
+.lib-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* NPC 资料库布局 */
+#npcLibToolbar {
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+  flex-wrap: wrap;
+}
+#npcLibToolbar input {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 220px;
+}
+#npcLibToolbar input:focus { border-color: var(--accent); outline: none; }
+#npcLibToolbar select {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* NPC 库主体：左列表 + 右详情 */
+#libPageNpc {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+#npcLibBody {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+#npcLibList {
+  width: 260px;
+  flex: none;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#npcLibDetail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+/* NPC 列表卡片 */
+.npc-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--npc);
+  border-radius: 5px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.npc-card:hover { background: var(--card-hover); }
+.npc-card.sel { border-color: var(--accent); background: rgba(var(--accent-rgb),.08); }
+.npc-card.monster { border-left-color: var(--danger); }
+.npc-card .nc-name { font-weight: bold; font-size: 13px; }
+.npc-card .nc-meta { font-size: 11px; color: var(--mute); display: flex; gap: 6px; }
+.npc-card .nc-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(178,124,216,.2);
+  color: var(--npc);
+}
+.npc-card.monster .nc-badge { background: rgba(217,83,79,.2); color: var(--danger); }
+
+/* NPC 详情面板 */
+.npc-detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--mute);
+  font-size: 14px;
+}
+.npc-detail-form { display: flex; flex-direction: column; gap: 14px; max-width: 680px; }
+.npc-field { display: flex; flex-direction: column; gap: 5px; }
+.npc-field label { font-size: 12px; color: var(--mute); font-weight: 600; letter-spacing: .3px; }
+.npc-field input, .npc-field textarea, .npc-field select {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+.npc-field input:focus, .npc-field textarea:focus, .npc-field select:focus {
+  border-color: var(--accent); outline: none;
+}
+.npc-row { display: flex; gap: 10px; }
+.npc-row .npc-field { flex: 1; }
+
+/* NPC 属性列表 */
+.npc-attrs { display: flex; flex-direction: column; gap: 6px; }
+.npc-attr-row {
+  display: flex; gap: 8px; align-items: center;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 4px; padding: 5px 8px;
+}
+.npc-attr-row input { background: transparent; border: none; color: var(--text); font-size: 13px; padding: 0; }
+.npc-attr-row input:focus { outline: none; border-bottom: 1px solid var(--accent); }
+.npc-attr-row .attr-name { flex: 1.2; }
+.npc-attr-row .attr-val  { flex: .8; }
+.npc-attr-row button { padding: 2px 6px; font-size: 11px; }
+
+/* NPC 对话列表 */
+.npc-dialogs { display: flex; flex-direction: column; gap: 6px; }
+.npc-dialog-row {
+  display: flex; gap: 8px; align-items: flex-start;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 4px; padding: 6px 8px;
+}
+.npc-dialog-row textarea {
+  flex: 1; background: transparent; border: none; color: var(--text);
+  font-size: 12.5px; font-family: inherit; resize: vertical; min-height: 36px; padding: 0;
+}
+.npc-dialog-row textarea:focus { outline: none; }
+.npc-dialog-row button { padding: 2px 6px; font-size: 11px; flex-shrink: 0; }
+
+/* NPC 详情顶部操作栏 */
+.npc-detail-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.npc-detail-header h3 { margin: 0; font-size: 16px; flex: 1; }
+
+/* 工作台 NPC 侧栏中的"显示在地图"开关 */
+.nc-vis-toggle {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--mute); cursor: pointer;
+  padding: 2px 4px; border-radius: 3px;
+  transition: background .15s;
+}
+.nc-vis-toggle:hover { background: var(--card-hover); color: var(--text); }
+.nc-vis-toggle input { margin: 0; cursor: pointer; accent-color: var(--npc); }
