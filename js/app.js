@@ -153,7 +153,7 @@ function openStripCfg() { renderStripCfg(); document.getElementById('stripDlg').
 function renderStripCfg() {
   document.getElementById('stripCfgBox').innerHTML =
     `<label class="chkrow"><input type="checkbox" ${D.ui.showChar ? 'checked' : ''} onchange="D.ui.showChar=this.checked;save()"><span>显示角色姓名（车卡里填写的）</span></label>` +
-    D.cardCfg.attrs.map(a => `<label class="chkrow"><input type="checkbox" ${a.show ? 'checked' : ''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name)||'（未命名）'}</span></label>`).join('');
+    D.cardCfg.attrs.map(a => `<label class="chkrow"><input type="checkbox" ${a.show ? 'checked' : ''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name) || '（未命名）'}</span></label>`).join('');
 }
 function attrShow(id, v) { D.cardCfg.attrs.find(a => a.id === id).show = v; save(); }
 function stripAll(v) { D.cardCfg.attrs.forEach(a => a.show = v); save(); renderStripCfg(); }
@@ -943,4 +943,31 @@ function resetAll() {
   D = migrate(DEFAULT_DATA ? JSON.parse(JSON.stringify(DEFAULT_DATA)) : blankData());
   sel = null; selEntity = null; save(); lastMin = null; bgSel = 0; dayView = D.curDay;
   document.getElementById('modTitle').value = D.title;
-  renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar
+  renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
+}
+
+// ===== 提供给联机同步调用的全量重绘钩子 =====
+function renderAllViews() {
+  document.getElementById('modTitle').value = D.title || '';
+  renderStrip();
+  renderMap();
+  renderSide();
+  renderEntitySide();
+  updateDayBar();
+  updatePlayerBar();
+  if (document.getElementById('bgDlg').open) renderBg();
+  if (document.getElementById('dayDlg').open) renderDays();
+  if (document.getElementById('sumDlg').open) renderPool();
+  if (document.getElementById('logDlg').open) renderLog();
+}
+
+// ===== 页面启动初始化 =====
+renderStrip();
+renderMap();
+updateDayBar();
+updatePlayerBar();
+
+// 启动 P2P 网络信道（如果使用方案二）
+if (typeof initP2PSync === 'function') {
+  initP2PSync();
+}
