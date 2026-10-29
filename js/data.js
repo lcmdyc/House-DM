@@ -120,7 +120,7 @@ function migrate(d) {
   return d;
 }
 
-function loadData() {
+function loadLocalData() {
   try {
     const s = localStorage.getItem(KEY);
     if (s) return migrate(JSON.parse(s));
@@ -128,14 +128,125 @@ function loadData() {
   return migrate(DEFAULT_DATA ? JSON.parse(JSON.stringify(DEFAULT_DATA)) : blankData());
 }
 
-function saveData(d) {
-  localStorage.setItem(KEY, JSON.stringify(d));
+// ══════════════【WebRTC / PeerJS P2P 实时联机引擎】══════════════
+let peer = null;
+let p2pConnections = [];
+let targetHostId = new URLSearchParams(window.location.search).get('peer') || null;
+let myPeerId = null;
+
+function updateP2PBtn() {
+  const btn = document.getElementById('p2pBtn');
+  if (!btn) return;
+  if (p2pConnections.length > 0) {
+    btn.textContent = `🟢 P2P已联机 (${p2pConnections.length}人)`;
+    btn.style.borderColor = 'var(--item)';
+  } else if (targetHostId) {
+    btn.textContent = '🔄 正在连接房主...';
+    btn.style.borderColor = 'var(--accent)';
+  } else if (myPeerId) {
+    btn.textContent = '📋 复制邀请链接';
+    btn.style.borderColor = 'var(--accent)';
+  } else {
+    btn.textContent = '🔗 邀请双人协作';
+    btn.style.borderColor = 'var(--accent)';
+  }
 }
 
-// 全局响应式状态
-let D = loadData();
+function initP2PSync() {
+  if (!window.Peer) return;
 
-// 通用查询助手函数
+  // 创建本地 Peer 节点
+  peer = new Peer();
+
+  peer.on('open', id => {
+    myPeerId = id;
+    updateP2PBtn();
+
+    // 如果打开的 URL 中带有 ?peer=xxx，表示当前用户是协作者，正在连接房主
+    if (targetHostId) {
+      toast('正在连接房主主机...');
+      const conn = peer.connect(targetHostId, { reliable: true });
+      setupP2PConn(conn, false);
+    }
+  });
+
+  // 如果自己是房主，等待协作者接入
+  peer.on('connection', conn => {
+    setupP2PConn(conn, true);
+  });
+
+  peer.on('error', err => {
+    console.error('PeerJS 错误:', err);
+    toast('P2P 通信遇到问题: ' + (err.type || '连接中断'));
+  });
+}
+
+function setupP2PConn(conn, isHost) {
+  conn.on('open', () => {
+    p2pConnections.push(conn);
+    updateP2PBtn();
+    toast('🎉 P2P 双人协作通道已建立！');
+
+    if (isHost) {
+      // 房主第一时间将当前最新的模组全量同步给新连入的协作者
+      conn.send({ type: 'FULL_SYNC', data: D });
+    }
+  });
+
+  conn.on('data', msg => {
+    if (!msg || typeof msg !== 'object') return;
+    if (msg.type === 'FULL_SYNC' || msg.type === 'DIFF_SYNC') {
+      D = migrate(msg.data);
+      localStorage.setItem(KEY, JSON.stringify(D));
+      toast('⚡ 收到对方的实时同步修改');
+      if (typeof renderAllViews === 'function') renderAllViews();
+    }
+  });
+
+  conn.on('close', () => {
+    p2pConnections = p2pConnections.filter(c => c !== conn);
+    updateP2PBtn();
+    toast('对方已退出联机');
+  });
+}
+
+// 广播给所有对端
+function broadcastP2P(data) {
+  p2pConnections.forEach(conn => {
+    if (conn.open) {
+      conn.send({ type: 'DIFF_SYNC', data });
+    }
+  });
+}
+
+// 点击顶部 P2P 按钮的处理逻辑
+function handleP2PAction() {
+  if (!myPeerId) {
+    toast('P2P 网络初始化中，请稍等2秒...');
+    return;
+  }
+  const u = new URL(window.location.href);
+  u.searchParams.set('peer', myPeerId);
+  const shareLink = u.toString();
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(shareLink).then(() => {
+      toast('📋 邀请链接已复制到剪贴板！发给对方即可直连');
+    });
+  } else {
+    prompt('请复制以下专属协作链接发给对方：', shareLink);
+  }
+}
+
+function saveData(d) {
+  localStorage.setItem(KEY, JSON.stringify(d));
+  // 实时发送至已连接对端
+  broadcastP2P(d);
+}
+
+// 初始数据加载
+let D = loadLocalData();
+
 const room = id => D.rooms.find(r => r.id === id);
 const at = (x, y) => D.rooms.find(r => r.x === x && r.y === y);
 const isGot = i => i.owners.length > 0 || i.consumed;
