@@ -405,3 +405,24 @@ input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 .act-item { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin-top: 6px; }
 .act-head { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
 .act-head input { font-weight: bold; }
+
+/* 拖拽手柄与拖动反馈样式 */
+.drag-handle {
+  cursor: grab;
+  color: var(--mute);
+  font-size: 16px;
+  user-select: none;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  transition: color .2s;
+}
+.drag-handle:hover { color: var(--accent); }
+.item[draggable="true"] { transition: opacity .15s, transform .15s; }
+.item.dragging { opacity: .35; border: 2px dashed var(--accent); }
+.item.drag-over-top { border-top: 2px solid var(--accent) !important; }
+.item.drag-over-bottom { border-bottom: 2px solid var(--accent) !important; }
+
+
