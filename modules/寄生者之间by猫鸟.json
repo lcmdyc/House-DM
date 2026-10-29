@@ -1500,99 +1500,12 @@
   "ui": {
     "strip": true,
     "showChar": true,
-    "npcVisible": [],
+    "npcVisible": [
+      "4o3yc69"
+    ],
     "npcStrip": true
   },
-  "log": [
-    {
-      "id": "ftiw6nm",
-      "ts": 1793281287650,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：未定位 → 门厅（下）",
-      "color": "#e0605e"
-    },
-    {
-      "id": "0mrsgi4",
-      "ts": 1793281299528,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：门厅（下） → 熏黑的房间",
-      "color": "#e0605e"
-    },
-    {
-      "id": "xssjp38",
-      "ts": 1793282036539,
-      "day": 2,
-      "type": "move",
-      "text": "玩家2：未定位 → 真实-深渊",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "4vdm7on",
-      "ts": 1793282037132,
-      "day": 2,
-      "type": "move",
-      "text": "玩家2：真实-深渊 → 未定位",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "knxldv8",
-      "ts": 1793282037918,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：熏黑的房间 → 真实-深渊",
-      "color": "#e0605e"
-    },
-    {
-      "id": "1dpxerv",
-      "ts": 1793282038519,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：真实-深渊 → 未定位",
-      "color": "#e0605e"
-    },
-    {
-      "id": "y8weizw",
-      "ts": 1793295949047,
-      "day": 2,
-      "type": "attr",
-      "text": "玩家1 的「力量」 4 → 3（-1）",
-      "color": "#e0605e"
-    },
-    {
-      "id": "jme2ioe",
-      "ts": 1793295949302,
-      "day": 2,
-      "type": "attr",
-      "text": "玩家1 的「力量」 3 → 2（-1）",
-      "color": "#e0605e"
-    },
-    {
-      "id": "nne1k3m",
-      "ts": 1793295949497,
-      "day": 2,
-      "type": "attr",
-      "text": "玩家1 的「力量」 2 → 1（-1）",
-      "color": "#e0605e"
-    },
-    {
-      "id": "0x1182f",
-      "ts": 1793295949880,
-      "day": 2,
-      "type": "attr",
-      "text": "玩家1 的「力量」 1 → 0（-1）",
-      "color": "#e0605e"
-    },
-    {
-      "id": "weck6qb",
-      "ts": 1793296022487,
-      "day": 2,
-      "type": "move",
-      "text": "[NPC]安奈林：未定位 → 墓地",
-      "color": "#b27cd8"
-    }
-  ],
+  "log": [],
   "npcs": [
     {
       "id": "4o3yc69",
@@ -1618,6 +1531,35 @@
       "dialogs": [
         {
           "id": "ruqddlg",
+          "trigger": "初次见面",
+          "line": ""
+        }
+      ]
+    },
+    {
+      "id": "whincor",
+      "name": "幽灵",
+      "category": "monster",
+      "disposition": "敌对",
+      "color": "#ededed",
+      "roomId": "",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "icny8v4",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "gvprbb0",
+          "name": "新属性",
+          "val": "0"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "4yfpb5p",
           "trigger": "初次见面",
           "line": ""
         }
