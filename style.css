@@ -1,11 +1,6 @@
 /* style.css */
 
-/* ============================
-   1. 深色主题（默认）
-============================ */
-:root,
-html[data-theme="dark"],
-html:not([data-theme="light"]) {
+:root {
   --bg: #14161b;
   --panel: #1c1f26;
   --card: #232732;
@@ -25,33 +20,6 @@ html:not([data-theme="light"]) {
   --out: #9b8b7a;
   --in: #6c7be0;
   --map-grid: rgba(255, 255, 255, .03);
-}
-
-/* ============================
-   2. 浅色主题（高对比度纸张质感）
-============================ */
-html[data-theme="light"],
-html.light-theme,
-body.light-theme {
-  --bg: #f2f4f7 !important;
-  --panel: #ffffff !important;
-  --card: #e4e7ee !important;
-  --card-hover: #d8dce6 !important;
-  --line: #b8c0cc !important;
-  --text: #1a1e26 !important;
-  --mute: #545c6e !important;
-  --accent: #bd6717 !important;
-  --accent-rgb: 189, 103, 23 !important;
-  --danger: #c73430 !important;
-  --item: #1b73a3 !important;
-  --clue: #b36b10 !important;
-  --npc: #8342af !important;
-  --door: #925f29 !important;
-  --open: #1e8a65 !important;
-  --lock: #b33230 !important;
-  --out: #6f6254 !important;
-  --in: #3e4da9 !important;
-  --map-grid: rgba(0, 0, 0, .07) !important;
 }
 
 * { box-sizing: border-box; }
