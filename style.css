@@ -521,7 +521,7 @@ textarea:focus, input[type=text]:focus, select:focus {
 .drow select { width: 110px; flex: none; }
 .drow input[type=text] { flex: 1; }
 
-/* 物资与实体卡片 */
+/* 统一物资、实体、事件、日程的基础卡片样式（.item） */
 .item {
   background: var(--bg);
   border: 1px solid var(--line);
@@ -532,6 +532,7 @@ textarea:focus, input[type=text]:focus, select:focus {
   gap: 6px;
   margin-bottom: 8px;
   position: relative;
+  transition: border-color .15s, transform .15s, opacity .15s;
 }
 .item:last-child { margin-bottom: 0; }
 .item.clue { border-left: 3px solid var(--clue); }
@@ -539,8 +540,30 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.npc { border-left: 3px solid var(--npc); cursor: pointer; }
 .item.rd { border-left: 3px solid var(--accent); cursor: pointer; }
 
-.item.consumed {
-  opacity: .5;
+/* 日程导航栏中的天项卡片 */
+.item.day-card {
+  padding: 6px 8px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  background: var(--card);
+}
+.item.day-card:hover {
+  background: var(--card-hover);
+  border-color: var(--mute);
+}
+.item.day-card.on {
+  border-color: var(--accent);
+  background: rgba(216, 137, 58, .15);
+}
+.item.day-card.on b {
+  color: var(--accent);
+}
+.item.day-card.cur {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.item.consumed, .item.done {
+  opacity: .55;
   background: rgba(20, 22, 27, .6);
 }
 
@@ -656,7 +679,7 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.en-copy { border-left: 3px solid var(--npc); }
 .item.en-copy.act { border-left: 3px solid #e07b5e; }
 
-/* 拖拽手柄与拖动反馈样式 */
+/* 拖拽手柄与全局拖动反馈（完全复用道具模块逻辑） */
 .drag-handle {
   cursor: grab;
   color: var(--mute);
@@ -681,17 +704,16 @@ textarea:focus, input[type=text]:focus, select:focus {
   cursor: grabbing;
 }
 
-/* 统一拖拽样式指示线（适用于卡片、日程项、事件项） */
-.item.dragging, .day-item.dragging, .ev.dragging {
+.item.dragging {
   opacity: .3 !important;
   outline: 2px dashed var(--accent) !important;
   background: var(--card) !important;
 }
-.item.drag-over-top, .day-item.drag-over-top, .ev.drag-over-top {
+.item.drag-over-top {
   border-top: 3px solid var(--accent) !important;
   transform: translateY(2px);
 }
-.item.drag-over-bottom, .day-item.drag-over-bottom, .ev.drag-over-bottom {
+.item.drag-over-bottom {
   border-bottom: 3px solid var(--accent) !important;
   transform: translateY(-2px);
 }
@@ -757,7 +779,7 @@ dialog::backdrop {
   width: 155px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   border-right: 1px solid var(--line);
   padding-right: 10px;
   overflow-y: auto;
@@ -768,34 +790,6 @@ dialog::backdrop {
   text-align: left;
   padding: 7px 10px;
   font-size: 12px;
-}
-
-/* 专用于可拖拽排序的日程项容器（替代 button） */
-.day-item {
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-size: 12.5px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all .15s ease;
-  user-select: none;
-}
-.day-item:hover {
-  background: var(--card-hover);
-  border-color: var(--mute);
-}
-.day-item.on {
-  border-color: var(--accent);
-  background: rgba(216, 137, 58, .15);
-  color: var(--accent);
-}
-.day-item.cur {
-  border-color: var(--accent);
 }
 
 .dtag {
@@ -813,7 +807,7 @@ dialog::backdrop {
   padding-right: 4px;
 }
 
-/* 日程事件 */
+/* 日程顶栏 */
 .dayhead {
   display: flex;
   gap: 8px;
@@ -838,26 +832,6 @@ dialog::backdrop {
   color: var(--accent);
   font-weight: bold;
 }
-
-.ev {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: transform .15s, opacity .15s;
-}
-.ev.done { opacity: .55; }
-.ev .r1 {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.ev .r1 input.tm { width: 80px; flex: none; }
-.ev .r1 input.tt { flex: 1; font-weight: bold; }
-.ev textarea { min-height: 48px; }
 
 /* 玩家背景分段 */
 .divider {
