@@ -316,6 +316,44 @@ function descCard(r) {
       <span class="copyi">📋</span></div></div>`;
 }
 
+// ===== 房间玩家分配 =====
+function setPlayerRoomFromRoom(pIdx, rid) {
+  const old = D.bg[pIdx].roomId || '';
+  if (old === rid) {
+    // 再次点击同一房间 → 移出（设为未定位）
+    D.bg[pIdx].roomId = '';
+    addLog('move', `${pname(pIdx)}：${rname(rid)} → 未定位`, pcolor(pIdx));
+  } else {
+    D.bg[pIdx].roomId = rid;
+    addLog('move', `${pname(pIdx)}：${rname(old)} → ${rname(rid)}`, pcolor(pIdx));
+  }
+  save();
+  renderStrip();
+  renderSide();
+  renderMap();
+}
+
+function roomPlayersHtml(rid) {
+  if (!D.players.length) return '';
+  const chips = D.players.map((_, i) => {
+    const inThis = D.bg[i].roomId === rid;
+    const inOther = !inThis && D.bg[i].roomId !== '';
+    const otherName = inOther ? rname(D.bg[i].roomId) : '';
+    const title = inThis
+      ? `${pname(i)}（点击移出房间）`
+      : inOther
+        ? `${pname(i)}（当前在：${otherName}，点击移入此房间）`
+        : `${pname(i)}（未定位，点击移入此房间）`;
+    return `<button
+      class="pbtn${inThis ? ' on' : ''}${inOther ? ' pbtn-away' : ''}"
+      style="border-color:${pcolor(i)};${inThis ? `background:${pcolor(i)};color:#111;` : inOther ? `border-color:${pcolor(i)}55;color:var(--mute);` : `border-color:${pcolor(i)}88;`}"
+      title="${esc(title)}"
+      onclick="setPlayerRoomFromRoom(${i},'${rid}')"
+    ><i class="cdot" style="background:${inOther ? pcolor(i)+'66' : pcolor(i)}"></i>${esc(pname(i))}</button>`;
+  }).join('');
+  return chips;
+}
+
 // ===== 拖拽重排 =====
 let dragType=null, dragSourceId=null;
 function handleHandleDragStart(e,type,id) {
@@ -408,7 +446,6 @@ function renderSide() {
   s.classList.add('open');
   const keep=s.scrollTop;
   const listItems=edit?r.items:[...r.items.filter(i=>!i.consumed),...r.items.filter(i=>i.consumed)];
-  const here=playersIn(r.id);
   s.innerHTML=`
   <div class="sidehead">
     <input type="text" value="${esc(r.name)}" placeholder="房间名" oninput="upd('name',this.value)">
@@ -416,7 +453,10 @@ function renderSide() {
     <button onclick="closeSide()">✕</button>
   </div>
   <div class="card"><h3>📍 此处玩家</h3>
-    <div class="here">${here.length?here.map(i=>`<span>${chipHtml(i)}${esc(pname(i))}</span>`).join(''):'<span class="hint">暂无玩家</span>'}</div></div>
+    <div class="status" style="flex-wrap:wrap;gap:5px;padding:2px 0">
+      ${roomPlayersHtml(r.id)||'<span class="hint" style="font-size:12px">暂无玩家</span>'}
+    </div>
+  </div>
   ${descCard(r)}
   ${entityListCard(r)}
   ${doorsCard(r)}
@@ -662,46 +702,6 @@ function endDay() {
   D.curDay=i+1; dayView=D.curDay; save();
   if (dayDlg.open) renderDays(); else updateDayBar();
   toast(`「${dayLabel(i)}」已结束，进入「${dayLabel(D.curDay)}」`);
-}
-// ===== 房间玩家分配 =====
-function setPlayerRoomFromRoom(pIdx, rid) {
-  const old = D.bg[pIdx].roomId || '';
-  if (old === rid) {
-    // 再次点击同一房间 → 移出（设为未定位）
-    D.bg[pIdx].roomId = '';
-    addLog('move', `${pname(pIdx)}：${rname(rid)} → 未定位`, pcolor(pIdx));
-  } else {
-    D.bg[pIdx].roomId = rid;
-    addLog('move', `${pname(pIdx)}：${rname(old)} → ${rname(rid)}`, pcolor(pIdx));
-  }
-  save();
-  renderStrip();
-  renderSide();
-  renderMap();
-}
-
-function roomPlayersHtml(rid) {
-  if (!D.players.length) return '';
-  const chips = D.players.map((_, i) => {
-    const inThis = D.bg[i].roomId === rid;
-    const inOther = !inThis && D.bg[i].roomId !== '';
-    const otherName = inOther ? rname(D.bg[i].roomId) : '';
-    const title = inThis
-      ? `${pname(i)}（点击移出房间）`
-      : inOther
-        ? `${pname(i)}（当前在：${otherName}，点击移入此房间）`
-        : `${pname(i)}（未定位，点击移入此房间）`;
-    return `<button
-      class="pchip${inThis ? ' on' : ''}${inOther ? ' pchip-other' : ''}"
-      style="border-color:${pcolor(i)};${inThis ? `background:${pcolor(i)}22;color:${pcolor(i)};font-weight:bold;` : ''}"
-      title="${esc(title)}"
-      onclick="setPlayerRoomFromRoom(${i},'${rid}')"
-    ><i class="cdot" style="background:${pcolor(i)}"></i>${esc(pname(i))}</button>`;
-  }).join('');
-  return `
-    <div class="sec-label">👥 此处的玩家</div>
-    <div class="pchip-row">${chips}</div>
-  `;
 }
 
 // ===== 玩家管理 =====
