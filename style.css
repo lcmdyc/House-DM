@@ -823,6 +823,55 @@ dialog::backdrop {
   gap: 12px;
   padding-right: 4px;
 }
+/* ===== 房间玩家分配 chip ===== */
+.sec-label {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 10px 0 4px;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+
+.pchip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.pchip {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all .15s;
+  opacity: 0.7;
+}
+
+.pchip:hover {
+  opacity: 1;
+  background: var(--card-hover);
+}
+
+.pchip.on {
+  opacity: 1;
+  font-weight: bold;
+}
+
+/* 在其他房间的玩家显示为半透明斜体 */
+.pchip.pchip-other {
+  opacity: 0.45;
+  font-style: italic;
+}
+.pchip.pchip-other:hover {
+  opacity: 0.85;
+}
 
 /* 日程顶栏 */
 .dayhead {
