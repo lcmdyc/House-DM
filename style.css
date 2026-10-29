@@ -138,11 +138,28 @@ main {
   transition: width .2s, padding .2s, margin .2s;
 }
 #strip.hide {
-  width: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  overflow: hidden;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* 收起按钮：参与 flex 排列，竖排文字贴在地图左边 */
+#stripOpen {
+  display: none;
+  writing-mode: vertical-rl;
+  padding: 12px 4px;
+  font-size: 12px;
+  background: var(--panel);
+  border-color: var(--line);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  flex: none;
+  z-index: 4;
+  align-self: flex-start;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
 .sthead {
@@ -211,17 +228,6 @@ main {
 }
 .pc .as span b { color: var(--text); font-weight: normal; }
 .pc .as span.z b { opacity: .4; }
-
-#stripOpen {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 4;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: var(--panel);
-  border-color: var(--line);
-}
 
 /* 画布与房间网格 */
 #mapWrap {
@@ -823,6 +829,7 @@ dialog::backdrop {
   gap: 12px;
   padding-right: 4px;
 }
+
 /* ===== 房间玩家分配 chip ===== */
 .sec-label {
   font-size: 12px;
@@ -864,7 +871,6 @@ dialog::backdrop {
   font-weight: bold;
 }
 
-/* 在其他房间的玩家显示为半透明斜体 */
 .pchip.pchip-other {
   opacity: 0.45;
   font-style: italic;
@@ -1080,6 +1086,7 @@ dialog::backdrop {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
 /* ===== 房间玩家分配：在其他房间的玩家按钮 ===== */
 .pbtn-away {
   opacity: 0.4;
@@ -1088,6 +1095,7 @@ dialog::backdrop {
 .pbtn-away:hover {
   opacity: 0.75;
 }
+
 /* ===== 📦 模组库卡片 ===== */
 .mod-card {
   background: var(--card);
@@ -1142,6 +1150,7 @@ dialog::backdrop {
   margin-top: 4px;
   width: 100%;
 }
+
 /* ===== 页签栏 ===== */
 #tabBar {
   display: flex;
@@ -1202,6 +1211,23 @@ dialog::backdrop {
   min-height: 0;
 }
 
+/* ===== 玩家侧栏收起按钮（参与 flex，不绝对定位） ===== */
+#stripOpen {
+  display: none;
+  writing-mode: vertical-rl;
+  padding: 12px 4px;
+  font-size: 12px;
+  background: var(--panel);
+  border-color: var(--line);
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  flex: none;
+  z-index: 4;
+  align-self: flex-start;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
 /* ===== NPC 属性侧栏 ===== */
 #npcStrip {
   width: 200px;
@@ -1217,25 +1243,31 @@ dialog::backdrop {
   transition: width .2s, padding .2s, margin .2s;
 }
 #npcStrip.hide {
-  width: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  overflow: hidden;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
 }
+
+/* ===== NPC 侧栏收起按钮（参与 flex，不绝对定位） ===== */
 #npcStripOpen {
-  position: absolute;
-  top: 44px;
-  left: 10px;
-  z-index: 4;
-  padding: 4px 8px;
+  display: none;
+  writing-mode: vertical-rl;
+  padding: 12px 4px;
   font-size: 12px;
   background: var(--panel);
   border-color: var(--line);
-  display: none;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  flex: none;
+  z-index: 4;
+  align-self: flex-start;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
-/* NPC 卡片（复用 .pc 结构，加 .nc 区分颜色） */
+/* NPC 卡片 */
 .nc {
   background: var(--card);
   border-radius: 4px;
@@ -1483,7 +1515,7 @@ dialog::backdrop {
 }
 .npc-detail-header h3 { margin: 0; font-size: 16px; flex: 1; }
 
-/* 工作台 NPC 侧栏中的"显示在地图"开关 */
+/* NPC 侧栏勾选开关 */
 .nc-vis-toggle {
   display: flex; align-items: center; gap: 5px;
   font-size: 11px; color: var(--mute); cursor: pointer;
@@ -1492,36 +1524,3 @@ dialog::backdrop {
 }
 .nc-vis-toggle:hover { background: var(--card-hover); color: var(--text); }
 .nc-vis-toggle input { margin: 0; cursor: pointer; accent-color: var(--npc); }
-/* ── 侧栏收起按钮不被遮挡 ── */
-#stripOpen {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: var(--panel);
-  border-color: var(--line);
-  display: none;
-}
-
-#npcStripOpen {
-  position: absolute;
-  top: 44px;
-  left: 10px;
-  z-index: 10;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: var(--panel);
-  border-color: var(--line);
-  display: none;
-}
-
-#strip.hide,
-#npcStrip.hide {
-  width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-}
