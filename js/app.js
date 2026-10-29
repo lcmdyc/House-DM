@@ -1021,22 +1021,15 @@ function renderAllViews() {
   if (document.getElementById('sumDlg').open) renderPool();
   if (document.getElementById('logDlg').open) renderLog();
 }
-
 // ===== 页面启动初始化 =====
 applyTheme(getStoredTheme());
-// 绑定主题按钮（双保险）
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('themeBtn');
-  if (btn && !btn.dataset.bound) {
-    btn.dataset.bound = 'true';
-    btn.addEventListener('click', e => { e.preventDefault(); toggleTheme(); });
-  }
-});
-// 立即也绑定一次（脚本在 body 末尾，DOM 已就绪）
+
+// 绑定主题按钮（只绑一次，不用 DOMContentLoaded，脚本已在 body 末尾）
 const _themeBtn = document.getElementById('themeBtn');
-if (_themeBtn && !_themeBtn.dataset.bound) {
-  _themeBtn.dataset.bound = 'true';
-  _themeBtn.addEventListener('click', e => { e.preventDefault(); toggleTheme(); });
+if (_themeBtn) {
+  // 移除 HTML 里可能的 onclick，改为纯 JS 绑定
+  _themeBtn.removeAttribute('onclick');
+  _themeBtn.addEventListener('click', toggleTheme);
 }
 
 renderStrip();
