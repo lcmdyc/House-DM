@@ -664,7 +664,7 @@ textarea:focus, input[type=text]:focus, select:focus {
   line-height: 1;
   user-select: none;
   -webkit-user-drag: element;
-  padding: 2px 4px;
+  padding: 3px 5px;
   margin-right: 2px;
   display: inline-flex;
   align-items: center;
@@ -675,24 +675,25 @@ textarea:focus, input[type=text]:focus, select:focus {
 }
 .drag-handle:hover {
   color: var(--accent);
-  background: rgba(216, 137, 58, .15);
+  background: rgba(216, 137, 58, .2);
 }
 .drag-handle:active {
   cursor: grabbing;
 }
 
-.item.dragging, .day-btn.dragging {
+/* 统一拖拽样式指示线（适用于卡片、日程项、事件项） */
+.item.dragging, .day-item.dragging, .ev.dragging {
   opacity: .3 !important;
   outline: 2px dashed var(--accent) !important;
   background: var(--card) !important;
 }
-.item.drag-over-top, .day-btn.drag-over-top {
+.item.drag-over-top, .day-item.drag-over-top, .ev.drag-over-top {
   border-top: 3px solid var(--accent) !important;
-  transform: translateY(1px);
+  transform: translateY(2px);
 }
-.item.drag-over-bottom, .day-btn.drag-over-bottom {
+.item.drag-over-bottom, .day-item.drag-over-bottom, .ev.drag-over-bottom {
   border-bottom: 3px solid var(--accent) !important;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 /* 弹窗通用样式 */
@@ -753,10 +754,10 @@ dialog::backdrop {
   height: 72vh;
 }
 .bgnav {
-  width: 140px;
+  width: 155px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   border-right: 1px solid var(--line);
   padding-right: 10px;
   overflow-y: auto;
@@ -768,12 +769,35 @@ dialog::backdrop {
   padding: 7px 10px;
   font-size: 12px;
 }
-.bgnav.daynav button {
-  justify-content: space-between;
+
+/* 专用于可拖拽排序的日程项容器（替代 button） */
+.day-item {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all .15s ease;
+  user-select: none;
 }
-.bgnav.daynav button.cur {
+.day-item:hover {
+  background: var(--card-hover);
+  border-color: var(--mute);
+}
+.day-item.on {
+  border-color: var(--accent);
+  background: rgba(216, 137, 58, .15);
+  color: var(--accent);
+}
+.day-item.cur {
   border-color: var(--accent);
 }
+
 .dtag {
   font-size: 10.5px;
   color: var(--mute);
@@ -823,6 +847,7 @@ dialog::backdrop {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: transform .15s, opacity .15s;
 }
 .ev.done { opacity: .55; }
 .ev .r1 {
