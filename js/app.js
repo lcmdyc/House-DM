@@ -877,17 +877,20 @@ function renderDays() {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
     return `<div class="item day-card ${i===dayView?'on':''} ${i===D.curDay?'cur':''}"
       data-id="${i}"
-      ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'day',${i})"
+      ondragover="${edit?'handleCardDragOver(event)':''}" ondragleave="${edit?'handleCardDragLeave(event)':''}" ondrop="${edit?`handleCardDrop(event,'day',${i})`:''}"
       onclick="dayView=${i};renderDays()">
       <div class="row" style="gap:4px">
-        <span class="drag-handle" draggable="true" ondragstart="handleHandleDragStart(event,'day',${i})" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>
+        ${edit?`<span class="drag-handle" draggable="true" ondragstart="handleHandleDragStart(event,'day',${i})" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>`:''}
         <b style="font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dayLabel(i))}</b>
         <span class="dtag">${i===D.curDay?'🚩':d.ended?'✔':''}${n?` ${dn}/${n}`:''}</span>
       </div></div>`;
-  }).join('') + `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>`;
+  }).join('') + (edit ? `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>` : '');
+
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
-  const evs = d.events.map(e => `
+
+  // ── 编辑模式：可编辑事件卡片 ──────────────────────────────
+  const evEdit = e => `
     <div class="item ${e.done?'done':''}" data-id="${e.id}"
       ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'event','${e.id}')">
       <div class="row">
@@ -899,19 +902,65 @@ function renderDays() {
       </div>
       <label class="s">事件详情</label>
       <textarea style="min-height:48px" oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
-    </div>`).join('') || '<p class="hint">这一天还没有事件</p>';
+    </div>`;
+
+  // ── 带团模式：只读可复制事件卡片 ─────────────────────────
+  const evCompact = e => `
+    <div class="item compact ${e.done?'consumed':''}" onclick="copyEventDetail('${e.id}')">
+      <div class="row">
+        <span class="tag static" style="background:${e.done?'#888':'var(--accent)'};color:#fff;min-width:36px;text-align:center">
+          ${e.done?'✔':'📅'}
+        </span>
+        <div class="memo">
+          <b>${esc(e.title)||'（未命名事件）'}</b>
+          ${e.time?`<span class="cd">🕐 ${esc(e.time)}</span>`:''}
+          ${e.detail?`<span class="desc-p">${esc(e.detail)}</span>`:''}
+        </div>
+        <span class="copyi">📋</span>
+      </div>
+      <div class="status" onclick="event.stopPropagation()">
+        <button class="cbtn ${e.done?'on':''}" onclick="evDone('${e.id}',${!e.done});renderDays()">
+          ${e.done?'✔ 已完成':'标记完成'}
+        </button>
+      </div>
+    </div>`;
+
+  const evs = d.events.length
+    ? d.events.map(edit ? evEdit : evCompact).join('')
+    : `<p class="hint">这一天还没有事件</p>`;
+
   document.getElementById('dayMain').innerHTML = `
     <div class="dayhead">
-      <input type="text" class="nm" style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
-        value="${esc(dayLabel(dayView))}" placeholder="Day 名称" oninput="setDayTitle(${dayView},this.value)">
+      ${edit
+        ? `<input type="text" class="nm" style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
+             value="${esc(dayLabel(dayView))}" placeholder="Day 名称" oninput="setDayTitle(${dayView},this.value)">`
+        : `<span class="nm" style="font-size:16px;font-weight:bold">${esc(dayLabel(dayView))}</span>`
+      }
       ${isCur?'<span class="badge2 cur">当前日</span>':d.ended?'<span class="badge2">已结束</span>':'<span class="badge2">未开始</span>'}
-      ${isCur?`<button class="primary" onclick="endDay()">${esc(dayLabel(dayView))} 结束 ▶</button>`:`<button onclick="setCur(${dayView})">设为当前日</button>`}
-      ${D.days.length>1?`<button class="danger" onclick="delDay()">删除这一天</button>`:''}
+      ${isCur
+        ? `<button class="primary" onclick="endDay()">${esc(dayLabel(dayView))} 结束 ▶</button>`
+        : `<button onclick="setCur(${dayView})">设为当前日</button>`
+      }
+      ${edit && D.days.length>1 ? `<button class="danger" onclick="delDay()">删除这一天</button>` : ''}
     </div>
     ${evs}
-    <button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>`;
+    ${edit ? `<button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>` : ''}`;
+
   document.getElementById('dayMain').scrollTop = keep;
   updateDayBar();
+}
+
+// 复制事件详情（带团模式点击卡片触发）
+function copyEventDetail(id) {
+  const ev = D.days.flatMap(d => d.events).find(e => e.id === id);
+  if (!ev) return;
+  const txt = [
+    ev.title || '（未命名）',
+    ev.time  ? `时间：${ev.time}` : '',
+    ev.detail ? `\n${ev.detail}` : ''
+  ].filter(Boolean).join('\n');
+  if (!txt.trim()) { toast('该事件没有可复制的内容'); return; }
+  copyText(txt).then(ok => toast(ok ? '📋 已复制事件内容' : '复制失败'));
 }
 function setDayTitle(i, val) {
   D.days[i].title = val.trim() || `Day ${i+1}`; save(); updateDayBar();
