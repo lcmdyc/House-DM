@@ -179,17 +179,33 @@ main {
   border-radius: 3px;
   width: 100%;
 }
+
 .pc .as {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2px 6px;
+  gap: 3px 6px;
   font-size: 11px;
   margin-top: 2px;
 }
+
+/* 属性滚轮悬浮微调指示条 */
 .pc .as span {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: var(--mute);
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: all .15s;
+}
+.pc .as span:hover {
+  background: rgba(216, 137, 58, .2);
+  color: var(--accent);
+  cursor: ns-resize;
+}
+.pc .as span:hover b {
+  color: #fff;
+  font-weight: bold;
 }
 .pc .as span b { color: var(--text); font-weight: normal; }
 .pc .as span.z b { opacity: .4; }
@@ -268,7 +284,6 @@ main {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 6px;
-  /* 增加内边距避开门UI：上下留出14px，左右留出16px */
   padding: 14px 16px 12px 16px;
   display: flex;
   flex-direction: column;
@@ -289,7 +304,6 @@ main {
   background: #2b2a32;
 }
 
-/* 房间名居中且带最大宽度约束 */
 .room .name {
   font-size: 12px;
   font-weight: 600;
@@ -301,7 +315,6 @@ main {
   line-height: 1.2;
 }
 
-/* 玩家标记居中 */
 .room .pl {
   display: flex;
   flex-wrap: wrap;
@@ -336,7 +349,7 @@ main {
   line-height: 1;
 }
 
-/* 扩展十字按钮（仅在编辑模式下显示） */
+/* 扩展十字按钮 */
 .add {
   position: absolute;
   width: 20px;
@@ -367,7 +380,7 @@ body.edit .cell:hover .add { display: flex; }
 .add.l { left: -10px; top: 40px; }
 .add.r { right: -10px; top: 40px; }
 
-/* 门标记：微调到贴紧边框外沿，避免侵入房间中央 */
+/* 门标记 */
 .dr {
   position: absolute;
   font-style: normal;
@@ -392,7 +405,7 @@ body.edit .cell:hover .add { display: flex; }
 .dr.out { color: var(--out); border: 1px solid var(--out); }
 .dr.in { color: var(--in); border: 1px solid var(--in); }
 
-/* 侧边详情栏（二级 & 三级） */
+/* 侧边详情栏 */
 #side, #entitySide {
   width: 360px;
   background: var(--panel);
@@ -643,16 +656,16 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.en-copy { border-left: 3px solid var(--npc); }
 .item.en-copy.act { border-left: 3px solid #e07b5e; }
 
-/* 拖拽手柄与拖动反馈样式（强化版） */
+/* 拖拽手柄与拖动反馈样式 */
 .drag-handle {
   cursor: grab;
   color: var(--mute);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   user-select: none;
   -webkit-user-drag: element;
-  padding: 4px 6px;
-  margin-left: -2px;
+  padding: 2px 4px;
+  margin-right: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -667,18 +680,19 @@ textarea:focus, input[type=text]:focus, select:focus {
 .drag-handle:active {
   cursor: grabbing;
 }
-.item.dragging {
+
+.item.dragging, .day-btn.dragging {
   opacity: .3 !important;
   outline: 2px dashed var(--accent) !important;
   background: var(--card) !important;
 }
-.item.drag-over-top {
+.item.drag-over-top, .day-btn.drag-over-top {
   border-top: 3px solid var(--accent) !important;
-  transform: translateY(2px);
+  transform: translateY(1px);
 }
-.item.drag-over-bottom {
+.item.drag-over-bottom, .day-btn.drag-over-bottom {
   border-bottom: 3px solid var(--accent) !important;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 /* 弹窗通用样式 */
@@ -763,6 +777,7 @@ dialog::backdrop {
 .dtag {
   font-size: 10.5px;
   color: var(--mute);
+  flex: none;
 }
 
 .bgmain {
