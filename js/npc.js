@@ -273,7 +273,11 @@ function setNpcStrip(show) {
   D.ui.npcStrip = show;
   saveData(D);
   renderNpcStrip();
+  setTimeout(() => {
+    if (typeof applyPan === 'function') applyPan();
+  }, 220); // 比 transition 的 0.2s 稍长
 }
+
 
 function renderNpcStrip() {
   const s = document.getElementById('npcStrip'); if (!s || !D) return;
