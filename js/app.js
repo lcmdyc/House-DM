@@ -379,9 +379,18 @@ function renderNpcDetail() {
 function npcEdit(id, field, val) {
   const n = D.npcs.find(x => x.id === id); if (!n) return;
   n[field] = val; saveData(D);
-  if (field === 'name' || field === 'category' || field === 'disposition') renderNpcLib();
-  if (field === 'color' || field === 'name') renderNpcStrip();
+  // name/category/disposition 只更新左侧列表里对应的那一条，不重绘整个详情
+  if (field === 'name') {
+    const card = document.querySelector(`#npcLibList .npc-card[onclick*="${id}"] .nc-name`);
+    if (card) card.textContent = val;
+    renderNpcStrip();
+  }
+  if (field === 'category' || field === 'disposition') {
+    renderNpcLib(); // 这两个改了不影响输入焦点，可以重绘
+  }
+  if (field === 'color') renderNpcStrip();
 }
+
 function npcSetRoom(id, rid) {
   const n = D.npcs.find(x => x.id === id); if (!n) return;
   const old = n.roomId; n.roomId = rid;
