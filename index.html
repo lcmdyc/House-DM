@@ -28,7 +28,6 @@
 
   <!-- ===== 工作台页 ===== -->
   <div id="pageWorkbench" class="tab-page">
-    <!-- 工作台工具栏 -->
     <div id="wbToolbar">
       <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
       <button id="dayBtn" onclick="openDays()">📅 Day 1</button>
@@ -39,16 +38,17 @@
       <button onclick="openHandbook()">📖 导出手册</button>
       <button onclick="openModuleLib()">📦 模组库</button>
     </div>
-    <!-- 工作台主体 -->
     <main id="wbMain">
       <!-- 玩家属性列 -->
       <div id="strip"></div>
-      <button id="stripOpen" onclick="setStrip(true)">👥 玩家</button>
       <!-- NPC 属性列 -->
       <div id="npcStrip"></div>
-      <button id="npcStripOpen" onclick="setNpcStrip(true)">👾 NPC</button>
-      <!-- 地图 -->
+      <!-- 地图（收起按钮放在地图内，绝对定位，不占布局空间） -->
       <div id="mapWrap">
+        <!-- 玩家栏收起按钮 -->
+        <button id="stripOpen" onclick="setStrip(true)">👥 玩家</button>
+        <!-- NPC栏收起按钮 -->
+        <button id="npcStripOpen" onclick="setNpcStrip(true)">👾 NPC</button>
         <div id="grid"></div>
         <button id="centerBtn" onclick="centerView()">⌖ 视角居中</button>
         <div id="panHint">按住空白处拖拽画布 · 滚轮上下移动 · Shift+滚轮左右移动</div>
@@ -65,14 +65,12 @@
       <button id="libTabBg"  class="lib-tab on"  onclick="switchLibTab('bg')">📜 玩家背景 / 车卡</button>
       <button id="libTabNpc" class="lib-tab"     onclick="switchLibTab('npc')">👾 NPC / 怪物</button>
     </div>
-    <!-- 玩家背景子页 -->
     <div id="libPageBg" class="lib-page">
       <div class="bgwrap">
         <div id="bgNav"  class="bgnav"></div>
         <div id="bgMain" class="bgmain"></div>
       </div>
     </div>
-    <!-- NPC/怪物子页 -->
     <div id="libPageNpc" class="lib-page" style="display:none">
       <div id="npcLibToolbar">
         <button class="primary" onclick="addNpcToLib()">＋ 新增 NPC/怪物</button>
@@ -94,8 +92,6 @@
   <div id="toast"></div>
 
   <!-- ===== 弹窗 ===== -->
-
-  <!-- 玩家属性栏设置 -->
   <dialog id="stripDlg" style="width:360px">
     <div class="tabs"><b style="color:var(--accent)">⚙ 玩家属性栏设置</b><div class="spacer"></div>
       <button onclick="stripAll(true)">全选</button><button onclick="stripAll(false)">全不选</button>
@@ -103,7 +99,6 @@
     <div id="stripCfgBox" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
   </dialog>
 
-  <!-- NPC列设置 -->
   <dialog id="npcStripDlg" style="width:380px">
     <div class="tabs"><b style="color:var(--accent)">⚙ NPC栏显示设置</b><div class="spacer"></div>
       <button onclick="npcStripCheckAll(true)">全选</button>
@@ -113,14 +108,12 @@
     <div id="npcStripCfgBox" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto;padding:0 12px 12px"></div>
   </dialog>
 
-  <!-- 日程 -->
   <dialog id="dayDlg" style="width:780px;max-width:92vw">
     <div class="tabs"><b style="color:var(--accent);font-size:15px">📅 日程推进与事件表</b><div class="spacer"></div>
       <button onclick="document.getElementById('dayDlg').close()">✕ 关闭</button></div>
     <div class="bgwrap"><div id="dayNav" class="bgnav"></div><div id="dayMain" class="bgmain"></div></div>
   </dialog>
 
-  <!-- 玩家管理 -->
   <dialog id="playersDlg" style="width:520px;max-width:92vw">
     <div class="tabs"><b style="color:var(--accent);font-size:15px">👥 玩家队伍设置</b>
       <span id="plCount" class="hint"></span><div class="spacer"></div>
@@ -129,7 +122,6 @@
     <div id="playersBox" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
   </dialog>
 
-  <!-- 物资总览 -->
   <dialog id="sumDlg" style="width:820px;max-width:92vw">
     <div class="tabs"><b style="color:var(--accent);font-size:15px">🎒 物资全览池与分配</b><div class="spacer"></div>
       <button class="primary" onclick="addPoolItem()">＋ 新物资</button>
@@ -143,7 +135,6 @@
     <div id="poolList" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
   </dialog>
 
-  <!-- 日志 -->
   <dialog id="logDlg" style="width:700px;max-width:92vw">
     <div class="tabs"><b style="color:var(--accent);font-size:15px">📜 模组运行日志</b>
       <div id="logTabs" style="display:flex;gap:4px;margin-left:10px"></div><div class="spacer"></div>
@@ -153,7 +144,6 @@
     <div id="logList"></div>
   </dialog>
 
-  <!-- 导出手册 -->
   <dialog id="hbDlg" style="width:900px;max-width:96vw">
     <div class="tabs">
       <button id="hbTabDm" class="on" onclick="setHbMode('dm')">📖 DM 完整手册</button>
@@ -177,7 +167,6 @@
     <iframe id="hbFrame" style="width:100%;height:60vh;border:none;border-top:1px solid var(--line);margin-top:8px"></iframe>
   </dialog>
 
-  <!-- 模组库 -->
   <dialog id="modLibDlg" style="width:860px;max-width:96vw">
     <div class="tabs"><b style="color:var(--accent);font-size:15px">📦 模组库</b>
       <span id="modLibCount" class="hint"></span>
