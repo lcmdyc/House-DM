@@ -5,12 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>TRPG 模组 · DM 工具</title>
   <link rel="stylesheet" href="style.css">
+  <!-- 引入 PeerJS WebRTC P2P 官方免密客户端 -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body class="edit">
   <header>
     <h1>🎲 模组 DM 工具</h1>
     <input class="title" id="modTitle" placeholder="模组名称">
     <div class="spacer"></div>
+    <button id="p2pBtn" onclick="handleP2PAction()" style="border-color:var(--accent)" title="双人实时联机协作">🔗 邀请双人协作</button>
     <button id="dayBtn" onclick="openDays()" title="查看 / 编辑日程">📅 Day 1</button>
     <button id="endDayBtn" class="primary" onclick="endDay()">Day 1 结束 ▶</button>
     <button id="modeBtn" class="on" onclick="toggleMode()" title="切换编辑 / 带团模式">✏️ 编辑模式</button>
@@ -140,7 +143,7 @@
     <div class="hint" style="margin-top:6px">打印窗口里选择「A4」，建议关闭「页眉和页脚」，并勾选「双面打印」。每个房间固定从新页开始。</div>
   </dialog>
 
-  <!-- 脚本加载（按依赖顺序） -->
+  <!-- 脚本加载 -->
   <script src="js/data.js"></script>
   <script src="js/handbook.js"></script>
   <script src="js/app.js"></script>
