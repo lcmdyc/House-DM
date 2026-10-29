@@ -48,6 +48,24 @@ tr{break-inside:avoid}
 .tight{margin:0;padding-left:18px}
 .hb-entity{border:1px solid #444;border-radius:4px;padding:8px 10px;margin-top:8px;background:#fdfdfd;break-inside:avoid}
 .hb-entity-title{font-size:14px;font-weight:bold;color:#222;margin-bottom:4px;display:flex;justify-content:space-between}
+.npc-card{border:1px solid #555;border-radius:4px;padding:10px 12px;margin-top:10px;break-inside:avoid;position:relative}
+.npc-card.monster{border-color:#a00;background:#fff8f8}
+.npc-card.other{border-color:#777;background:#f8f8f8}
+.npc-card-title{font-size:15px;font-weight:bold;display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.npc-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;background:#333;color:#fff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;vertical-align:1px}
+.npc-badge.monster{background:#a00}
+.npc-badge.other{background:#777}
+.npc-disp{display:inline-block;font-size:11px;padding:1px 6px;border-radius:10px;border:1px solid #888;color:#444;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+.npc-disp.友好{border-color:#4aa8d8;color:#1a6a9a}
+.npc-disp.敌对{border-color:#a00;color:#a00}
+.npc-color-dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #aaa;vertical-align:-2px;margin-right:3px}
+.day-block{border:1px solid #bbb;border-radius:4px;padding:8px 12px;margin-top:10px;break-inside:avoid}
+.day-block.cur{border-color:#222;border-width:2px}
+.day-block.ended{background:#f5f5f5}
+.day-title{font-size:15px;font-weight:bold;font-family:"PingFang SC","Microsoft YaHei",sans-serif;display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.day-status{font-size:10.5px;padding:1px 7px;border-radius:10px;background:#eee;color:#555;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+.day-status.cur{background:#222;color:#fff}
+.day-status.ended{background:#888;color:#fff}
 `;
 
 const HB_DUP = `
@@ -87,6 +105,155 @@ function cardBlock(i, sv) {
     <div class="lb">其他背景（性格、外貌、经历）</div>${hTxt(sv ? c.other : '', 5)}`;
 }
 
+// ── 日程章节构建 ──────────────────────────────────────────────
+function buildDaySection(o, chNum) {
+  let h = `<section class="ch"><div class="part">${chNum}　日程与事件</div>`;
+  if (!D.days || !D.days.length) {
+    h += '<p class="note">尚未创建任何日程。</p></section>';
+    return h;
+  }
+  D.days.forEach((d, i) => {
+    const isCur = i === D.curDay;
+    const statusLabel = isCur
+      ? '<span class="day-status cur">🚩 当前日</span>'
+      : d.ended
+        ? '<span class="day-status ended">✔ 已结束</span>'
+        : '<span class="day-status">未开始</span>';
+    const doneCount = d.events.filter(e => e.done).length;
+    const totalCount = d.events.length;
+    h += `<div class="day-block ${isCur ? 'cur' : ''} ${d.ended ? 'ended' : ''}">
+      <div class="day-title">
+        ${esc(d.title || ('Day ' + (i + 1)))}
+        ${statusLabel}
+        ${totalCount ? `<span style="font-size:11px;color:#666;font-weight:normal">事件 ${doneCount}/${totalCount} 已完成</span>` : ''}
+      </div>`;
+    if (totalCount) {
+      h += `<table><tr>
+        <th class="c" style="width:28px">✓</th>
+        <th style="width:70px">时间</th>
+        <th style="width:26%">事件</th>
+        <th>详情 / 触发条件</th>
+      </tr>` +
+        d.events.map(e =>
+          `<tr>
+            <td class="c">${hBx(o.st && e.done)}</td>
+            <td>${esc(e.time)}</td>
+            <td><b>${esc(e.title) || '（未命名）'}</b></td>
+            <td class="pre">${esc(e.detail)}</td>
+          </tr>`
+        ).join('') +
+        // 留两行空白供手写
+        `<tr><td class="c">${hBx(false)}</td><td></td><td></td><td></td></tr>
+         <tr><td class="c">${hBx(false)}</td><td></td><td></td><td></td></tr>
+        </table>`;
+    } else {
+      h += '<p class="note">（本日暂无预设事件）</p>';
+      h += `<table><tr><th class="c" style="width:28px">✓</th><th style="width:70px">时间</th><th style="width:26%">事件</th><th>详情</th></tr>
+        <tr><td class="c">${hBx(false)}</td><td></td><td></td><td></td></tr>
+        <tr><td class="c">${hBx(false)}</td><td></td><td></td><td></td></tr>
+        </table>`;
+    }
+    h += '</div>';
+  });
+  h += '</section>';
+  return h;
+}
+
+// ── NPC/怪物章节构建 ─────────────────────────────────────────
+function buildNpcSection(o, chNum) {
+  let h = `<section class="ch"><div class="part">${chNum}　NPC / 怪物档案</div>`;
+  const npcs = (D.npcs || []);
+  if (!npcs.length) {
+    h += '<p class="note">本模组尚未创建任何 NPC 或怪物。</p></section>';
+    return h;
+  }
+
+  // 按类型分组：NPC / 怪物 / 其他
+  const groups = [
+    { key: 'npc',     label: '🧑 NPC',   badge: 'npc'     },
+    { key: 'monster', label: '👹 怪物',  badge: 'monster' },
+    { key: 'other',   label: '◆ 其他',  badge: 'other'   },
+  ];
+
+  groups.forEach(g => {
+    const list = npcs.filter(n => n.category === g.key);
+    if (!list.length) return;
+    h += `<h3 class="sub">${g.label}（${list.length}）</h3>`;
+    list.forEach(n => {
+      const roomName = n.roomId ? rname(n.roomId) : '未定位';
+      const attrStr = (n.attrs || []).map(a => `<b>${esc(a.name)}</b> ${esc(a.val)}`).join('　　');
+      const dispClass = ['友好', '中立', '敌对'].includes(n.disposition) ? n.disposition : '';
+
+      h += `<div class="npc-card ${g.key}">
+        <div class="npc-card-title">
+          <i class="npc-color-dot" style="background:${n.color || '#b27cd8'}"></i>
+          ${esc(n.name)}
+          <span class="npc-badge ${g.badge}">${g.label.replace(/^[^ ]+ /, '')}</span>
+          <span class="npc-disp ${dispClass}">${esc(n.disposition)}</span>
+          <span style="font-size:11px;color:#666;font-weight:normal;margin-left:auto">📍 ${esc(roomName)}</span>
+        </div>`;
+
+      // 属性行
+      if (n.attrs && n.attrs.length) {
+        h += `<div style="font-size:12px;margin-bottom:5px;padding:4px 6px;background:#f5f5f5;border-radius:3px">${attrStr}</div>`;
+      }
+
+      // 外观描述（玩家可见）
+      if (n.desc && n.desc.trim()) {
+        h += `<div class="lb">外观与描述（可念给玩家）</div>
+          <div class="tx">${esc(n.desc)}</div>`;
+      } else {
+        h += `<div class="lb">外观与描述（可念给玩家）</div>${hLines(2)}`;
+      }
+
+      // DM 备注（仅 DM 手册）
+      if (o.dm) {
+        if (n.dmNote && n.dmNote.trim()) {
+          h += `<div class="lb">🔒 DM 备注（动机 / 隐藏信息）</div>
+            <div class="tx dm">${esc(n.dmNote)}</div>`;
+        } else {
+          h += `<div class="lb">🔒 DM 备注（动机 / 隐藏信息）</div>${hLines(2)}`;
+        }
+      }
+
+      // 预设对话
+      const dialogs = (n.dialogs || []).filter(d => d.trigger || d.line);
+      if (dialogs.length) {
+        h += `<div class="lb">预设对话</div>
+          <table><tr><th style="width:30%">触发条件</th><th>台词内容</th></tr>` +
+          dialogs.map(d =>
+            `<tr><td style="color:#555">${esc(d.trigger) || '—'}</td><td class="pre">${esc(d.line) || '—'}</td></tr>`
+          ).join('') +
+          '</table>';
+      }
+
+      h += '</div>'; // .npc-card
+    });
+  });
+
+  // NPC 快查表
+  h += `<h3 class="sub" style="margin-top:20px">NPC 快查总表</h3>
+    <table>
+      <tr><th class="c" style="width:20px">#</th><th>名称</th><th style="width:40px">类型</th><th style="width:50px">立场</th><th style="width:30%">当前位置</th><th>${D.cardCfg.attrs.length ? D.cardCfg.attrs.slice(0,3).map(a => esc(a.name)).join(' / ') : '属性'}</th></tr>` +
+    npcs.map((n, i) => {
+      const attrVals = (n.attrs || []).slice(0, 3).map(a => esc(a.val)).join(' / ') || '—';
+      const catLabel = n.category === 'monster' ? '怪物' : n.category === 'npc' ? 'NPC' : '其他';
+      return `<tr>
+        <td class="c">${i + 1}</td>
+        <td><i class="npc-color-dot" style="background:${n.color || '#b27cd8'}"></i><b>${esc(n.name)}</b></td>
+        <td>${catLabel}</td>
+        <td>${esc(n.disposition)}</td>
+        <td>${esc(n.roomId ? rname(n.roomId) : '未定位')}</td>
+        <td>${attrVals}</td>
+      </tr>`;
+    }).join('') +
+    '</table>';
+
+  h += '</section>';
+  return h;
+}
+
+// ── DM 完整手册 ───────────────────────────────────────────────
 function hbHtml(o) {
   const title = D.title || '未命名模组';
   const rooms = [...D.rooms].sort((a, b) => a.y - b.y || a.x - b.x);
@@ -98,35 +265,52 @@ function hbHtml(o) {
     return `${l}${DOOR_S[t]}${t === 'in' ? '←' : '→'}${n ? num.get(n.id) : '外'}`;
   }).join('　') || '无';
   const today = new Date().toLocaleDateString('zh-CN');
+  const hasNpc = (D.npcs || []).length > 0;
+
+  // 章节编号动态分配
+  let chIdx = 1;
+  const ch = () => ['一','二','三','四','五','六','七','八'][chIdx++ - 1] || String(chIdx - 1);
+
   let h = '';
 
+  // ── 封面 ──
   h += `<section class="cover"><h1>${esc(title)}</h1><div class="sub">DM 带团手册</div>
     <div class="meta">玩家 ${D.players.length} 人　·　房间 ${D.rooms.length} 间　·　共 ${D.days.length} 天<br>
-    物资 ${D.pool.length + D.rooms.reduce((s, r) => s + r.items.length, 0)} 件<br>印制日期：${today}</div>
+    NPC/怪物 ${(D.npcs || []).length} 个　·　物资 ${D.pool.length + D.rooms.reduce((s, r) => s + r.items.length, 0)} 件<br>印制日期：${today}</div>
     <div class="dm">${o.dm ? '含 DM 专属内容，请勿向玩家展示' : '玩家可阅读版本'}</div></section>`;
+
+  // ── 目录 ──
+  chIdx = 1;
+  const tocRows = [
+    [ch(), '日程与事件（每日事件表、进度追踪）'],
+    hasNpc ? [ch(), 'NPC / 怪物档案（属性、描述、对话、DM备注）'] : null,
+    [ch(), '地图总览（含门与通道）与房间索引'],
+    [ch(), '房间详解（每间房：场景、实体/遭遇、门、DM 备注、物资）'],
+    o.pl ? [ch(), '玩家角色（预设背景 + 车卡，每人一页）'] : null,
+    [ch(), '附录：物资总表、属性追踪表、笔记页'],
+  ].filter(Boolean);
 
   h += `<section class="ch"><div class="part">目 录</div>
     <table class="toc"><tr><th class="c">章节</th><th>内容</th></tr>
-    <tr><td class="n">一</td><td>日程与事件</td></tr>
-    <tr><td class="n">二</td><td>地图总览（含门与通道）与房间索引</td></tr>
-    <tr><td class="n">三</td><td>房间详解（每间房独立一页：场景、实体/遭遇、门、DM 备注、物资）</td></tr>
-    ${o.pl ? '<tr><td class="n">四</td><td>玩家角色（预设背景 + 车卡，每人一页）</td></tr>' : ''}
-    <tr><td class="n">${o.pl ? '五' : '四'}</td><td>附录：物资总表、属性追踪表、笔记页</td></tr></table>
+    ${tocRows.map(([n, l]) => `<tr><td class="n">${n}</td><td>${l}</td></tr>`).join('')}
+    </table>
     <h3 class="sub">玩家一览</h3>
     <table><tr><th class="c">#</th><th>玩家</th><th>角色姓名</th><th>代表色</th>${o.st ? '<th>当前位置</th>' : ''}</tr>
     ${D.players.map((_, i) => `<tr><td class="c">${i + 1}</td><td>${pn(i)}</td><td>${esc(D.bg[i].card.info.name)}</td>
-      <td><i class="dot" style="background:${pcolor(i)}"></i>${pcolor(i)}</td>${o.st ? `<td>${D.bg[i].roomId ? num.get(D.bg[i].roomId) + ' ' + esc(rname(D.bg[i].roomId)) : '—'}</td>` : ''}</tr>`).join('')}</table></section>`;
+      <td><i class="dot" style="background:${pcolor(i)}"></i>${pcolor(i)}</td>${o.st ? `<td>${D.bg[i].roomId ? num.get(D.bg[i].roomId) + ' ' + esc(rname(D.bg[i].roomId)) : '—'}</td>` : ''}</tr>`).join('')}
+    </table></section>`;
 
-  h += `<section class="ch"><div class="part">一　日程与事件</div>`;
-  D.days.forEach((d, i) => {
-    h += `<h3 class="sub">Day ${i + 1}</h3><table><tr><th class="c" style="width:28px">✓</th><th style="width:70px">时间</th><th style="width:26%">事件</th><th>详情 / 触发条件</th></tr>` +
-      (d.events.length ? d.events.map(e => `<tr><td class="c">${hBx(o.st && e.done)}</td><td>${esc(e.time)}</td><td><b>${esc(e.title) || '（未命名）'}</b></td><td class="pre">${esc(e.detail)}</td></tr>`).join('')
-        : `<tr><td colspan="4" class="note">（本日暂无预设事件）</td></tr>`) +
-      `<tr><td class="c">${hBx(0)}</td><td></td><td></td><td></td></tr><tr><td class="c">${hBx(0)}</td><td></td><td></td><td></td></tr></table>`;
-  });
-  h += '</section>';
+  // ── 重置章节计数器，正式输出各章 ──
+  chIdx = 1;
 
-  h += `<section class="ch"><div class="part">二　地图总览</div>`;
+  // 第一章：日程
+  h += buildDaySection(o, ch());
+
+  // 第二章（可选）：NPC
+  if (hasNpc) h += buildNpcSection(o, ch());
+
+  // 第三章：地图总览
+  h += `<section class="ch"><div class="part">${ch()}　地图总览</div>`;
   if (!rooms.length) h += '<p class="note">尚未创建房间。</p>';
   else {
     const xs = rooms.map(r => r.x), ys = rooms.map(r => r.y);
@@ -145,7 +329,8 @@ function hbHtml(o) {
   }
   h += '</section>';
 
-  h += `<section class="ch"><div class="part">三　房间详解</div>`;
+  // 第四章：房间详解
+  h += `<section class="ch"><div class="part">${ch()}　房间详解</div>`;
   if (!rooms.length) h += '<p class="note">尚未创建房间。</p>';
   rooms.forEach((r, idx) => {
     const here = o.st ? playersIn(r.id) : [];
@@ -186,8 +371,9 @@ function hbHtml(o) {
   });
   h += '</section>';
 
+  // 第五章（可选）：玩家角色
   if (o.pl) {
-    h += `<section class="ch"><div class="part">四　玩家角色</div>`;
+    h += `<section class="ch"><div class="part">${ch()}　玩家角色</div>`;
     D.players.forEach((_, i) => {
       const b = D.bg[i], c = b.card;
       h += `<div class="player ${i ? '' : 'f'}"><h2><i class="dot" style="background:${b.color};width:14px;height:14px"></i> ${pn(i)}${c.info.name && o.st ? `　<span style="font-size:14px;font-weight:normal">（${esc(c.info.name)}）</span>` : ''}</h2>
@@ -196,26 +382,40 @@ function hbHtml(o) {
     h += '</section>';
   }
 
+  // 附录
   const all = [...D.rooms.flatMap(r => r.items.map(i => ({ i, r }))), ...D.pool.map(i => ({ i, r: null }))];
-  h += `<section class="ch"><div class="part">${o.pl ? '五' : '四'}　附录</div>
+  h += `<section class="ch"><div class="part">${ch()}　附录</div>
     <h3 class="sub">A. 物资总表</h3>`;
   h += all.length ? `<table><tr><th class="c" style="width:28px">✓</th><th style="width:40px">类型</th><th style="width:20%">名称</th><th style="width:16%">所在房间</th><th>获取条件</th>${o.st ? '<th>获得者</th>' : ''}</tr>` +
     all.map(({ i, r }) => `<tr><td class="c">${hBx(o.st && isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name) || '（未命名）'}</b></td><td>${r ? num.get(r.id) + ' ' + esc(r.name) : '未分配'}</td><td class="pre">${esc(i.cond)}</td>${o.st ? `<td>${(i.consumed ? '已消耗 ' : '') + i.owners.map(pn).join('、')}</td>` : ''}</tr>`).join('') + '</table>' : '<p class="note">（暂无物资）</p>';
+
   h += `<h3 class="sub">B. 玩家属性追踪表</h3><p class="note">带团时在格子里手写当前数值，随时涂改。</p>
     <table><tr><th>玩家</th>${D.cardCfg.attrs.map(a => `<th class="c">${esc(a.name)}</th>`).join('')}</tr>` +
     D.players.map((_, i) => `<tr><td><i class="dot" style="background:${pcolor(i)}"></i>${pn(i)}</td>${D.cardCfg.attrs.map(a => `<td class="c" style="height:30px">${o.st ? (+D.bg[i].card.vals[a.id] || 0) : ''}</td>`).join('')}</tr>`).join('') + '</table>';
-  h += `<h3 class="sub">C. 事件记录</h3><table><tr><th style="width:60px">Day</th><th style="width:70px">时间</th><th>事件 / 玩家行动 / 备注</th></tr>` +
-    Array.from({length: 14}, () => '<tr><td style="height:28px"></td><td></td><td></td></tr>').join('') + '</table></section>';
+
+  // NPC 快查附录（若 NPC 章节已输出则跳过，否则补一张精简表）
+  if (!hasNpc && (D.npcs || []).length) {
+    h += `<h3 class="sub">C. NPC 快查表</h3>
+      <table><tr><th>名称</th><th>类型</th><th>立场</th><th>位置</th><th>属性摘要</th></tr>` +
+      D.npcs.map(n => `<tr><td><b>${esc(n.name)}</b></td><td>${n.category === 'monster' ? '怪物' : 'NPC'}</td><td>${esc(n.disposition)}</td><td>${esc(n.roomId ? rname(n.roomId) : '未定位')}</td><td>${(n.attrs || []).slice(0, 3).map(a => `${esc(a.name)}:${esc(a.val)}`).join(' ')}</td></tr>`).join('') +
+      '</table>';
+  }
+
+  h += `<h3 class="sub">${hasNpc ? 'C' : 'C'}. 事件记录</h3><table><tr><th style="width:60px">Day</th><th style="width:70px">时间</th><th>事件 / 玩家行动 / 备注</th></tr>` +
+    Array.from({ length: 14 }, () => '<tr><td style="height:28px"></td><td></td><td></td></tr>').join('') + '</table></section>';
+
   h += `<section class="ch"><div class="part">笔记</div>${hLines(30)}</section>`;
 
   return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · DM 带团手册</title><style>${HB_CSS}${o.dup ? HB_DUP : ''}</style></head><body class="${o.dup ? 'dup' : ''}">${h}</body></html>`;
 }
 
+// ── 玩家发放版 ────────────────────────────────────────────────
 function hpHtml(o) {
   const title = D.title || '未命名模组';
   const head = i => `<div class="ph"><span>${esc(title)}</span><span>玩家角色卡</span></div>
     <h2><i class="dot" style="background:${pcolor(i)};width:14px;height:14px"></i> ${esc(pname(i))}　<span style="font-size:13px;font-weight:normal">玩家姓名：${'＿'.repeat(6)}</span></h2>`;
-  const pages = D.players.map((_, i) => {
+
+  let pages = D.players.map((_, i) => {
     const bg = o.bg ? bgBlock(i, false) : '';
     const card = cardBlock(i, o.fill);
     if (o.bg && o.split)
@@ -223,5 +423,26 @@ function hpHtml(o) {
               <section class="hpb">${head(i)}${card}</section>`;
     return `<section class="hp ${i ? '' : 'f'}">${head(i)}${bg}${card}</section>`;
   }).join('');
+
+  // 玩家版：仅输出 NPC 公开描述（无 DM 备注）
+  if (o.npcPub && (D.npcs || []).length) {
+    const pubNpcs = D.npcs.filter(n => n.desc && n.desc.trim());
+    if (pubNpcs.length) {
+      pages += `<section class="ch"><div class="part">已知人物</div>
+        <p class="note" style="margin-bottom:12px">以下是玩家角色可能见到或听说过的人物外貌描述。</p>`;
+      pubNpcs.forEach(n => {
+        pages += `<div class="npc-card ${n.category}">
+          <div class="npc-card-title">
+            <i class="npc-color-dot" style="background:${n.color || '#b27cd8'}"></i>
+            ${esc(n.name)}
+            <span class="npc-disp ${['友好','中立','敌对'].includes(n.disposition) ? n.disposition : ''}">${esc(n.disposition)}</span>
+          </div>
+          <div class="tx">${esc(n.desc)}</div>
+        </div>`;
+      });
+      pages += '</section>';
+    }
+  }
+
   return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · 玩家发放版</title><style>${HB_CSS}${o.dup ? HB_DUP : ''}</style></head><body class="${o.dup ? 'dup' : ''}">${pages}</body></html>`;
 }
