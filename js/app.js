@@ -13,6 +13,29 @@ function save() {
   renderStrip();
 }
 
+// ===== 主题配色切换与持久化 =====
+function initTheme() {
+  const t = localStorage.getItem('trpg_theme') || 'dark';
+  applyTheme(t);
+}
+
+function applyTheme(t) {
+  const isLight = t === 'light';
+  document.body.classList.toggle('light-theme', isLight);
+  const btn = document.getElementById('themeBtn');
+  if (btn) {
+    btn.textContent = isLight ? '☀️ 浅色' : '🌙 深色';
+  }
+}
+
+function toggleTheme() {
+  const cur = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+  const next = cur === 'light' ? 'dark' : 'light';
+  localStorage.setItem('trpg_theme', next);
+  applyTheme(next);
+  toast(`已切换为${next === 'light' ? '☀️ 浅色' : '🌙 深色'}主题`);
+}
+
 const newItem = () => ({ id: uid(), type: 'item', name: '', desc: '', cond: '', owners: [], consumed: false });
 const chipHtml = i => `<i class="chip" style="background:${pcolor(i)}" title="${esc(pname(i))}">${esc([...pname(i)][0] || '?')}</i>`;
 
@@ -359,7 +382,7 @@ function descCard(r) {
   }
   return `<div class="item compact rd" title="点击复制房间描述" onclick="copyRoomDesc()">
     <div class="row">
-      <span class="tag static" style="background:var(--accent)">房间</span>
+      <span class="tag static" style="background:var(--accent);color:#fff">房间</span>
       <div class="memo"><b>${esc(r.name) || '未命名'}</b>
         <span class="cd ${r.desc.trim() ? '' : 'emp'}">${r.desc.trim() ? esc(r.desc) : '（还没有描述，切到编辑模式填写）'}</span></div>
       <span class="copyi">📋</span>
@@ -367,7 +390,7 @@ function descCard(r) {
   </div>`;
 }
 
-// ===== 全局统一手柄拖拽重排（物资、实体、日程、事件完全通用）=====
+// ===== 全局统一手柄拖拽重排 =====
 let dragType = null;
 let dragSourceId = null;
 
@@ -674,7 +697,7 @@ function renderEntitySide() {
 
 function upd(k, v) { const r = room(sel); r[k] = v; save(); if (k === 'name') { renderMap(); if (!edit) renderSide(); } }
 
-// ===== 物资卡片（采用标准的 .item 结构）=====
+// ===== 物资卡片 =====
 function pbtnsHtml(i) {
   return D.players.map((p, idx) => {
     const on = i.owners.includes(idx), c = pcolor(idx);
@@ -745,7 +768,7 @@ function toggleConsumed(id) {
   save(); renderSide(); renderMap();
 }
 
-// ===== 日程（完全复用线索道具的 .item 拖拽架构）=====
+// ===== 日程 =====
 const dayDlg = document.getElementById('dayDlg');
 function updateDayBar() {
   const curTitle = dayLabel(D.curDay);
@@ -758,7 +781,7 @@ function renderDays() {
   if (dayView >= D.days.length) dayView = D.days.length - 1;
   const nav = document.getElementById('dayNav');
 
-  // 1. 左侧天列表：完全复用 .item 结构与拖拽监听
+  // 1. 左侧天列表
   nav.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
     return `<div class="item day-card ${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}"
@@ -778,7 +801,7 @@ function renderDays() {
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
 
-  // 2. 右侧事件列表：完全复用 .item 结构与拖拽监听
+  // 2. 右侧事件列表
   const evs = d.events.map(e => `
     <div class="item ${e.done ? 'done' : ''}"
       data-id="${e.id}"
@@ -1135,6 +1158,7 @@ function renderAllViews() {
 }
 
 // ===== 页面启动初始化 =====
+initTheme(); // 初始化浅色/深色偏好
 renderStrip();
 renderMap();
 updateDayBar();
