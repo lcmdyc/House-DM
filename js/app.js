@@ -109,7 +109,7 @@ function clearLog() {
   D.log = []; save(); renderLog();
 }
 
-// ===== 玩家属性视窗与位置 =====
+// ===== 玩家属性视窗与滚轮增减微调 =====
 function roomSel(cur) {
   return `<option value="">📍 未定位</option>` + D.rooms.map(r =>
     `<option value="${r.id}" ${r.id === cur ? 'selected' : ''}>${esc(r.name) || '未命名'} (${r.x},${r.y})</option>`).join('');
@@ -123,6 +123,31 @@ function setPlayerRoom(i, rid) {
   save(); renderMap(); renderSide();
 }
 
+// 滚轮快速微调玩家属性（上滚增加，下滚减少）
+function handleAttrWheel(e, pIdx, attrId) {
+  e.preventDefault();
+  e.stopPropagation();
+  const delta = e.deltaY < 0 ? 1 : -1;
+  const c = D.bg[pIdx].card;
+  const old = +c.vals[attrId] || 0;
+  let next = old + delta;
+
+  if (next < 0) return;
+  const others = cardUsed(c) - old;
+  const max = Math.max(0, D.cardCfg.points - others);
+  if (next > max) {
+    toast(`已达上限 (点数剩余 ${D.cardCfg.points - cardUsed(c)})`);
+    return;
+  }
+
+  c.vals[attrId] = next;
+  const a = D.cardCfg.attrs.find(x => x.id === attrId);
+  addLog('attr', `${pname(pIdx)} 的「${a.name}」 ${old} → ${next}（${delta > 0 ? '+' : ''}${delta}，滚轮微调）`, pcolor(pIdx));
+  save();
+  renderStrip();
+  if (document.getElementById('bgDlg').open && bgSel === pIdx) renderBg();
+}
+
 function renderStrip() {
   const s = document.getElementById('strip'); if (!s || !D) return;
   s.classList.toggle('hide', !D.ui.strip);
@@ -134,7 +159,7 @@ function renderStrip() {
     const cn = D.ui.showChar && b.card.info.name ? `<div class="cn">${esc(b.card.info.name)}</div>` : '';
     const as = attrs.map(a => {
       const v = +b.card.vals[a.id] || 0;
-      return `<span class="${v ? '' : 'z'}"><i>${esc(a.name)}</i><b>${v}</b></span>`;
+      return `<span class="${v ? '' : 'z'}" title="上下滚动滚轮快速 ±1" onwheel="handleAttrWheel(event,${i},'${a.id}')"><i>${esc(a.name)}</i><b>${v}</b></span>`;
     }).join('');
     return `<div class="pc" style="border-left-color:${b.color}" title="点击查看 ${esc(pname(i))} 的背景和车卡" onclick="bgSel=${i};openBg()">
       <div class="pn">${esc(pname(i))}</div>${cn}
@@ -342,7 +367,7 @@ function descCard(r) {
   </div>`;
 }
 
-// ===== 强化版手柄拖拽重排 =====
+// ===== 强化版手柄拖拽重排（物资、实体、日程）=====
 let dragType = null;
 let dragSourceId = null;
 
@@ -351,8 +376,8 @@ function handleHandleDragStart(e, type, id) {
   dragSourceId = id;
   e.stopPropagation();
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', id);
-  const card = e.target.closest('.item');
+  e.dataTransfer.setData('text/plain', String(id));
+  const card = e.target.closest('.item, .day-btn');
   if (card) {
     setTimeout(() => card.classList.add('dragging'), 0);
   }
@@ -362,7 +387,7 @@ function handleCardDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   const card = e.currentTarget;
-  if (!card || card.dataset.id === dragSourceId) return;
+  if (!card || card.dataset.id === String(dragSourceId)) return;
   const rect = card.getBoundingClientRect();
   const midY = rect.top + rect.height / 2;
   if (e.clientY < midY) {
@@ -380,7 +405,7 @@ function handleCardDragLeave(e) {
 }
 
 function handleCardDragEnd(e) {
-  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+  document.querySelectorAll('.item, .day-btn').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
   dragType = null;
   dragSourceId = null;
 }
@@ -390,12 +415,33 @@ function handleCardDrop(e, type, targetId) {
   e.stopPropagation();
   const card = e.currentTarget;
   const isTop = card && card.classList.contains('drag-over-top');
-  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+  document.querySelectorAll('.item, .day-btn').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
 
-  if (dragType !== type || !dragSourceId || dragSourceId === targetId) return;
+  if (dragType !== type || String(dragSourceId) === String(targetId)) return;
+
+  // 日程拖拽重排
+  if (type === 'day') {
+    const fromIdx = +dragSourceId;
+    const toRawIdx = +targetId;
+    if (isNaN(fromIdx) || isNaN(toRawIdx)) return;
+    const curObj = D.days[D.curDay];
+    const [moved] = D.days.splice(fromIdx, 1);
+    let toIdx = toRawIdx;
+    if (fromIdx < toRawIdx) toIdx = isTop ? toRawIdx - 1 : toRawIdx;
+    else toIdx = isTop ? toRawIdx : toRawIdx + 1;
+    toIdx = Math.max(0, Math.min(D.days.length, toIdx));
+    D.days.splice(toIdx, 0, moved);
+
+    // 智能跟随当前进行日与视图日
+    D.curDay = D.days.indexOf(curObj);
+    dayView = D.days.indexOf(moved);
+    save(); renderDays();
+    return;
+  }
+
+  // 房间物资与实体拖拽重排
   const r = room(sel); if (!r) return;
   const list = type === 'item' ? r.items : r.entities;
-
   const fromIdx = list.findIndex(x => x.id === dragSourceId);
   if (fromIdx === -1) return;
   const [moved] = list.splice(fromIdx, 1);
@@ -683,7 +729,7 @@ function toggleConsumed(id) {
   save(); renderSide(); renderMap();
 }
 
-// ===== 日程（支持标题自定义）=====
+// ===== 日程（支持标题自定义与左侧手柄拖拽重排）=====
 const dayDlg = document.getElementById('dayDlg');
 function updateDayBar() {
   const curTitle = dayLabel(D.curDay);
@@ -696,11 +742,17 @@ function renderDays() {
   const nav = document.getElementById('dayNav');
   nav.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
-    return `<button class="${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}" onclick="dayView=${i};renderDays()">
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dayLabel(i))}</span>
+    return `<button class="day-btn ${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}"
+      data-id="${i}"
+      ondragover="handleCardDragOver(event)"
+      ondragleave="handleCardDragLeave(event)"
+      ondrop="handleCardDrop(event,'day',${i})"
+      onclick="dayView=${i};renderDays()">
+      <span class="drag-handle" title="按住拖拽调整前后顺序" draggable="true" ondragstart="handleHandleDragStart(event,'day',${i})" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(dayLabel(i))}</span>
       <span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span></button>`;
   }).join('') + `<button onclick="addDay()">＋ 新增一天</button>`;
-  
+
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
   const evs = d.events.map(e => `<div class="ev ${e.done ? 'done' : ''}">
@@ -714,7 +766,7 @@ function renderDays() {
       </div>
       <textarea placeholder="事件详情…" oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
     </div>`).join('') || '<p class="hint">这一天还没有事件，点击下方「＋ 添加事件」</p>';
-  
+
   document.getElementById('dayMain').innerHTML = `
     <div class="dayhead">
       <input type="text" class="nm" style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
@@ -736,9 +788,9 @@ function setDayTitle(i, val) {
   D.days[i].title = val.trim() || `Day ${i + 1}`;
   save();
   updateDayBar();
-  const navBtns = document.getElementById('dayNav').querySelectorAll('button');
+  const navBtns = document.getElementById('dayNav').querySelectorAll('.day-btn');
   if (navBtns[i]) {
-    const s = navBtns[i].querySelector('span');
+    const s = navBtns[i].querySelectorAll('span')[1];
     if (s) s.textContent = dayLabel(i);
   }
 }
