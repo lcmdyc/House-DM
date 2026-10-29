@@ -182,7 +182,7 @@ function centerView() {
 
 let drag=null, moved=false;
 wrap.addEventListener('pointerdown',e=>{
-  if (e.button!==0||e.target.closest('.add,#centerBtn,#stripOpen')) return;
+if (e.button!==0||e.target.closest('.add,#centerBtn,#stripOpen,#npcStripOpen,.empty')) return;
   drag={sx:e.clientX,sy:e.clientY,px:pan.x,py:pan.y}; moved=false;
 });
 window.addEventListener('pointermove',e=>{
