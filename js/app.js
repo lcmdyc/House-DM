@@ -13,7 +13,52 @@ function save() {
   renderStrip();
 }
 
-// ===== 配色主题切换与全局应用（深度挂载与强力覆写）=====
+// ===== 配色主题配置与核心行内变量注入（绝对优先级）=====
+const THEMES = {
+  dark: {
+    '--bg': '#14161b',
+    '--panel': '#1c1f26',
+    '--card': '#232732',
+    '--card-hover': '#2a2f3d',
+    '--line': '#2e3444',
+    '--text': '#e1e4ea',
+    '--mute': '#8b92a4',
+    '--accent': '#d8893a',
+    '--accent-rgb': '216, 137, 58',
+    '--danger': '#d9534f',
+    '--item': '#4aa8d8',
+    '--clue': '#e8a13a',
+    '--npc': '#b27cd8',
+    '--door': '#c8955a',
+    '--open': '#4cc9a0',
+    '--lock': '#e0605e',
+    '--out': '#9b8b7a',
+    '--in': '#6c7be0',
+    '--map-grid': 'rgba(255, 255, 255, 0.03)'
+  },
+  light: {
+    '--bg': '#f2f4f7',
+    '--panel': '#ffffff',
+    '--card': '#e4e7ee',
+    '--card-hover': '#d8dce6',
+    '--line': '#b8c0cc',
+    '--text': '#1a1e26',
+    '--mute': '#545c6e',
+    '--accent': '#bd6717',
+    '--accent-rgb': '189, 103, 23',
+    '--danger': '#c73430',
+    '--item': '#1b73a3',
+    '--clue': '#b36b10',
+    '--npc': '#8342af',
+    '--door': '#925f29',
+    '--open': '#1e8a65',
+    '--lock': '#b33230',
+    '--out': '#6f6254',
+    '--in': '#3e4da9',
+    '--map-grid': 'rgba(0, 0, 0, 0.07)'
+  }
+};
+
 function getStoredTheme() {
   try {
     return localStorage.getItem('trpg_theme') || 'dark';
@@ -25,15 +70,23 @@ function getStoredTheme() {
 function applyTheme(theme) {
   const isLight = theme === 'light';
   const t = isLight ? 'light' : 'dark';
+  const vars = THEMES[t];
 
-  // 同时作用于 html 与 body 标签，保证无论 CSS 如何引用都能即刻响应
-  document.documentElement.setAttribute('data-theme', t);
-  document.documentElement.classList.toggle('light-theme', isLight);
+  // 1. 直接强制写入 <html> 行内变量（最高优先级，穿透任何缓存与样式权重）
+  const root = document.documentElement;
+  for (const [k, v] of Object.entries(vars)) {
+    root.style.setProperty(k, v);
+  }
+
+  // 2. 标记属性与 class
+  root.setAttribute('data-theme', t);
+  root.classList.toggle('light-theme', isLight);
   if (document.body) {
     document.body.setAttribute('data-theme', t);
     document.body.classList.toggle('light-theme', isLight);
   }
 
+  // 3. 更新按钮文字
   const btn = document.getElementById('themeBtn');
   if (btn) {
     btn.textContent = isLight ? '☀️ 浅色' : '🌙 深色';
@@ -173,7 +226,6 @@ function setPlayerRoom(i, rid) {
   save(); renderMap(); renderSide();
 }
 
-// 滚轮快速微调玩家属性（上滚增加，下滚减少）
 function handleAttrWheel(e, pIdx, attrId) {
   e.preventDefault();
   e.stopPropagation();
@@ -470,7 +522,6 @@ function handleCardDrop(e, type, targetId) {
   targetId = String(targetId);
   if (dragType !== type || !dragSourceId || dragSourceId === targetId) return;
 
-  // 1. 日程列表（左侧天）拖拽重排
   if (type === 'day') {
     const fromIdx = +dragSourceId;
     const toRawIdx = +targetId;
@@ -489,7 +540,6 @@ function handleCardDrop(e, type, targetId) {
     return;
   }
 
-  // 2. 当日事件列表（右侧事件）拖拽重排
   if (type === 'event') {
     const events = D.days[dayView].events;
     const fromIdx = events.findIndex(ev => String(ev.id) === dragSourceId);
@@ -505,7 +555,6 @@ function handleCardDrop(e, type, targetId) {
     return;
   }
 
-  // 3. 房间物资与实体拖拽重排
   const r = room(sel); if (!r) return;
   const list = type === 'item' ? r.items : r.entities;
   const fromIdx = list.findIndex(x => String(x.id) === dragSourceId);
@@ -808,7 +857,6 @@ function renderDays() {
   if (dayView >= D.days.length) dayView = D.days.length - 1;
   const nav = document.getElementById('dayNav');
 
-  // 1. 左侧天列表
   nav.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
     return `<div class="item day-card ${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}"
@@ -828,7 +876,6 @@ function renderDays() {
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
 
-  // 2. 右侧事件列表
   const evs = d.events.map(e => `
     <div class="item ${e.done ? 'done' : ''}"
       data-id="${e.id}"
