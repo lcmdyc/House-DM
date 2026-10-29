@@ -40,7 +40,7 @@ const newEntity = () => ({
 
 const blankCard = () => ({ info: { name: '', gender: '', age: '', job: '', religion: '', zodiac: '' }, vals: {}, items: '', other: '' });
 const blankBg = (i = 0) => ({ identity: '', skills: [], goals: [], card: blankCard(), color: PALETTE[i % PALETTE.length], roomId: '' });
-const newDay = () => ({ id: uid(), ended: false, events: [] });
+const newDay = (idx = 0) => ({ id: uid(), title: `Day ${idx + 1}`, ended: false, events: [] });
 const defaultCfg = () => ({ points: 40, attrs: ['力量', '技巧', '敏捷', '勇气', '观察', '理智', '口才'].map(n => ({ id: uid(), name: n, show: true })) });
 
 function blankRoom(x, y, name) {
@@ -55,7 +55,7 @@ function blankData() {
     pool: [],
     cardCfg: defaultCfg(),
     bg: Array.from({ length: 7 }, (_, i) => blankBg(i)),
-    days: [newDay()],
+    days: [newDay(0)],
     curDay: 0,
     ui: { strip: true, showChar: true },
     log: []
@@ -79,8 +79,12 @@ function migrate(d) {
   if (typeof d.cardCfg.points !== 'number') d.cardCfg.points = 40;
   d.cardCfg.attrs.forEach(a => { if (typeof a.show !== 'boolean') a.show = true; });
   d.ui = Object.assign({ strip: true, showChar: true }, d.ui || {});
-  if (!Array.isArray(d.days) || !d.days.length) d.days = [newDay()];
-  d.days.forEach(x => { if (!Array.isArray(x.events)) x.events = []; if (!x.id) x.id = uid(); });
+  if (!Array.isArray(d.days) || !d.days.length) d.days = [newDay(0)];
+  d.days.forEach((x, idx) => {
+    if (!Array.isArray(x.events)) x.events = [];
+    if (!x.id) x.id = uid();
+    if (typeof x.title !== 'string' || !x.title.trim()) x.title = `Day ${idx + 1}`;
+  });
   if (!(d.curDay >= 0 && d.curDay < d.days.length)) d.curDay = 0;
 
   d.rooms.forEach(r => {
@@ -133,14 +137,13 @@ let peer = null;
 let p2pConnections = [];
 let targetHostId = new URLSearchParams(window.location.search).get('peer') || null;
 let myPeerId = null;
-const isHost = !targetHostId; // URL里没带peer参数即为房主
+const isHost = !targetHostId;
 
 function updateP2PBtn() {
   const btn = document.getElementById('p2pBtn');
   if (!btn) return;
-  
   if (p2pConnections.length > 0) {
-    const totalCount = p2pConnections.length + 1; // 加上自己
+    const totalCount = p2pConnections.length + 1;
     btn.textContent = `🟢 联机中 (${totalCount}人在线)`;
     btn.style.borderColor = 'var(--item)';
   } else if (targetHostId) {
@@ -157,14 +160,11 @@ function updateP2PBtn() {
 
 function initP2PSync() {
   if (!window.Peer) return;
-
   peer = new Peer();
 
   peer.on('open', id => {
     myPeerId = id;
     updateP2PBtn();
-
-    // 协作者模式：连接房主
     if (targetHostId) {
       toast('正在连入房主房间...');
       const conn = peer.connect(targetHostId, { reliable: true });
@@ -172,7 +172,6 @@ function initP2PSync() {
     }
   });
 
-  // 房主模式：监听所有加入进来的协作者
   peer.on('connection', conn => {
     setupP2PConn(conn);
   });
@@ -188,23 +187,19 @@ function setupP2PConn(conn) {
     p2pConnections.push(conn);
     updateP2PBtn();
     toast(`🎉 新成员加入！当前共 ${p2pConnections.length + 1} 人`);
-
     if (isHost) {
-      // 房主将最新模组进度推送给刚进房的人
       conn.send({ type: 'FULL_SYNC', data: D });
     }
   });
 
   conn.on('data', msg => {
     if (!msg || typeof msg !== 'object') return;
-
     if (msg.type === 'FULL_SYNC' || msg.type === 'DIFF_SYNC') {
       D = migrate(msg.data);
       localStorage.setItem(KEY, JSON.stringify(D));
       toast('⚡ 收到房间实时同步修改');
       if (typeof renderAllViews === 'function') renderAllViews();
 
-      // ⭐ 核心重点：如果当前自己是房主，把这个改动中继转播给房里的其他所有人！
       if (isHost) {
         p2pConnections.forEach(otherConn => {
           if (otherConn !== conn && otherConn.open) {
@@ -222,7 +217,6 @@ function setupP2PConn(conn) {
   });
 }
 
-// 广播给房间内的所有连接端
 function broadcastP2P(data) {
   p2pConnections.forEach(conn => {
     if (conn.open) {
@@ -231,14 +225,11 @@ function broadcastP2P(data) {
   });
 }
 
-// 点击顶部邀请按钮
 function handleP2PAction() {
   if (!myPeerId) {
     toast('联机网络初始化中，请稍等片刻...');
     return;
   }
-  
-  // 始终以房主的 ID 作为固定链接
   const hostId = isHost ? myPeerId : targetHostId;
   const u = new URL(window.location.href);
   u.searchParams.set('peer', hostId);
@@ -269,3 +260,4 @@ const pcolor = i => (D.bg[i] && D.bg[i].color) || '#888';
 const pname = i => D.players[i] || ('玩家' + (i + 1));
 const cardUsed = c => D.cardCfg.attrs.reduce((s, a) => s + (+c.vals[a.id] || 0), 0);
 const playersIn = rid => D.players.map((_, i) => i).filter(i => D.bg[i].roomId === rid);
+const dayLabel = i => (D.days[i] && D.days[i].title) ? D.days[i].title : `Day ${i + 1}`;
