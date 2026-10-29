@@ -1,3 +1,5 @@
+/* style.css */
+
 :root {
   --bg: #14161b;
   --panel: #1c1f26;
@@ -121,9 +123,10 @@ main {
   overflow: hidden;
 }
 
-/* 玩家属性边栏 */
+/* ===== 玩家属性侧栏（固定展开，不可折叠） ===== */
 #strip {
   width: 200px;
+  min-width: 200px;
   background: var(--panel);
   border-right: 1px solid var(--line);
   display: flex;
@@ -133,30 +136,37 @@ main {
   overflow-y: auto;
   flex: none;
   z-index: 5;
-  transition: width .2s, padding .2s, margin .2s;
 }
+/* 保留 .hide 类名防止 JS 报错，但不折叠 */
 #strip.hide {
-  width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
+  width: 200px;
+  min-width: 200px;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
 }
 
-/* ===== 玩家栏收起按钮：浮在地图左上角，不占 flex 空间 ===== */
-#stripOpen {
-  display: none;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  padding: 5px 9px;
-  font-size: 12px;
+/* ===== NPC 属性侧栏（固定展开，不可折叠） ===== */
+#npcStrip {
+  width: 200px;
+  min-width: 200px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  cursor: pointer;
-  writing-mode: horizontal-tb;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+  overflow-y: auto;
+  flex: none;
+  z-index: 5;
+}
+/* 保留 .hide 类名防止 JS 报错，但不折叠 */
+#npcStrip.hide {
+  width: 200px;
+  min-width: 200px;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
 }
 
 .sthead {
@@ -225,9 +235,10 @@ main {
 .pc .as span b { color: var(--text); font-weight: normal; }
 .pc .as span.z b { opacity: .4; }
 
-/* 画布与房间网格 */
+/* ===== 地图区域 ===== */
 #mapWrap {
   flex: 1;
+  min-width: 320px;
   position: relative;
   overflow: hidden;
   background-color: var(--bg);
@@ -545,7 +556,6 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.npc   { border-left: 3px solid var(--npc); cursor: pointer; }
 .item.rd    { border-left: 3px solid var(--accent); cursor: pointer; }
 
-/* 日程天卡片专属高亮 */
 .item.day-card {
   padding: 8px 10px;
   cursor: pointer;
@@ -670,7 +680,6 @@ textarea:focus, input[type=text]:focus, select:focus {
   color: #fff;
 }
 
-/* 实体触发行为卡片 */
 .act-item {
   background: var(--bg);
   border: 1px solid var(--line);
@@ -691,7 +700,6 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.en-copy { border-left: 3px solid var(--npc); }
 .item.en-copy.act { border-left: 3px solid #e07b5e; }
 
-/* 拖拽手柄 */
 .drag-handle {
   cursor: grab;
   color: var(--mute);
@@ -763,7 +771,6 @@ dialog::backdrop {
   cursor: pointer;
 }
 
-/* 玩家弹窗 */
 .prow {
   display: flex;
   gap: 8px;
@@ -782,7 +789,6 @@ dialog::backdrop {
 .prow input[type=text] { flex: 1; }
 .prow select { width: 130px; }
 
-/* 日程与玩家背景左右分栏 */
 .bgwrap {
   display: flex;
   gap: 14px;
@@ -820,7 +826,6 @@ dialog::backdrop {
   padding-right: 4px;
 }
 
-/* 房间玩家分配 chip */
 .sec-label {
   font-size: 12px;
   color: var(--mute);
@@ -855,7 +860,6 @@ dialog::backdrop {
 .pchip.pchip-other { opacity: 0.45; font-style: italic; }
 .pchip.pchip-other:hover { opacity: 0.85; }
 
-/* 日程顶栏 */
 .dayhead {
   display: flex;
   gap: 8px;
@@ -881,7 +885,6 @@ dialog::backdrop {
   font-weight: bold;
 }
 
-/* 玩家背景分段 */
 .divider {
   display: flex;
   align-items: center;
@@ -943,7 +946,6 @@ dialog::backdrop {
 .attr button { padding: 3px 6px; }
 .attr button.x { color: var(--mute); border: none; background: transparent; }
 
-/* 物资总览池 */
 .ptool {
   display: flex;
   gap: 8px;
@@ -988,7 +990,6 @@ dialog::backdrop {
   gap: 6px;
 }
 
-/* 日志 */
 #logList {
   display: flex;
   flex-direction: column;
@@ -1018,7 +1019,6 @@ dialog::backdrop {
 }
 .lg.day { background: rgba(var(--accent-rgb), .12); }
 
-/* 手册预览 */
 .hbopts {
   display: flex;
   gap: 14px;
@@ -1040,7 +1040,6 @@ dialog::backdrop {
   border-radius: 4px;
 }
 
-/* Toast */
 #toast {
   position: fixed;
   bottom: 24px;
@@ -1063,11 +1062,9 @@ dialog::backdrop {
   transform: translateX(-50%) translateY(0);
 }
 
-/* 在其他房间的玩家按钮 */
 .pbtn-away { opacity: 0.4; font-style: italic; }
 .pbtn-away:hover { opacity: 0.75; }
 
-/* 模组库卡片 */
 .mod-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1153,80 +1150,6 @@ dialog::backdrop {
   position: relative;
   overflow: hidden;
   min-height: 0;
-}
-
-/* ===== 玩家属性侧栏 ===== */
-#strip {
-  width: 200px;
-  background: var(--panel);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  gap: 8px;
-  overflow-y: auto;
-  flex: none;
-  z-index: 5;
-  transition: width .2s, padding .2s, margin .2s;
-}
-#strip.hide {
-  width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-
-/* ===== 玩家栏收起按钮：绝对定位在地图左上角 ===== */
-#stripOpen {
-  display: none;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  padding: 5px 9px;
-  font-size: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* ===== NPC 属性侧栏 ===== */
-#npcStrip {
-  width: 200px;
-  background: var(--panel);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  gap: 8px;
-  overflow-y: auto;
-  flex: none;
-  z-index: 5;
-  transition: width .2s, padding .2s, margin .2s;
-}
-#npcStrip.hide {
-  width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-
-/* ===== NPC 栏收起按钮：绝对定位在地图左上角（玩家按钮下方） ===== */
-#npcStripOpen {
-  display: none;
-  position: absolute;
-  top: 44px;
-  left: 10px;
-  z-index: 10;
-  padding: 5px 9px;
-  font-size: 12px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 /* NPC 卡片 */
@@ -1329,7 +1252,6 @@ dialog::backdrop {
   min-height: 0;
 }
 
-/* NPC 资料库布局 */
 #npcLibToolbar {
   padding: 10px 14px;
   display: flex;
@@ -1387,7 +1309,6 @@ dialog::backdrop {
   padding: 16px 20px;
 }
 
-/* NPC 列表卡片 */
 .npc-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1414,7 +1335,6 @@ dialog::backdrop {
 }
 .npc-card.monster .nc-badge { background: rgba(217,83,79,.2); color: var(--danger); }
 
-/* NPC 详情面板 */
 .npc-detail-empty {
   display: flex;
   align-items: center;
