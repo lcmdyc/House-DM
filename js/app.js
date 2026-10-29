@@ -342,67 +342,71 @@ function descCard(r) {
   </div>`;
 }
 
-// ===== 拖拽重排通用逻辑 =====
-let dragType = null; // 'item' 或 'entity'
+// ===== 强化版手柄拖拽重排 =====
+let dragType = null;
 let dragSourceId = null;
 
-function handleDragStart(e, type, id) {
+function handleHandleDragStart(e, type, id) {
   dragType = type;
   dragSourceId = id;
+  e.stopPropagation();
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', id);
-  setTimeout(() => e.target.classList.add('dragging'), 0);
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDragEnter(e) {
-  const card = e.target.closest('.item');
-  if (card && !card.classList.contains('dragging')) {
-    card.classList.add('drag-over-top');
-  }
-}
-
-function handleDragLeave(e) {
   const card = e.target.closest('.item');
   if (card) {
-    card.classList.remove('drag-over-top', 'drag-over-bottom');
+    setTimeout(() => card.classList.add('dragging'), 0);
   }
 }
 
-function handleDragEnd(e) {
-  e.target.classList.remove('dragging');
+function handleCardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const card = e.currentTarget;
+  if (!card || card.dataset.id === dragSourceId) return;
+  const rect = card.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  if (e.clientY < midY) {
+    card.classList.add('drag-over-top');
+    card.classList.remove('drag-over-bottom');
+  } else {
+    card.classList.add('drag-over-bottom');
+    card.classList.remove('drag-over-top');
+  }
+}
+
+function handleCardDragLeave(e) {
+  const card = e.currentTarget;
+  if (card) card.classList.remove('drag-over-top', 'drag-over-bottom');
+}
+
+function handleCardDragEnd(e) {
   document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
   dragType = null;
   dragSourceId = null;
 }
 
-function handleItemDrop(e, targetId) {
+function handleCardDrop(e, type, targetId) {
   e.preventDefault();
-  if (dragType !== 'item' || dragSourceId === targetId) return;
+  e.stopPropagation();
+  const card = e.currentTarget;
+  const isTop = card && card.classList.contains('drag-over-top');
+  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+
+  if (dragType !== type || !dragSourceId || dragSourceId === targetId) return;
   const r = room(sel); if (!r) return;
-  const fromIdx = r.items.findIndex(i => i.id === dragSourceId);
-  const toIdx = r.items.findIndex(i => i.id === targetId);
-  if (fromIdx === -1 || toIdx === -1) return;
+  const list = type === 'item' ? r.items : r.entities;
 
-  const [moved] = r.items.splice(fromIdx, 1);
-  r.items.splice(toIdx, 0, moved);
-  save(); renderSide();
-}
+  const fromIdx = list.findIndex(x => x.id === dragSourceId);
+  if (fromIdx === -1) return;
+  const [moved] = list.splice(fromIdx, 1);
 
-function handleEntityDrop(e, targetId) {
-  e.preventDefault();
-  if (dragType !== 'entity' || dragSourceId === targetId) return;
-  const r = room(sel); if (!r) return;
-  const fromIdx = r.entities.findIndex(en => en.id === dragSourceId);
-  const toIdx = r.entities.findIndex(en => en.id === targetId);
-  if (fromIdx === -1 || toIdx === -1) return;
+  let toIdx = list.findIndex(x => x.id === targetId);
+  if (toIdx === -1) { list.push(moved); }
+  else {
+    if (!isTop) toIdx += 1;
+    list.splice(toIdx, 0, moved);
+  }
 
-  const [moved] = r.entities.splice(fromIdx, 1);
-  r.entities.splice(toIdx, 0, moved);
   save(); renderSide();
 }
 
@@ -410,10 +414,11 @@ function entityListCard(r) {
   const list = (r.entities || []).map(en => {
     const isCur = selEntity && selEntity.id === en.id;
     return `<div class="item compact npc ${isCur ? 'sel' : ''}" style="${isCur ? 'outline:2px solid var(--accent)' : ''}"
-      ${edit ? `draggable="true" ondragstart="handleDragStart(event,'entity','${en.id}')" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleEntityDrop(event,'${en.id}')" ondragend="handleDragEnd(event)"` : ''}
+      data-id="${en.id}"
+      ${edit ? `ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'entity','${en.id}')"` : ''}
       onclick="openEntity('${en.id}')">
       <div class="row">
-        ${edit ? `<span class="drag-handle" title="按住拖拽排序" onclick="event.stopPropagation()">⠿</span>` : ''}
+        ${edit ? `<span class="drag-handle" title="按住拖拽排序" draggable="true" ondragstart="handleHandleDragStart(event,'entity','${en.id}')" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>` : ''}
         <span class="tag static npc">${esc(en.disposition || '中立')}</span>
         <div class="memo">
           <b>${esc(en.name) || '未命名实体'}</b>
@@ -439,7 +444,6 @@ function renderSide() {
   if (!r) { s.classList.remove('open'); s.innerHTML = ''; return; }
   s.classList.add('open');
   const keep = s.scrollTop;
-  // 编辑模式保留原始列表顺序供拖拽，带团模式按未消耗/已消耗归类展示
   const listItems = edit ? r.items : [...r.items.filter(i => !i.consumed), ...r.items.filter(i => i.consumed)];
   const here = playersIn(r.id);
   s.innerHTML = `
@@ -608,7 +612,7 @@ function renderEntitySide() {
 
 function upd(k, v) { const r = room(sel); r[k] = v; save(); if (k === 'name') { renderMap(); if (!edit) renderSide(); } }
 
-// ===== 物资卡片（带小字描述与拖拽重排）=====
+// ===== 物资卡片（带小字描述与手柄拖拽重排）=====
 function pbtnsHtml(i) {
   return D.players.map((p, idx) => {
     const on = i.owners.includes(idx), c = pcolor(idx);
@@ -620,15 +624,12 @@ function pbtnsHtml(i) {
 function itemHtml(i) {
   const t = i.type === 'clue';
   return `<div class="item ${t ? 'clue' : ''} ${i.consumed ? 'consumed' : ''}"
-    draggable="true"
-    ondragstart="handleDragStart(event,'item','${i.id}')"
-    ondragover="handleDragOver(event)"
-    ondragenter="handleDragEnter(event)"
-    ondragleave="handleDragLeave(event)"
-    ondrop="handleItemDrop(event,'${i.id}')"
-    ondragend="handleDragEnd(event)">
+    data-id="${i.id}"
+    ondragover="handleCardDragOver(event)"
+    ondragleave="handleCardDragLeave(event)"
+    ondrop="handleCardDrop(event,'item','${i.id}')">
     <div class="row">
-      <span class="drag-handle" title="按住拖动排序" onclick="event.stopPropagation()">⠿</span>
+      <span class="drag-handle" title="按住拖拽排序" draggable="true" ondragstart="handleHandleDragStart(event,'item','${i.id}')" ondragend="handleCardDragEnd(event)" onclick="event.stopPropagation()">⠿</span>
       <button class="tag ${i.type}" title="点击切换类型" onclick="itemType('${i.id}')">${t ? '线索' : '道具'}</button>
       <input type="text" value="${esc(i.name)}" placeholder="物资名称" oninput="itemUpd('${i.id}','name',this.value)">
       <button class="danger" onclick="delItem('${i.id}')">🗑</button>
