@@ -99,7 +99,7 @@ function renderLog() {
 }
 
 function copyLog() {
-  const t = logFiltered().map(e => `[Day ${e.day} ${logTime(e.ts)}] ${e.text}`).join('\n');
+  const t = logFiltered().map(e => `[${dayLabel(e.day - 1)} ${logTime(e.ts)}] ${e.text}`).join('\n');
   if (!t) { toast('没有可复制的记录'); return; }
   copyText(t).then(ok => ok ? toast('📋 已复制日志') : prompt('请手动复制：', t));
 }
@@ -342,11 +342,78 @@ function descCard(r) {
   </div>`;
 }
 
+// ===== 拖拽重排通用逻辑 =====
+let dragType = null; // 'item' 或 'entity'
+let dragSourceId = null;
+
+function handleDragStart(e, type, id) {
+  dragType = type;
+  dragSourceId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  const card = e.target.closest('.item');
+  if (card && !card.classList.contains('dragging')) {
+    card.classList.add('drag-over-top');
+  }
+}
+
+function handleDragLeave(e) {
+  const card = e.target.closest('.item');
+  if (card) {
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
+  }
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging'));
+  dragType = null;
+  dragSourceId = null;
+}
+
+function handleItemDrop(e, targetId) {
+  e.preventDefault();
+  if (dragType !== 'item' || dragSourceId === targetId) return;
+  const r = room(sel); if (!r) return;
+  const fromIdx = r.items.findIndex(i => i.id === dragSourceId);
+  const toIdx = r.items.findIndex(i => i.id === targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  const [moved] = r.items.splice(fromIdx, 1);
+  r.items.splice(toIdx, 0, moved);
+  save(); renderSide();
+}
+
+function handleEntityDrop(e, targetId) {
+  e.preventDefault();
+  if (dragType !== 'entity' || dragSourceId === targetId) return;
+  const r = room(sel); if (!r) return;
+  const fromIdx = r.entities.findIndex(en => en.id === dragSourceId);
+  const toIdx = r.entities.findIndex(en => en.id === targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  const [moved] = r.entities.splice(fromIdx, 1);
+  r.entities.splice(toIdx, 0, moved);
+  save(); renderSide();
+}
+
 function entityListCard(r) {
   const list = (r.entities || []).map(en => {
     const isCur = selEntity && selEntity.id === en.id;
-    return `<div class="item compact npc ${isCur ? 'sel' : ''}" style="${isCur ? 'outline:2px solid var(--accent)' : ''}" onclick="openEntity('${en.id}')">
+    return `<div class="item compact npc ${isCur ? 'sel' : ''}" style="${isCur ? 'outline:2px solid var(--accent)' : ''}"
+      ${edit ? `draggable="true" ondragstart="handleDragStart(event,'entity','${en.id}')" ondragover="handleDragOver(event)" ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondrop="handleEntityDrop(event,'${en.id}')" ondragend="handleDragEnd(event)"` : ''}
+      onclick="openEntity('${en.id}')">
       <div class="row">
+        ${edit ? `<span class="drag-handle" title="按住拖拽排序" onclick="event.stopPropagation()">⠿</span>` : ''}
         <span class="tag static npc">${esc(en.disposition || '中立')}</span>
         <div class="memo">
           <b>${esc(en.name) || '未命名实体'}</b>
@@ -361,7 +428,7 @@ function entityListCard(r) {
     <h3>🎭 固定场景 / 实体 / 遭遇 (${(r.entities || []).length})
       ${edit ? '<button class="primary" onclick="createEntity()">＋ 新建实体</button>' : ''}
     </h3>
-    <div class="hint" style="margin-bottom:6px">NPC、固定怪、机关陷阱等。点击展开独立属性与后果侧栏。</div>
+    <div class="hint" style="margin-bottom:6px">${edit ? '按住左侧 ⠿ 手柄可上下拖拽排序。' : ''}点击展开独立属性与后果侧栏。</div>
     ${list || '<p class="hint">当前房间无固定实体/怪物</p>'}
   </div>`;
 }
@@ -372,7 +439,8 @@ function renderSide() {
   if (!r) { s.classList.remove('open'); s.innerHTML = ''; return; }
   s.classList.add('open');
   const keep = s.scrollTop;
-  const sorted = [...r.items.filter(i => !i.consumed), ...r.items.filter(i => i.consumed)];
+  // 编辑模式保留原始列表顺序供拖拽，带团模式按未消耗/已消耗归类展示
+  const listItems = edit ? r.items : [...r.items.filter(i => !i.consumed), ...r.items.filter(i => i.consumed)];
   const here = playersIn(r.id);
   s.innerHTML = `
   <div class="sidehead">
@@ -391,7 +459,7 @@ function renderSide() {
       ${edit ? '<button class="primary" onclick="addItem()">＋ 添加物资</button>' : '<span class="hint">点击卡片复制描述</span>'}</h3>
     <label class="s">整体判定条件 / 备注</label>
     <textarea style="min-height:50px" oninput="upd('poolNote',this.value)" placeholder="如：搜索检定 DC12；每人限搜一次…">${esc(r.poolNote)}</textarea>
-    <div id="items">${sorted.map(edit ? itemHtml : itemCompact).join('') || '<p class="hint">暂无物资</p>'}</div>
+    <div id="items">${listItems.map(edit ? itemHtml : itemCompact).join('') || '<p class="hint">暂无物资</p>'}</div>
   </div>`;
   s.scrollTop = keep;
 }
@@ -540,7 +608,7 @@ function renderEntitySide() {
 
 function upd(k, v) { const r = room(sel); r[k] = v; save(); if (k === 'name') { renderMap(); if (!edit) renderSide(); } }
 
-// ===== 物资卡片（带小字描述渲染）=====
+// ===== 物资卡片（带小字描述与拖拽重排）=====
 function pbtnsHtml(i) {
   return D.players.map((p, idx) => {
     const on = i.owners.includes(idx), c = pcolor(idx);
@@ -551,8 +619,16 @@ function pbtnsHtml(i) {
 
 function itemHtml(i) {
   const t = i.type === 'clue';
-  return `<div class="item ${t ? 'clue' : ''} ${i.consumed ? 'consumed' : ''}">
+  return `<div class="item ${t ? 'clue' : ''} ${i.consumed ? 'consumed' : ''}"
+    draggable="true"
+    ondragstart="handleDragStart(event,'item','${i.id}')"
+    ondragover="handleDragOver(event)"
+    ondragenter="handleDragEnter(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleItemDrop(event,'${i.id}')"
+    ondragend="handleDragEnd(event)">
     <div class="row">
+      <span class="drag-handle" title="按住拖动排序" onclick="event.stopPropagation()">⠿</span>
       <button class="tag ${i.type}" title="点击切换类型" onclick="itemType('${i.id}')">${t ? '线索' : '道具'}</button>
       <input type="text" value="${esc(i.name)}" placeholder="物资名称" oninput="itemUpd('${i.id}','name',this.value)">
       <button class="danger" onclick="delItem('${i.id}')">🗑</button>
@@ -606,11 +682,12 @@ function toggleConsumed(id) {
   save(); renderSide(); renderMap();
 }
 
-// ===== 日程 =====
+// ===== 日程（支持标题自定义）=====
 const dayDlg = document.getElementById('dayDlg');
 function updateDayBar() {
-  document.getElementById('dayBtn').textContent = '📅 Day ' + (D.curDay + 1);
-  document.getElementById('endDayBtn').textContent = 'Day ' + (D.curDay + 1) + ' 结束 ▶';
+  const curTitle = dayLabel(D.curDay);
+  document.getElementById('dayBtn').textContent = '📅 ' + curTitle;
+  document.getElementById('endDayBtn').textContent = curTitle + ' 结束 ▶';
 }
 function openDays() { dayView = D.curDay; renderDays(); dayDlg.showModal(); }
 function renderDays() {
@@ -619,8 +696,10 @@ function renderDays() {
   nav.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
     return `<button class="${i === dayView ? 'on' : ''} ${i === D.curDay ? 'cur' : ''}" onclick="dayView=${i};renderDays()">
-      <span>Day ${i + 1}</span><span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span></button>`;
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dayLabel(i))}</span>
+      <span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span></button>`;
   }).join('') + `<button onclick="addDay()">＋ 新增一天</button>`;
+  
   const d = D.days[dayView], isCur = dayView === D.curDay;
   const keep = document.getElementById('dayMain').scrollTop;
   const evs = d.events.map(e => `<div class="ev ${e.done ? 'done' : ''}">
@@ -634,17 +713,33 @@ function renderDays() {
       </div>
       <textarea placeholder="事件详情…" oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
     </div>`).join('') || '<p class="hint">这一天还没有事件，点击下方「＋ 添加事件」</p>';
+  
   document.getElementById('dayMain').innerHTML = `
     <div class="dayhead">
-      <span class="nm">Day ${dayView + 1}</span>
+      <input type="text" class="nm" style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
+        value="${esc(dayLabel(dayView))}"
+        placeholder="名目 (如 Day 1 / 序幕)"
+        title="点击直接修改此天名称"
+        oninput="setDayTitle(${dayView},this.value)">
       ${isCur ? '<span class="badge2 cur">当前日</span>' : d.ended ? '<span class="badge2">已结束</span>' : '<span class="badge2">未开始</span>'}
-      ${isCur ? `<button class="primary" onclick="endDay()">Day ${dayView + 1} 结束 ▶</button>` : `<button onclick="setCur(${dayView})">设为当前日</button>`}
+      ${isCur ? `<button class="primary" onclick="endDay()">${esc(dayLabel(dayView))} 结束 ▶</button>` : `<button onclick="setCur(${dayView})">设为当前日</button>`}
       ${D.days.length > 1 ? `<button class="danger" onclick="delDay()">删除这一天</button>` : ''}
     </div>
     ${evs}
     <button class="primary" onclick="evAdd()">＋ 添加事件</button>`;
   document.getElementById('dayMain').scrollTop = keep;
   updateDayBar();
+}
+
+function setDayTitle(i, val) {
+  D.days[i].title = val.trim() || `Day ${i + 1}`;
+  save();
+  updateDayBar();
+  const navBtns = document.getElementById('dayNav').querySelectorAll('button');
+  if (navBtns[i]) {
+    const s = navBtns[i].querySelector('span');
+    if (s) s.textContent = dayLabel(i);
+  }
 }
 
 const evGet = id => D.days[dayView].events.find(e => e.id === id);
@@ -657,31 +752,31 @@ function evMove(id, dir) {
   if (j < 0 || j >= a.length) return;
   [a[i], a[j]] = [a[j], a[i]]; save(); renderDays();
 }
-function addDay() { D.days.push(newDay()); dayView = D.days.length - 1; save(); renderDays(); }
+function addDay() { D.days.push(newDay(D.days.length)); dayView = D.days.length - 1; save(); renderDays(); }
 function delDay() {
   const d = D.days[dayView];
-  if (!confirm(`删除 Day ${dayView + 1}？`)) return;
+  if (!confirm(`删除「${dayLabel(dayView)}」？`)) return;
   D.days.splice(dayView, 1);
   if (dayView < D.curDay) D.curDay--;
   else if (dayView === D.curDay) D.curDay = Math.min(D.curDay, D.days.length - 1);
   dayView = Math.min(dayView, D.days.length - 1);
   save(); renderDays();
 }
-function setCur(i) { D.curDay = i; D.days[i].ended = false; dayView = i; save(); renderDays(); toast('当前日：Day ' + (i + 1)); }
+function setCur(i) { D.curDay = i; D.days[i].ended = false; dayView = i; save(); renderDays(); toast('当前进度：' + dayLabel(i)); }
 function endDay() {
   const i = D.curDay, d = D.days[i];
   const undone = d.events.filter(e => !e.done);
-  if (!confirm(`确认结束 Day ${i + 1}？` + (undone.length ? `\n还有 ${undone.length} 个事件未完成。` : ''))) return;
+  if (!confirm(`确认结束「${dayLabel(i)}」？` + (undone.length ? `\n还有 ${undone.length} 个事件未完成。` : ''))) return;
   let carry = false;
-  if (undone.length) carry = confirm(`把这 ${undone.length} 个未完成事件顺延到 Day ${i + 2}？\n\n确定 = 顺延　取消 = 保留`);
-  addLog('day', `—— Day ${i + 1} 结束 ——`);
+  if (undone.length) carry = confirm(`把这 ${undone.length} 个未完成事件顺延到下一天？\n\n确定 = 顺延　取消 = 保留`);
+  addLog('day', `—— ${dayLabel(i)} 结束 ——`);
   d.ended = true;
-  if (i === D.days.length - 1) D.days.push(newDay());
+  if (i === D.days.length - 1) D.days.push(newDay(D.days.length));
   const next = D.days[i + 1];
   if (carry) { d.events = d.events.filter(e => e.done); next.events.unshift(...undone); }
   D.curDay = i + 1; dayView = D.curDay; save();
   if (dayDlg.open) renderDays(); else updateDayBar();
-  toast(`Day ${i + 1} 已结束，进入 Day ${i + 2}`);
+  toast(`「${dayLabel(i)}」已结束，进入「${dayLabel(D.curDay)}」`);
 }
 
 // ===== 玩家管理 =====
@@ -946,7 +1041,7 @@ function resetAll() {
   renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
 }
 
-// ===== 提供给联机同步调用的全量重绘钩子 =====
+// ===== 全局重绘钩子（供 P2P 联机同步调用）=====
 function renderAllViews() {
   document.getElementById('modTitle').value = D.title || '';
   renderStrip();
@@ -967,7 +1062,7 @@ renderMap();
 updateDayBar();
 updatePlayerBar();
 
-// 启动 P2P 网络信道（如果使用方案二）
+// 启动 P2P 网络信道
 if (typeof initP2PSync === 'function') {
   initP2PSync();
 }
