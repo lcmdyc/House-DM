@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>TRPG 模组 DM 工具</title>
-  <link rel="stylesheet" href="style.css">
+  <!-- 带版本参数强破浏览器 CSS 强缓存 -->
+  <link rel="stylesheet" href="style.css?v=light2">
   <!-- WebRTC 多人联机库 -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
@@ -22,7 +23,7 @@
 
     <div class="spacer"></div>
 
-    <!-- 新增：浅色/深色主题切换按钮 -->
+    <!-- 配色切换按钮 -->
     <button id="themeBtn" title="切换浅色/深色主题" onclick="toggleTheme()">🌓 配色</button>
     <!-- 多人联机状态按钮 -->
     <button id="peerBtn" title="P2P WebRTC 联机状态" onclick="openP2PModal()">📡 联机中...</button>
