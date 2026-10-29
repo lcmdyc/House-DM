@@ -13,27 +13,45 @@ function save() {
   renderStrip();
 }
 
-// ===== 主题配色切换与持久化 =====
-function initTheme() {
-  const t = localStorage.getItem('trpg_theme') || 'dark';
-  applyTheme(t);
+// ===== 配色主题切换与全局应用（基于 html[data-theme]）=====
+function getStoredTheme() {
+  try {
+    return localStorage.getItem('trpg_theme') || 'dark';
+  } catch (_) {
+    return 'dark';
+  }
 }
 
-function applyTheme(t) {
-  const isLight = t === 'light';
-  document.body.classList.toggle('light-theme', isLight);
+function applyTheme(theme) {
+  const t = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
   const btn = document.getElementById('themeBtn');
   if (btn) {
-    btn.textContent = isLight ? '☀️ 浅色' : '🌙 深色';
+    btn.textContent = t === 'light' ? '☀️ 浅色' : '🌙 深色';
+    btn.title = `当前为${t === 'light' ? '浅色' : '深色'}配色，点击切换`;
   }
 }
 
 function toggleTheme() {
-  const cur = document.body.classList.contains('light-theme') ? 'light' : 'dark';
-  const next = cur === 'light' ? 'dark' : 'light';
-  localStorage.setItem('trpg_theme', next);
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  try {
+    localStorage.setItem('trpg_theme', next);
+  } catch (_) {}
   applyTheme(next);
-  toast(`已切换为${next === 'light' ? '☀️ 浅色' : '🌙 深色'}主题`);
+  toast(`已切换为 ${next === 'light' ? '☀️ 浅色' : '🌙 深色'} 主题`);
+}
+
+// 绑定主题按钮点击事件（双保险，防御内联事件丢失）
+function bindThemeButton() {
+  const btn = document.getElementById('themeBtn');
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = 'true';
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      toggleTheme();
+    });
+  }
 }
 
 const newItem = () => ({ id: uid(), type: 'item', name: '', desc: '', cond: '', owners: [], consumed: false });
@@ -50,6 +68,7 @@ const getItem = id => findItem(id).item;
 let toastT;
 function toast(msg) {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastT);
@@ -1158,7 +1177,8 @@ function renderAllViews() {
 }
 
 // ===== 页面启动初始化 =====
-initTheme(); // 初始化浅色/深色偏好
+applyTheme(getStoredTheme());
+bindThemeButton();
 renderStrip();
 renderMap();
 updateDayBar();
