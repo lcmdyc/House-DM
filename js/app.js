@@ -13,7 +13,7 @@ function save() {
   renderStrip();
 }
 
-// ===== 配色主题切换与全局应用（基于 html[data-theme]）=====
+// ===== 配色主题切换与全局应用（深度挂载与强力覆写）=====
 function getStoredTheme() {
   try {
     return localStorage.getItem('trpg_theme') || 'dark';
@@ -23,26 +23,34 @@ function getStoredTheme() {
 }
 
 function applyTheme(theme) {
-  const t = theme === 'light' ? 'light' : 'dark';
+  const isLight = theme === 'light';
+  const t = isLight ? 'light' : 'dark';
+
+  // 同时作用于 html 与 body 标签，保证无论 CSS 如何引用都能即刻响应
   document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.classList.toggle('light-theme', isLight);
+  if (document.body) {
+    document.body.setAttribute('data-theme', t);
+    document.body.classList.toggle('light-theme', isLight);
+  }
+
   const btn = document.getElementById('themeBtn');
   if (btn) {
-    btn.textContent = t === 'light' ? '☀️ 浅色' : '🌙 深色';
-    btn.title = `当前为${t === 'light' ? '浅色' : '深色'}配色，点击切换`;
+    btn.textContent = isLight ? '☀️ 浅色' : '🌙 深色';
+    btn.title = `当前为 ${isLight ? '浅色' : '深色'} 配色，点击切换`;
   }
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = current === 'light' ? 'dark' : 'light';
+  const cur = (document.documentElement.getAttribute('data-theme') || 'dark');
+  const next = cur === 'light' ? 'dark' : 'light';
   try {
     localStorage.setItem('trpg_theme', next);
   } catch (_) {}
   applyTheme(next);
-  toast(`已切换为 ${next === 'light' ? '☀️ 浅色' : '🌙 深色'} 主题`);
+  toast(`已切换为 ${next === 'light' ? '☀️ 浅色' : '🌙 深色'} 配色`);
 }
 
-// 绑定主题按钮点击事件（双保险，防御内联事件丢失）
 function bindThemeButton() {
   const btn = document.getElementById('themeBtn');
   if (btn && !btn.dataset.bound) {
