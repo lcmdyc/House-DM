@@ -1,8 +1,11 @@
 /* style.css */
 
-/* 默认 / 深色主题 */
+/* ============================
+   1. 深色主题（默认）
+============================ */
 :root,
-html[data-theme="dark"] {
+html[data-theme="dark"],
+html:not([data-theme="light"]) {
   --bg: #14161b;
   --panel: #1c1f26;
   --card: #232732;
@@ -24,27 +27,31 @@ html[data-theme="dark"] {
   --map-grid: rgba(255, 255, 255, .03);
 }
 
-/* 浅色主题：纸张质感、高可读性 */
-html[data-theme="light"] {
-  --bg: #f4f5f8;
-  --panel: #ffffff;
-  --card: #eaedf2;
-  --card-hover: #dfe3ea;
-  --line: #c2c8d4;
-  --text: #1d2129;
-  --mute: #5a6272;
-  --accent: #c06919;
-  --accent-rgb: 192, 105, 25;
-  --danger: #c93834;
-  --item: #2178a8;
-  --clue: #b87114;
-  --npc: #8848b3;
-  --door: #98652e;
-  --open: #21936c;
-  --lock: #b83634;
-  --out: #736557;
-  --in: #4352af;
-  --map-grid: rgba(0, 0, 0, .06);
+/* ============================
+   2. 浅色主题（高对比度纸张质感）
+============================ */
+html[data-theme="light"],
+html.light-theme,
+body.light-theme {
+  --bg: #f2f4f7 !important;
+  --panel: #ffffff !important;
+  --card: #e4e7ee !important;
+  --card-hover: #d8dce6 !important;
+  --line: #b8c0cc !important;
+  --text: #1a1e26 !important;
+  --mute: #545c6e !important;
+  --accent: #bd6717 !important;
+  --accent-rgb: 189, 103, 23 !important;
+  --danger: #c73430 !important;
+  --item: #1b73a3 !important;
+  --clue: #b36b10 !important;
+  --npc: #8342af !important;
+  --door: #925f29 !important;
+  --open: #1e8a65 !important;
+  --lock: #b33230 !important;
+  --out: #6f6254 !important;
+  --in: #3e4da9 !important;
+  --map-grid: rgba(0, 0, 0, .07) !important;
 }
 
 * { box-sizing: border-box; }
@@ -59,7 +66,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   user-select: none;
-  transition: background .2s ease, color .2s ease;
+  transition: background .15s ease, color .15s ease;
 }
 
 /* 顶部操作栏 */
@@ -328,7 +335,7 @@ main {
 }
 .room.sel {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .3);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .35);
   background: var(--panel);
 }
 
@@ -767,7 +774,7 @@ dialog {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px 18px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, .4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .3);
 }
 dialog::backdrop {
   background: rgba(10, 12, 16, .6);
