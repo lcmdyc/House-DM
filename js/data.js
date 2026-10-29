@@ -128,26 +128,29 @@ function loadLocalData() {
   return migrate(DEFAULT_DATA ? JSON.parse(JSON.stringify(DEFAULT_DATA)) : blankData());
 }
 
-// ══════════════【WebRTC / PeerJS P2P 实时联机引擎】══════════════
+// ══════════════【WebRTC / PeerJS 多人中继广播联机引擎】══════════════
 let peer = null;
 let p2pConnections = [];
 let targetHostId = new URLSearchParams(window.location.search).get('peer') || null;
 let myPeerId = null;
+const isHost = !targetHostId; // URL里没带peer参数即为房主
 
 function updateP2PBtn() {
   const btn = document.getElementById('p2pBtn');
   if (!btn) return;
+  
   if (p2pConnections.length > 0) {
-    btn.textContent = `🟢 P2P已联机 (${p2pConnections.length}人)`;
+    const totalCount = p2pConnections.length + 1; // 加上自己
+    btn.textContent = `🟢 联机中 (${totalCount}人在线)`;
     btn.style.borderColor = 'var(--item)';
   } else if (targetHostId) {
     btn.textContent = '🔄 正在连接房主...';
     btn.style.borderColor = 'var(--accent)';
   } else if (myPeerId) {
-    btn.textContent = '📋 复制邀请链接';
+    btn.textContent = '📋 邀请多人协作';
     btn.style.borderColor = 'var(--accent)';
   } else {
-    btn.textContent = '🔗 邀请双人协作';
+    btn.textContent = '🔗 启动多人协作';
     btn.style.borderColor = 'var(--accent)';
   }
 }
@@ -155,62 +158,71 @@ function updateP2PBtn() {
 function initP2PSync() {
   if (!window.Peer) return;
 
-  // 创建本地 Peer 节点
   peer = new Peer();
 
   peer.on('open', id => {
     myPeerId = id;
     updateP2PBtn();
 
-    // 如果打开的 URL 中带有 ?peer=xxx，表示当前用户是协作者，正在连接房主
+    // 协作者模式：连接房主
     if (targetHostId) {
-      toast('正在连接房主主机...');
+      toast('正在连入房主房间...');
       const conn = peer.connect(targetHostId, { reliable: true });
-      setupP2PConn(conn, false);
+      setupP2PConn(conn);
     }
   });
 
-  // 如果自己是房主，等待协作者接入
+  // 房主模式：监听所有加入进来的协作者
   peer.on('connection', conn => {
-    setupP2PConn(conn, true);
+    setupP2PConn(conn);
   });
 
   peer.on('error', err => {
     console.error('PeerJS 错误:', err);
-    toast('P2P 通信遇到问题: ' + (err.type || '连接中断'));
+    toast('联机状态异常: ' + (err.type || '连接中断'));
   });
 }
 
-function setupP2PConn(conn, isHost) {
+function setupP2PConn(conn) {
   conn.on('open', () => {
     p2pConnections.push(conn);
     updateP2PBtn();
-    toast('🎉 P2P 双人协作通道已建立！');
+    toast(`🎉 新成员加入！当前共 ${p2pConnections.length + 1} 人`);
 
     if (isHost) {
-      // 房主第一时间将当前最新的模组全量同步给新连入的协作者
+      // 房主将最新模组进度推送给刚进房的人
       conn.send({ type: 'FULL_SYNC', data: D });
     }
   });
 
   conn.on('data', msg => {
     if (!msg || typeof msg !== 'object') return;
+
     if (msg.type === 'FULL_SYNC' || msg.type === 'DIFF_SYNC') {
       D = migrate(msg.data);
       localStorage.setItem(KEY, JSON.stringify(D));
-      toast('⚡ 收到对方的实时同步修改');
+      toast('⚡ 收到房间实时同步修改');
       if (typeof renderAllViews === 'function') renderAllViews();
+
+      // ⭐ 核心重点：如果当前自己是房主，把这个改动中继转播给房里的其他所有人！
+      if (isHost) {
+        p2pConnections.forEach(otherConn => {
+          if (otherConn !== conn && otherConn.open) {
+            otherConn.send({ type: 'DIFF_SYNC', data: D });
+          }
+        });
+      }
     }
   });
 
   conn.on('close', () => {
     p2pConnections = p2pConnections.filter(c => c !== conn);
     updateP2PBtn();
-    toast('对方已退出联机');
+    toast(`有成员退出了房间 (剩余 ${p2pConnections.length + 1} 人)`);
   });
 }
 
-// 广播给所有对端
+// 广播给房间内的所有连接端
 function broadcastP2P(data) {
   p2pConnections.forEach(conn => {
     if (conn.open) {
@@ -219,28 +231,30 @@ function broadcastP2P(data) {
   });
 }
 
-// 点击顶部 P2P 按钮的处理逻辑
+// 点击顶部邀请按钮
 function handleP2PAction() {
   if (!myPeerId) {
-    toast('P2P 网络初始化中，请稍等2秒...');
+    toast('联机网络初始化中，请稍等片刻...');
     return;
   }
+  
+  // 始终以房主的 ID 作为固定链接
+  const hostId = isHost ? myPeerId : targetHostId;
   const u = new URL(window.location.href);
-  u.searchParams.set('peer', myPeerId);
+  u.searchParams.set('peer', hostId);
   const shareLink = u.toString();
 
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(shareLink).then(() => {
-      toast('📋 邀请链接已复制到剪贴板！发给对方即可直连');
+      toast('📋 邀请链接已复制！无论发给多少人，打开都将进入同一进程');
     });
   } else {
-    prompt('请复制以下专属协作链接发给对方：', shareLink);
+    prompt('请复制以下专属房间链接发给大家：', shareLink);
   }
 }
 
 function saveData(d) {
   localStorage.setItem(KEY, JSON.stringify(d));
-  // 实时发送至已连接对端
   broadcastP2P(d);
 }
 
