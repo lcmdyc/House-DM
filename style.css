@@ -532,7 +532,7 @@ textarea:focus, input[type=text]:focus, select:focus {
   gap: 6px;
   margin-bottom: 8px;
   position: relative;
-  transition: border-color .15s, transform .15s, opacity .15s;
+  transition: border-color .15s, transform .15s, opacity .15s, box-shadow .15s;
 }
 .item:last-child { margin-bottom: 0; }
 .item.clue { border-left: 3px solid var(--clue); }
@@ -540,26 +540,28 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.npc { border-left: 3px solid var(--npc); cursor: pointer; }
 .item.rd { border-left: 3px solid var(--accent); cursor: pointer; }
 
-/* 日程导航栏中的天项卡片 */
+/* 日程导航栏中的天项卡片（强化辨识与高亮） */
 .item.day-card {
-  padding: 6px 8px;
+  padding: 7px 9px;
   cursor: pointer;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
 }
 .item.day-card:hover {
   background: var(--card-hover);
-  border-color: var(--mute);
+  border-color: rgba(216, 137, 58, .4);
 }
 .item.day-card.on {
   border-color: var(--accent);
-  background: rgba(216, 137, 58, .15);
+  background: rgba(216, 137, 58, .18);
 }
 .item.day-card.on b {
   color: var(--accent);
 }
 .item.day-card.cur {
-  box-shadow: inset 0 0 0 1px var(--accent);
+  border-left: 3px solid var(--accent);
 }
 
 .item.consumed, .item.done {
@@ -679,7 +681,7 @@ textarea:focus, input[type=text]:focus, select:focus {
 .item.en-copy { border-left: 3px solid var(--npc); }
 .item.en-copy.act { border-left: 3px solid #e07b5e; }
 
-/* 拖拽手柄与全局拖动反馈（完全复用道具模块逻辑） */
+/* 拖拽手柄与全局拖动反馈（强化高亮版） */
 .drag-handle {
   cursor: grab;
   color: var(--mute);
@@ -698,24 +700,42 @@ textarea:focus, input[type=text]:focus, select:focus {
 }
 .drag-handle:hover {
   color: var(--accent);
-  background: rgba(216, 137, 58, .2);
+  background: rgba(216, 137, 58, .25);
 }
 .drag-handle:active {
   cursor: grabbing;
 }
 
+/* 被拖拽中的卡片（占位半透明 + 橙色虚线高亮） */
 .item.dragging {
-  opacity: .3 !important;
+  opacity: .35 !important;
   outline: 2px dashed var(--accent) !important;
   background: var(--card) !important;
+  transform: scale(0.98);
 }
+
+/* 拖拽悬停在上方的插槽高亮指示线与动效 */
 .item.drag-over-top {
   border-top: 3px solid var(--accent) !important;
-  transform: translateY(2px);
+  box-shadow: 0 -4px 12px rgba(216, 137, 58, .35) !important;
+  transform: translateY(3px) !important;
 }
+
+/* 拖拽悬停在下方的插槽高亮指示线与动效 */
 .item.drag-over-bottom {
   border-bottom: 3px solid var(--accent) !important;
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(216, 137, 58, .35) !important;
+  transform: translateY(-3px) !important;
+}
+
+/* 日程天卡片专属高亮强化（让左侧小按钮的上下拖动更醒目） */
+.item.day-card.drag-over-top {
+  border-top: 3px solid #ff9d3b !important;
+  background: rgba(216, 137, 58, .12) !important;
+}
+.item.day-card.drag-over-bottom {
+  border-bottom: 3px solid #ff9d3b !important;
+  background: rgba(216, 137, 58, .12) !important;
 }
 
 /* 弹窗通用样式 */
