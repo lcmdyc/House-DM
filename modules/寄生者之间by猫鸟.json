@@ -1337,7 +1337,7 @@
           "zodiac": ""
         },
         "vals": {
-          "bykjset": 4
+          "bykjset": 0
         },
         "items": "",
         "other": ""
@@ -1499,56 +1499,71 @@
   "curDay": 1,
   "ui": {
     "strip": true,
-    "showChar": true
+    "showChar": true,
+    "npcVisible": [
+      "4o3yc69"
+    ],
+    "npcStrip": true
   },
-  "log": [
+  "log": [],
+  "npcs": [
     {
-      "id": "ftiw6nm",
-      "ts": 1793281287650,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：未定位 → 门厅（下）",
-      "color": "#e0605e"
+      "id": "4o3yc69",
+      "name": "安奈林",
+      "category": "npc",
+      "disposition": "友好",
+      "color": "#b27cd8",
+      "roomId": "0a4v9wb",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "ph5jrta",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "n6d5vwh",
+          "name": "AC",
+          "val": "10"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "ruqddlg",
+          "trigger": "初次见面",
+          "line": ""
+        }
+      ]
     },
     {
-      "id": "0mrsgi4",
-      "ts": 1793281299528,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：门厅（下） → 熏黑的房间",
-      "color": "#e0605e"
-    },
-    {
-      "id": "xssjp38",
-      "ts": 1793282036539,
-      "day": 2,
-      "type": "move",
-      "text": "玩家2：未定位 → 真实-深渊",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "4vdm7on",
-      "ts": 1793282037132,
-      "day": 2,
-      "type": "move",
-      "text": "玩家2：真实-深渊 → 未定位",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "knxldv8",
-      "ts": 1793282037918,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：熏黑的房间 → 真实-深渊",
-      "color": "#e0605e"
-    },
-    {
-      "id": "1dpxerv",
-      "ts": 1793282038519,
-      "day": 2,
-      "type": "move",
-      "text": "玩家1：真实-深渊 → 未定位",
-      "color": "#e0605e"
+      "id": "whincor",
+      "name": "幽灵",
+      "category": "monster",
+      "disposition": "敌对",
+      "color": "#ededed",
+      "roomId": "",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "icny8v4",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "gvprbb0",
+          "name": "新属性",
+          "val": "0"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "4yfpb5p",
+          "trigger": "初次见面",
+          "line": ""
+        }
+      ]
     }
     
   ]
