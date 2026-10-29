@@ -1,6 +1,5 @@
 // js/app.js
 
-let D = loadData();
 let sel = null;
 let selEntity = null;
 let edit = true;
@@ -14,15 +13,7 @@ function save() {
   renderStrip();
 }
 
-const room = id => D.rooms.find(r => r.id === id);
-const at = (x, y) => D.rooms.find(r => r.x === x && r.y === y);
-const isGot = i => i.owners.length > 0 || i.consumed;
 const newItem = () => ({ id: uid(), type: 'item', name: '', desc: '', cond: '', owners: [], consumed: false });
-const rname = id => id ? ((room(id) || {}).name || '未命名') : '未定位';
-const pcolor = i => (D.bg[i] && D.bg[i].color) || '#888';
-const pname = i => D.players[i] || ('玩家' + (i + 1));
-const cardUsed = c => D.cardCfg.attrs.reduce((s, a) => s + (+c.vals[a.id] || 0), 0);
-const playersIn = rid => D.players.map((_, i) => i).filter(i => D.bg[i].roomId === rid);
 const chipHtml = i => `<i class="chip" style="background:${pcolor(i)}" title="${esc(pname(i))}">${esc([...pname(i)][0] || '?')}</i>`;
 
 function findItem(id) {
@@ -162,7 +153,7 @@ function openStripCfg() { renderStripCfg(); document.getElementById('stripDlg').
 function renderStripCfg() {
   document.getElementById('stripCfgBox').innerHTML =
     `<label class="chkrow"><input type="checkbox" ${D.ui.showChar ? 'checked' : ''} onchange="D.ui.showChar=this.checked;save()"><span>显示角色姓名（车卡里填写的）</span></label>` +
-    D.cardCfg.attrs.map(a => `<label class="chkrow"><input type="checkbox" ${a.show ? 'checked' : ''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name) || '（未命名）'}</span></label>`).join('');
+    D.cardCfg.attrs.map(a => `<label class="chkrow"><input type="checkbox" ${a.show ? 'checked' : ''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name)||'（未命名）'}</span></label>`).join('');
 }
 function attrShow(id, v) { D.cardCfg.attrs.find(a => a.id === id).show = v; save(); }
 function stripAll(v) { D.cardCfg.attrs.forEach(a => a.show = v); save(); renderStripCfg(); }
@@ -206,7 +197,7 @@ wrap.addEventListener('wheel', e => {
   applyPan();
 }, { passive: false });
 
-// ===== 地图渲染与房间 =====
+// ===== 地图渲染 =====
 function doorTitle(s, d) { const l = SIDES.find(x => x[0] === s)[1]; return `${l}：${DOOR_T[d.t]}${d.note ? '：' + d.note : ''}`; }
 function doorsHtml(r) {
   return SIDES.filter(([s]) => r.doors[s]).map(([s]) => {
@@ -952,11 +943,4 @@ function resetAll() {
   D = migrate(DEFAULT_DATA ? JSON.parse(JSON.stringify(DEFAULT_DATA)) : blankData());
   sel = null; selEntity = null; save(); lastMin = null; bgSel = 0; dayView = D.curDay;
   document.getElementById('modTitle').value = D.title;
-  renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
-}
-
-// ===== 页面启动初始化 =====
-renderStrip();
-renderMap();
-updateDayBar();
-updatePlayerBar();
+  renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar
