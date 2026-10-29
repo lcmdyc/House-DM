@@ -152,6 +152,7 @@ function renderStrip() {
     <button title="设置显示哪些属性" onclick="openStripCfg()">⚙</button>
     <button title="收起" onclick="setStrip(false)">◀</button></div>
     ${attrs.length?'':'<div class="hint">没有选择任何属性，点 ⚙ 设置</div>'}${cards}`;
+  if (typeof renderNpcStrip === 'function') renderNpcStrip();
 }
 function setStrip(v) { D.ui.strip=v; save(); }
 function openStripCfg() { renderStripCfg(); document.getElementById('stripDlg').showModal(); }
@@ -227,7 +228,7 @@ function renderMap() {
     const nEntity=r.entities?r.entities.length:0;
     const btn=(cls,dx,dy)=>at(x+dx,y+dy)?'':
       `<button class="add ${cls}" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
-    h+=`<div class="cell">
+    h+=`<div class="cell" data-rid="${r.id}">
       <div class="room ${sel===r.id?'sel':''}" onclick="select('${r.id}')">
         <div class="name">${esc(r.name)||'未命名'}</div>
         <div class="pl">${here.map(chipHtml).join('')}</div>
@@ -240,6 +241,7 @@ function renderMap() {
   grid.innerHTML=h;
   if (!lastMin) { lastMin={x:minX,y:minY}; centerView(); }
   else { pan.x-=(lastMin.x-minX)*CELL_W; pan.y-=(lastMin.y-minY)*CELL_H; lastMin={x:minX,y:minY}; applyPan(); }
+  if (typeof injectNpcChips === 'function') injectNpcChips();
 }
 
 function addFirst() { const r=blankRoom(0,0,'入口'); D.rooms.push(r); save(); select(r.id); centerView(); }
