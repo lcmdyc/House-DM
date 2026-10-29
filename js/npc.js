@@ -14,16 +14,15 @@ function newNpc() {
   return {
     id: uid(),
     name: '新NPC',
-    category: 'npc',       // 'npc' | 'monster' | 'other'
-    disposition: '中立',   // 友好 / 中立 / 敌对
+    category: 'npc',
+    disposition: '中立',
     color: '#b27cd8',
     roomId: '',
-    showOnMap: false,
     desc: '',
     dmNote: '',
     attrs: [
-      { id: uid(), name: 'HP',   val: '10' },
-      { id: uid(), name: 'AC',   val: '10' }
+      { id: uid(), name: 'HP', val: '10' },
+      { id: uid(), name: 'AC', val: '10' }
     ],
     dialogs: [
       { id: uid(), trigger: '初次见面', line: '' }
@@ -58,22 +57,8 @@ function switchLibTab(sub) {
 let selNpcId = null;
 
 function renderNpcLib() {
-  // 确保布局容器存在
   const page = document.getElementById('libPageNpc');
   if (!page) return;
-  // 动态插入 body 容器（只插一次）
-  if (!document.getElementById('npcLibBody')) {
-    const toolbar = document.getElementById('npcLibToolbar');
-    const body = document.createElement('div');
-    body.id = 'npcLibBody';
-    body.style.cssText = 'flex:1;display:flex;overflow:hidden;min-height:0';
-    // 把 list 和 detail 移进 body
-    const list   = document.getElementById('npcLibList');
-    const detail = document.getElementById('npcLibDetail');
-    page.appendChild(body);
-    body.appendChild(list);
-    body.appendChild(detail);
-  }
 
   const q   = (document.getElementById('npcLibQ')   || {}).value || '';
   const cat = (document.getElementById('npcLibCat') || {}).value || '';
@@ -198,13 +183,6 @@ function renderNpcDetail() {
           <label>当前所在房间</label>
           <select onchange="npcSetRoom('${n.id}',this.value)">${roomOpts}</select>
         </div>
-        <div class="npc-field" style="justify-content:flex-end">
-          <label>显示在地图</label>
-          <label class="nc-vis-toggle" style="margin-top:4px">
-            <input type="checkbox" ${n.showOnMap?'checked':''} onchange="npcToggleMap('${n.id}',this.checked)">
-            在地图房间内显示
-          </label>
-        </div>
       </div>
 
       <div class="npc-field">
@@ -236,7 +214,6 @@ function npcEdit(id, field, val) {
   const n = D.npcs.find(x => x.id === id); if (!n) return;
   n[field] = val;
   saveData(D);
-  // 更新列表卡片名称/类型，不重绘整个详情
   if (field === 'name' || field === 'category' || field === 'disposition') renderNpcLib();
   if (field === 'color') renderNpcStrip();
 }
@@ -248,14 +225,6 @@ function npcSetRoom(id, rid) {
   addLog('move', `[NPC]${n.name}：${rname(old)} → ${rname(rid)}`, n.color || '#b27cd8');
   saveData(D);
   renderNpcStrip();
-  renderMap();
-  renderNpcDetail();
-}
-
-function npcToggleMap(id, val) {
-  const n = D.npcs.find(x => x.id === id); if (!n) return;
-  n.showOnMap = val;
-  saveData(D);
   renderMap();
   renderNpcDetail();
 }
@@ -318,7 +287,7 @@ function renderNpcStrip() {
 
   const cards = visible.map(n => {
     const attrsHtml = n.attrs.slice(0,4).map(a =>
-      `<span class="${+a.val===0?'z':''}" title="点击编辑">
+      `<span class="${+a.val===0?'z':''}" title="${esc(a.name)}">
         <i>${esc(a.name)}</i><b>${esc(a.val)}</b>
       </span>`).join('');
     return `<div class="nc" style="border-left-color:${n.color||'#b27cd8'}"
@@ -330,10 +299,6 @@ function renderNpcStrip() {
         ${D.rooms.map(r=>`<option value="${r.id}"${r.id===n.roomId?' selected':''}>${esc(r.name||'未命名')} (${r.x},${r.y})</option>`).join('')}
       </select>
       ${n.attrs.length ? `<div class="as">${attrsHtml}</div>` : ''}
-      <label class="nc-vis-toggle" onclick="event.stopPropagation()">
-        <input type="checkbox" ${n.showOnMap?'checked':''} onchange="npcToggleMap('${n.id}',this.checked)">
-        显示在地图
-      </label>
     </div>`;
   }).join('');
 
@@ -349,7 +314,6 @@ function renderNpcStrip() {
       </p>`}`;
 }
 
-// 点击NPC卡片 → 跳到资料库详情
 function goNpcDetail(id) {
   selNpcId = id;
   switchTab('library');
@@ -390,25 +354,18 @@ function npcStripCheckAll(val) {
   D.ui.npcVisible = val ? D.npcs.map(n => n.id) : [];
   saveData(D);
   renderNpcStrip();
-  openNpcStripCfg(); // 刷新勾选状态
+  openNpcStripCfg();
 }
 
-// ─── 地图：NPC 头像注入（在 renderMap 之后调用）──────────────
-// 通过 MutationObserver 监听地图渲染完成后自动注入
-
-
+// ─── 地图：NPC 头像注入（有 roomId 的 NPC 自动显示在地图上）────
 function injectNpcChips() {
-  // 找出所有 showOnMap=true 且有 roomId 的 NPC
-  const visible = D.npcs.filter(n => n.showOnMap && n.roomId);
-  // 按房间分组
+  const visible = D.npcs.filter(n => n.roomId);
   const byRoom = {};
   visible.forEach(n => {
     if (!byRoom[n.roomId]) byRoom[n.roomId] = [];
     byRoom[n.roomId].push(n);
   });
-  // 注入到每个房间的 .room-npcs 容器
   Object.entries(byRoom).forEach(([rid, npcs]) => {
-    // 找到对应的 .cell 元素（通过 data-rid 属性）
     const cell = document.querySelector(`.cell[data-rid="${rid}"]`);
     if (!cell) return;
     let container = cell.querySelector('.room-npcs');
@@ -422,7 +379,6 @@ function injectNpcChips() {
       `<i class="npc-chip" style="background:${n.color||'#b27cd8'}" title="${esc(n.name)}">${esc([...n.name][0]||'?')}</i>`
     ).join('');
   });
-  // 清除没有NPC的房间的容器
   document.querySelectorAll('.room-npcs').forEach(c => {
     const cell = c.closest('.cell');
     if (!cell) return;
@@ -432,6 +388,4 @@ function injectNpcChips() {
 }
 
 // ─── 初始化 ────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  renderNpcStrip();
-});
+renderNpcStrip();
