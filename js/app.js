@@ -142,7 +142,7 @@ function renderStrip() {
       const v=+b.card.vals[a.id]||0;
       return `<span class="${v?'':'z'}" title="滚轮 ±1" onwheel="handleAttrWheel(event,${i},'${a.id}')"><i>${esc(a.name)}</i><b>${v}</b></span>`;
     }).join('');
-    return `<div class="pc" style="border-left-color:${b.color}" onclick="bgSel=${i};openBg()">
+    return `<div class="pc" style="border-left-color:${b.color}" onclick="bgSel=${i};switchTab('library');switchLibTab('bg')">
       <div class="pn">${esc(pname(i))}</div>${cn}
       <select class="prm" onclick="event.stopPropagation()" onchange="setPlayerRoom(${i},this.value)">${roomSel(b.roomId)}</select>
       ${attrs.length?`<div class="as">${as}</div>`:''}
