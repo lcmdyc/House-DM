@@ -20,13 +20,12 @@
     <button class="danger" onclick="resetAll()">重置模组</button>
   </header>
 
-  <!-- 页签栏 -->
   <nav id="tabBar">
     <button id="tabWorkbench" class="tab-btn on" onclick="switchTab('workbench')">🎲 工作台</button>
     <button id="tabLibrary"   class="tab-btn"    onclick="switchTab('library')">📖 资料库</button>
   </nav>
 
-  <!-- ===== 工作台页 ===== -->
+  <!-- 工作台页 -->
   <div id="pageWorkbench" class="tab-page">
     <div id="wbToolbar">
       <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
@@ -39,23 +38,19 @@
       <button onclick="openModuleLib()">📦 模组库</button>
     </div>
     <main id="wbMain">
-      <!-- 玩家属性列 -->
       <div id="strip"></div>
-      <!-- NPC 属性列 -->
       <div id="npcStrip"></div>
-      <!-- 地图 -->
       <div id="mapWrap">
         <div id="grid"></div>
         <button id="centerBtn" onclick="centerView()">⌖ 视角居中</button>
         <div id="panHint">按住空白处拖拽画布 · 滚轮上下移动 · Shift+滚轮左右移动</div>
       </div>
-      <!-- 右侧面板 -->
       <div id="side"></div>
       <div id="entitySide"></div>
     </main>
   </div>
 
-  <!-- ===== 资料库页 ===== -->
+  <!-- 资料库页 -->
   <div id="pageLibrary" class="tab-page" style="display:none">
     <div id="libToolbar">
       <button id="libTabBg"  class="lib-tab on"  onclick="switchLibTab('bg')">📜 玩家背景 / 车卡</button>
@@ -87,7 +82,7 @@
 
   <div id="toast"></div>
 
-  <!-- ===== 弹窗 ===== -->
+  <!-- 弹窗 -->
   <dialog id="stripDlg" style="width:360px">
     <div class="tabs"><b style="color:var(--accent)">⚙ 玩家属性栏设置</b><div class="spacer"></div>
       <button onclick="stripAll(true)">全选</button><button onclick="stripAll(false)">全不选</button>
@@ -175,6 +170,5 @@
   <script src="js/theme.js"></script>
   <script src="js/p2p.js"></script>
   <script src="js/app.js"></script>
-  <script src="js/npc.js"></script>
 </body>
 </html>
