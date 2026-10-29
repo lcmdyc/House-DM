@@ -1,4 +1,5 @@
-// js/app.js
+// js/app.js — UI 逻辑主文件
+// 依赖：data.js, theme.js, p2p.js（均已在 index.html 中先行加载）
 
 let sel = null;
 let selEntity = null;
@@ -8,109 +9,9 @@ let bgSel = 0;
 let dayView = D.curDay;
 let logF = 'all';
 
-function save() {
-  saveData(D);
-  renderStrip();
-}
+function save() { saveData(D); renderStrip(); }
 
-// ===== 配色主题（行内变量注入，最高优先级）=====
-const THEMES = {
-  dark: {
-    '--bg': '#14161b',
-    '--panel': '#1c1f26',
-    '--card': '#232732',
-    '--card-hover': '#2a2f3d',
-    '--line': '#2e3444',
-    '--text': '#e1e4ea',
-    '--mute': '#8b92a4',
-    '--accent': '#d8893a',
-    '--accent-rgb': '216, 137, 58',
-    '--danger': '#d9534f',
-    '--item': '#4aa8d8',
-    '--clue': '#e8a13a',
-    '--npc': '#b27cd8',
-    '--door': '#c8955a',
-    '--open': '#4cc9a0',
-    '--lock': '#e0605e',
-    '--out': '#9b8b7a',
-    '--in': '#6c7be0',
-    '--map-grid': 'rgba(255,255,255,0.03)'
-  },
-  light: {
-    '--bg': '#f2f4f7',
-    '--panel': '#ffffff',
-    '--card': '#e4e7ee',
-    '--card-hover': '#d8dce6',
-    '--line': '#b8c0cc',
-    '--text': '#1a1e26',
-    '--mute': '#545c6e',
-    '--accent': '#bd6717',
-    '--accent-rgb': '189, 103, 23',
-    '--danger': '#c73430',
-    '--item': '#1b73a3',
-    '--clue': '#b36b10',
-    '--npc': '#8342af',
-    '--door': '#925f29',
-    '--open': '#1e8a65',
-    '--lock': '#b33230',
-    '--out': '#6f6254',
-    '--in': '#3e4da9',
-    '--map-grid': 'rgba(0,0,0,0.07)'
-  }
-};
-
-function getStoredTheme() {
-  try {
-    const v = localStorage.getItem('trpg_theme');
-    // 只接受合法值，否则重置为 dark
-    if (v === 'light' || v === 'dark') return v;
-    localStorage.setItem('trpg_theme', 'dark');
-    return 'dark';
-  } catch (_) {
-    return 'dark';
-  }
-}
-
-function applyTheme(theme) {
-  const t = theme === 'light' ? 'light' : 'dark';
-  const vars = THEMES[t];
-  const root = document.documentElement;
-  // 注入所有 CSS 变量到 <html> 行内样式（最高优先级）
-  for (const [k, v] of Object.entries(vars)) {
-    root.style.setProperty(k, v);
-  }
-  root.setAttribute('data-theme', t);
-  const btn = document.getElementById('themeBtn');
-  if (btn) {
-    btn.textContent = t === 'light' ? '☀️ 浅色' : '🌙 深色';
-    btn.title = `当前：${t === 'light' ? '浅色' : '深色'}，点击切换`;
-  }
-}
-
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = cur === 'light' ? 'dark' : 'light';
-  try { localStorage.setItem('trpg_theme', next); } catch (_) {}
-  applyTheme(next);
-  toast(`已切换为 ${next === 'light' ? '☀️ 浅色' : '🌙 深色'} 配色`);
-}
-
-
-
-// 如果 p2p.js 存在并定义了 initP2PSync，则由其覆盖上面的存根
-// （保持向后兼容）
-
-const newItem = () => ({ id: uid(), type: 'item', name: '', desc: '', cond: '', owners: [], consumed: false });
-const chipHtml = i => `<i class="chip" style="background:${pcolor(i)}" title="${esc(pname(i))}">${esc([...pname(i)][0] || '?')}</i>`;
-
-function findItem(id) {
-  let l = D.pool.find(i => i.id === id); if (l) return { item: l, list: D.pool, rid: '' };
-  for (const r of D.rooms) { const it = r.items.find(i => i.id === id); if (it) return { item: it, list: r.items, rid: r.id }; }
-  return null;
-}
-const getItem = id => findItem(id).item;
-
-// ===== 提示与剪贴板 =====
+// ===== Toast 提示 =====
 let toastT;
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -121,62 +22,70 @@ function toast(msg) {
   toastT = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
+// ===== 剪贴板 =====
 function copyText(text) {
   const fallback = () => {
     const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(ta);
-    ta.select();
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
     let ok = false;
-    try { ok = document.execCommand('copy'); } catch (_) {}
-    ta.remove();
-    return ok;
+    try { ok = document.execCommand('copy'); } catch(_) {}
+    ta.remove(); return ok;
   };
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text).then(() => true, () => fallback());
-  }
+  if (navigator.clipboard && window.isSecureContext)
+    return navigator.clipboard.writeText(text).then(()=>true, ()=>fallback());
   return Promise.resolve(fallback());
 }
 
 function copyDesc(id) {
   const i = getItem(id);
   if (!i.desc.trim()) { toast('这张卡没有描述'); return; }
-  copyText(i.desc).then(ok => toast(ok ? '📋 已复制描述' : '复制失败，请手动复制'));
+  copyText(i.desc).then(ok => toast(ok ? '📋 已复制描述' : '复制失败'));
 }
 function copyRoomDesc() {
   const r = room(sel); if (!r) return;
-  if (!r.desc.trim()) { toast('这个房间还没有描述'); return; }
+  if (!r.desc.trim()) { toast('房间还没有描述'); return; }
   copyText(r.desc).then(ok => toast(ok ? '📋 已复制房间描述' : '复制失败'));
 }
 function copyEntityDesc() {
-  if (!selEntity || !selEntity.desc.trim()) { toast('该实体还没有外观与台词'); return; }
+  if (!selEntity||!selEntity.desc.trim()) { toast('该实体还没有外观与台词'); return; }
   copyText(selEntity.desc).then(ok => toast(ok ? '📋 已复制外观台词' : '复制失败'));
 }
 function copyEntityAction(idx) {
-  if (!selEntity || !selEntity.actions[idx]) return;
+  if (!selEntity||!selEntity.actions[idx]) return;
   const act = selEntity.actions[idx];
-  const txt = act.effect.trim() || act.trigger.trim();
+  const txt = act.effect.trim()||act.trigger.trim();
   if (!txt) { toast('该行为没有可复制的后果'); return; }
-  copyText(txt).then(ok => toast(ok ? `📋 已复制触发 #${idx + 1} 后果` : '复制失败'));
+  copyText(txt).then(ok => toast(ok ? `📋 已复制触发 #${idx+1} 后果` : '复制失败'));
 }
 
-// ===== 日志系统 =====
-function addLog(type, text, color = '') {
-  D.log.push({ id: uid(), ts: Date.now(), day: D.curDay + 1, type, text, color });
-  if (D.log.length > 2000) D.log.splice(0, D.log.length - 2000);
+// ===== 物资辅助 =====
+const newItem = () => ({ id:uid(), type:'item', name:'', desc:'', cond:'', owners:[], consumed:false });
+const chipHtml = i => `<i class="chip" style="background:${pcolor(i)}" title="${esc(pname(i))}">${esc([...pname(i)][0]||'?')}</i>`;
+
+function findItem(id) {
+  let l = D.pool.find(i=>i.id===id); if (l) return {item:l,list:D.pool,rid:''};
+  for (const r of D.rooms) { const it=r.items.find(i=>i.id===id); if(it) return {item:it,list:r.items,rid:r.id}; }
+  return null;
+}
+const getItem = id => findItem(id).item;
+
+// ===== 日志 =====
+function addLog(type, text, color='') {
+  D.log.push({id:uid(),ts:Date.now(),day:D.curDay+1,type,text,color});
+  if (D.log.length>2000) D.log.splice(0,D.log.length-2000);
   if (document.getElementById('logDlg').open) renderLog();
 }
-const LOG_TYPES = [['all','全部'],['item','📦 物品'],['attr','📊 属性'],['move','🚶 移动'],['day','🚩 日程']];
+const LOG_TYPES=[['all','全部'],['item','📦 物品'],['attr','📊 属性'],['move','🚶 移动'],['day','🚩 日程']];
 const logTime = ts => new Date(ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
-const logFiltered = () => D.log.filter(e => logF === 'all' || e.type === logF);
+const logFiltered = () => D.log.filter(e=>logF==='all'||e.type===logF);
 
 function openLog() { renderLog(); document.getElementById('logDlg').showModal(); }
 function renderLog() {
-  document.getElementById('logTabs').innerHTML = LOG_TYPES.map(([k,l]) =>
+  document.getElementById('logTabs').innerHTML = LOG_TYPES.map(([k,l])=>
     `<button class="${logF===k?'on':''}" onclick="logF='${k}';renderLog()">${l}</button>`).join('');
   const list = logFiltered().slice().reverse();
-  document.getElementById('logList').innerHTML = list.length ? list.map(e =>
+  document.getElementById('logList').innerHTML = list.length ? list.map(e=>
     `<div class="lg ${e.type}"><span class="ld">Day ${e.day}</span><span class="lt">${logTime(e.ts)}</span>
      <span class="lx">${e.color?`<i class="cdot" style="background:${e.color}"></i>`:''}${esc(e.text)}</span></div>`).join('')
     : '<p class="hint">暂无记录。</p>';
@@ -184,141 +93,141 @@ function renderLog() {
 function copyLog() {
   const t = logFiltered().map(e=>`[${dayLabel(e.day-1)} ${logTime(e.ts)}] ${e.text}`).join('\n');
   if (!t) { toast('没有可复制的记录'); return; }
-  copyText(t).then(ok => ok ? toast('📋 已复制日志') : prompt('请手动复制：',t));
+  copyText(t).then(ok=>ok?toast('📋 已复制日志'):prompt('请手动复制：',t));
 }
 function clearLog() {
   if (!confirm('清空全部日志？')) return;
-  D.log = []; save(); renderLog();
+  D.log=[]; save(); renderLog();
 }
 
 // ===== 玩家属性侧栏 =====
 function roomSel(cur) {
-  return `<option value="">📍 未定位</option>` + D.rooms.map(r =>
+  return `<option value="">📍 未定位</option>`+D.rooms.map(r=>
     `<option value="${r.id}" ${r.id===cur?'selected':''}>${esc(r.name)||'未命名'} (${r.x},${r.y})</option>`).join('');
 }
 function setPlayerRoom(i, rid) {
-  const old = D.bg[i].roomId || '';
-  if (old === rid) return;
-  D.bg[i].roomId = rid;
-  addLog('move', `${pname(i)}：${rname(old)} → ${rname(rid)}`, pcolor(i));
+  const old=D.bg[i].roomId||'';
+  if (old===rid) return;
+  D.bg[i].roomId=rid;
+  addLog('move',`${pname(i)}：${rname(old)} → ${rname(rid)}`,pcolor(i));
   save(); renderMap(); renderSide();
 }
 function handleAttrWheel(e, pIdx, attrId) {
   e.preventDefault(); e.stopPropagation();
-  const delta = e.deltaY < 0 ? 1 : -1;
-  const c = D.bg[pIdx].card;
-  const old = +c.vals[attrId] || 0;
-  let next = old + delta;
-  if (next < 0) return;
-  const others = cardUsed(c) - old;
-  const max = Math.max(0, D.cardCfg.points - others);
-  if (next > max) { toast(`已达上限`); return; }
-  c.vals[attrId] = next;
-  const a = D.cardCfg.attrs.find(x => x.id === attrId);
-  addLog('attr', `${pname(pIdx)} 的「${a.name}」 ${old} → ${next}（${delta>0?'+':''}${delta}）`, pcolor(pIdx));
+  const delta=e.deltaY<0?1:-1;
+  const c=D.bg[pIdx].card;
+  const old=+c.vals[attrId]||0;
+  let next=old+delta;
+  if (next<0) return;
+  const others=cardUsed(c)-old;
+  const max=Math.max(0,D.cardCfg.points-others);
+  if (next>max) { toast('已达上限'); return; }
+  c.vals[attrId]=next;
+  const a=D.cardCfg.attrs.find(x=>x.id===attrId);
+  addLog('attr',`${pname(pIdx)} 的「${a.name}」 ${old} → ${next}（${delta>0?'+':''}${delta}）`,pcolor(pIdx));
   save(); renderStrip();
-  if (document.getElementById('bgDlg').open && bgSel === pIdx) renderBg();
+  if (document.getElementById('bgDlg').open&&bgSel===pIdx) renderBg();
 }
 
 function renderStrip() {
-  const s = document.getElementById('strip'); if (!s || !D) return;
-  s.classList.toggle('hide', !D.ui.strip);
-  document.getElementById('stripOpen').style.display = D.ui.strip ? 'none' : 'block';
+  const s=document.getElementById('strip'); if (!s||!D) return;
+  s.classList.toggle('hide',!D.ui.strip);
+  document.getElementById('stripOpen').style.display=D.ui.strip?'none':'block';
   if (!D.ui.strip) return;
-  const attrs = D.cardCfg.attrs.filter(a => a.show);
-  const cards = D.players.map((p, i) => {
-    const b = D.bg[i]; if (!b) return '';
-    const cn = D.ui.showChar && b.card.info.name ? `<div class="cn">${esc(b.card.info.name)}</div>` : '';
-    const as = attrs.map(a => {
-      const v = +b.card.vals[a.id] || 0;
+  const attrs=D.cardCfg.attrs.filter(a=>a.show);
+  const cards=D.players.map((p,i)=>{
+    const b=D.bg[i]; if (!b) return '';
+    const cn=D.ui.showChar&&b.card.info.name?`<div class="cn">${esc(b.card.info.name)}</div>`:'';
+    const as=attrs.map(a=>{
+      const v=+b.card.vals[a.id]||0;
       return `<span class="${v?'':'z'}" title="滚轮 ±1" onwheel="handleAttrWheel(event,${i},'${a.id}')"><i>${esc(a.name)}</i><b>${v}</b></span>`;
     }).join('');
     return `<div class="pc" style="border-left-color:${b.color}" onclick="bgSel=${i};openBg()">
       <div class="pn">${esc(pname(i))}</div>${cn}
       <select class="prm" onclick="event.stopPropagation()" onchange="setPlayerRoom(${i},this.value)">${roomSel(b.roomId)}</select>
-      ${attrs.length ? `<div class="as">${as}</div>` : ''}
+      ${attrs.length?`<div class="as">${as}</div>`:''}
     </div>`;
   }).join('');
-  s.innerHTML = `<div class="sthead"><span style="margin-right:auto">👥 玩家属性</span>
+  s.innerHTML=`<div class="sthead"><span style="margin-right:auto">👥 玩家属性</span>
     <button title="设置显示哪些属性" onclick="openStripCfg()">⚙</button>
     <button title="收起" onclick="setStrip(false)">◀</button></div>
-    ${attrs.length ? '' : '<div class="hint">没有选择任何属性，点 ⚙ 设置</div>'}${cards}`;
+    ${attrs.length?'':'<div class="hint">没有选择任何属性，点 ⚙ 设置</div>'}${cards}`;
 }
-function setStrip(v) { D.ui.strip = v; save(); }
+function setStrip(v) { D.ui.strip=v; save(); }
 function openStripCfg() { renderStripCfg(); document.getElementById('stripDlg').showModal(); }
 function renderStripCfg() {
-  document.getElementById('stripCfgBox').innerHTML =
-    `<label class="chkrow"><input type="checkbox" ${D.ui.showChar?'checked':''} onchange="D.ui.showChar=this.checked;save()"><span>显示角色姓名</span></label>` +
-    D.cardCfg.attrs.map(a => `<label class="chkrow"><input type="checkbox" ${a.show?'checked':''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name)||'（未命名）'}</span></label>`).join('');
+  document.getElementById('stripCfgBox').innerHTML=
+    `<label class="chkrow"><input type="checkbox" ${D.ui.showChar?'checked':''} onchange="D.ui.showChar=this.checked;save()"><span>显示角色姓名</span></label>`+
+    D.cardCfg.attrs.map(a=>`<label class="chkrow"><input type="checkbox" ${a.show?'checked':''} onchange="attrShow('${a.id}',this.checked)"><span>${esc(a.name)||'（未命名）'}</span></label>`).join('');
 }
-function attrShow(id, v) { D.cardCfg.attrs.find(a => a.id === id).show = v; save(); }
-function stripAll(v) { D.cardCfg.attrs.forEach(a => a.show = v); save(); renderStripCfg(); }
+function attrShow(id,v) { D.cardCfg.attrs.find(a=>a.id===id).show=v; save(); }
+function stripAll(v) { D.cardCfg.attrs.forEach(a=>a.show=v); save(); renderStripCfg(); }
 
 // ===== 地图平移与居中 =====
-const wrap = document.getElementById('mapWrap'), grid = document.getElementById('grid');
-const CELL_W = 130 + 14, CELL_H = 100 + 14;
-let pan = { x: 0, y: 0 }, lastMin = null;
+const wrap=document.getElementById('mapWrap'), grid=document.getElementById('grid');
+const CELL_W=130+14, CELL_H=100+14;
+let pan={x:0,y:0}, lastMin=null;
 
 function applyPan() {
-  grid.style.transform = `translate(${pan.x}px,${pan.y}px)`;
-  wrap.style.backgroundPosition = `${pan.x}px ${pan.y}px`;
+  grid.style.transform=`translate(${pan.x}px,${pan.y}px)`;
+  wrap.style.backgroundPosition=`${pan.x}px ${pan.y}px`;
 }
 function centerView() {
-  pan.x = Math.round((wrap.clientWidth - grid.offsetWidth) / 2);
-  pan.y = Math.round((wrap.clientHeight - grid.offsetHeight) / 2);
+  pan.x=Math.round((wrap.clientWidth-grid.offsetWidth)/2);
+  pan.y=Math.round((wrap.clientHeight-grid.offsetHeight)/2);
   applyPan();
 }
 
-let drag = null, moved = false;
-wrap.addEventListener('pointerdown', e => {
-  if (e.button !== 0 || e.target.closest('.add,#centerBtn,#stripOpen')) return;
-  drag = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y }; moved = false;
+let drag=null, moved=false;
+wrap.addEventListener('pointerdown',e=>{
+  if (e.button!==0||e.target.closest('.add,#centerBtn,#stripOpen')) return;
+  drag={sx:e.clientX,sy:e.clientY,px:pan.x,py:pan.y}; moved=false;
 });
-window.addEventListener('pointermove', e => {
+window.addEventListener('pointermove',e=>{
   if (!drag) return;
-  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-  if (!moved && Math.hypot(dx, dy) < 5) return;
-  moved = true; wrap.classList.add('dragging');
-  pan.x = drag.px + dx; pan.y = drag.py + dy; applyPan();
+  const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+  if (!moved&&Math.hypot(dx,dy)<5) return;
+  moved=true; wrap.classList.add('dragging');
+  pan.x=drag.px+dx; pan.y=drag.py+dy; applyPan();
 });
-window.addEventListener('pointerup', () => { drag = null; wrap.classList.remove('dragging'); });
-window.addEventListener('pointercancel', () => { drag = null; wrap.classList.remove('dragging'); });
-wrap.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
-wrap.addEventListener('wheel', e => {
+window.addEventListener('pointerup',()=>{ drag=null; wrap.classList.remove('dragging'); });
+window.addEventListener('pointercancel',()=>{ drag=null; wrap.classList.remove('dragging'); });
+wrap.addEventListener('click',e=>{ if(moved){e.stopPropagation();e.preventDefault();moved=false;} },true);
+wrap.addEventListener('wheel',e=>{
   e.preventDefault();
-  pan.x -= e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX;
-  pan.y -= e.shiftKey && !e.deltaX ? 0 : e.deltaY;
+  pan.x-=e.shiftKey&&!e.deltaX?e.deltaY:e.deltaX;
+  pan.y-=e.shiftKey&&!e.deltaX?0:e.deltaY;
   applyPan();
-}, { passive: false });
+},{passive:false});
 
 // ===== 地图渲染 =====
-function doorTitle(s, d) { const l = SIDES.find(x => x[0]===s)[1]; return `${l}：${DOOR_T[d.t]}${d.note?'：'+d.note:''}`; }
+function doorTitle(s,d){ const l=SIDES.find(x=>x[0]===s)[1]; return `${l}：${DOOR_T[d.t]}${d.note?'：'+d.note:''}`; }
 function doorsHtml(r) {
-  return SIDES.filter(([s]) => r.doors[s]).map(([s]) => {
-    const d = r.doors[s];
+  return SIDES.filter(([s])=>r.doors[s]).map(([s])=>{
+    const d=r.doors[s];
     return `<i class="dr ${d.t} ${s}" title="${esc(doorTitle(s,d))}">${doorSym(d.t,s)}</i>`;
   }).join('');
 }
 function renderMap() {
   if (!D.rooms.length) {
-    grid.style.display = 'block';
-    grid.innerHTML = '<div class="empty"><p>地图还是空的</p><button class="primary" onclick="addFirst()">＋ 创建第一个房间</button></div>';
-    lastMin = null; centerView(); return;
+    grid.style.display='block';
+    grid.innerHTML='<div class="empty"><p>地图还是空的</p><button class="primary" onclick="addFirst()">＋ 创建第一个房间</button></div>';
+    lastMin=null; centerView(); return;
   }
-  grid.style.display = 'grid';
-  const xs = D.rooms.map(r=>r.x), ys = D.rooms.map(r=>r.y);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  grid.style.gridTemplateColumns = `repeat(${maxX-minX+1},130px)`;
-  let h = '';
-  for (let y = minY; y <= maxY; y++) for (let x = minX; x <= maxX; x++) {
-    const r = at(x, y);
-    if (!r) { h += '<div class="cell"></div>'; continue; }
-    const total = r.items.length, got = r.items.filter(isGot).length;
-    const here = playersIn(r.id);
-    const nEntity = r.entities ? r.entities.length : 0;
-    const btn = (cls,dx,dy) => at(x+dx,y+dy)?'':
+  grid.style.display='grid';
+  const xs=D.rooms.map(r=>r.x), ys=D.rooms.map(r=>r.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  grid.style.gridTemplateColumns=`repeat(${maxX-minX+1},130px)`;
+  let h='';
+  for (let y=minY;y<=maxY;y++) for (let x=minX;x<=maxX;x++) {
+    const r=at(x,y);
+    if (!r) { h+='<div class="cell"></div>'; continue; }
+    const total=r.items.length, got=r.items.filter(isGot).length;
+    const here=playersIn(r.id);
+    const nEntity=r.entities?r.entities.length:0;
+    const btn=(cls,dx,dy)=>at(x+dx,y+dy)?'':
       `<button class="add ${cls}" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
-    h += `<div class="cell">
+    h+=`<div class="cell">
       <div class="room ${sel===r.id?'sel':''}" onclick="select('${r.id}')">
         <div class="name">${esc(r.name)||'未命名'}</div>
         <div class="pl">${here.map(chipHtml).join('')}</div>
@@ -328,69 +237,67 @@ function renderMap() {
       ${btn('t',0,-1)}${btn('bm',0,1)}${btn('l',-1,0)}${btn('r',1,0)}
     </div>`;
   }
-  grid.innerHTML = h;
-  if (!lastMin) { lastMin = { x: minX, y: minY }; centerView(); }
-  else {
-    pan.x -= (lastMin.x-minX)*CELL_W; pan.y -= (lastMin.y-minY)*CELL_H;
-    lastMin = { x: minX, y: minY }; applyPan();
-  }
+  grid.innerHTML=h;
+  if (!lastMin) { lastMin={x:minX,y:minY}; centerView(); }
+  else { pan.x-=(lastMin.x-minX)*CELL_W; pan.y-=(lastMin.y-minY)*CELL_H; lastMin={x:minX,y:minY}; applyPan(); }
 }
-function addFirst() { const r = blankRoom(0,0,'入口'); D.rooms.push(r); save(); select(r.id); centerView(); }
-function addRoom(id, dx, dy) {
-  const r = room(id); if (at(r.x+dx,r.y+dy)) return;
-  const n = blankRoom(r.x+dx, r.y+dy);
-  r.doors[sideOf(dx,dy)] = { t:'door', note:'' };
-  n.doors[OPP[sideOf(dx,dy)]] = { t:'door', note:'' };
+
+function addFirst() { const r=blankRoom(0,0,'入口'); D.rooms.push(r); save(); select(r.id); centerView(); }
+function addRoom(id,dx,dy) {
+  const r=room(id); if(at(r.x+dx,r.y+dy)) return;
+  const n=blankRoom(r.x+dx,r.y+dy);
+  r.doors[sideOf(dx,dy)]={t:'door',note:''};
+  n.doors[OPP[sideOf(dx,dy)]]={t:'door',note:''};
   D.rooms.push(n); save(); select(n.id);
 }
 function delRoom(id) {
-  const r = room(id);
+  const r=room(id);
   if (!confirm('确定删除该房间？'+(r.items.length?'\n物资会回到未分配池。':'')+(playersIn(id).length?'\n玩家会变成未定位。':''))) return;
   D.pool.push(...r.items);
-  D.bg.forEach(b => { if (b.roomId===id) b.roomId=''; });
-  D.rooms = D.rooms.filter(x => x.id!==id);
+  D.bg.forEach(b=>{ if(b.roomId===id) b.roomId=''; });
+  D.rooms=D.rooms.filter(x=>x.id!==id);
   if (sel===id) closeSide();
   save(); renderMap();
 }
 function select(id) { sel=id; selEntity=null; renderMap(); renderSide(); renderEntitySide(); }
 function closeSide() { sel=null; selEntity=null; renderMap(); renderSide(); renderEntitySide(); }
 function toggleMode() {
-  edit = !edit;
-  document.body.classList.toggle('edit', edit);
-  const b = document.getElementById('modeBtn');
-  b.classList.toggle('on', edit);
-  b.textContent = edit ? '✏️ 编辑模式' : '🎮 带团模式';
+  edit=!edit;
+  document.body.classList.toggle('edit',edit);
+  const b=document.getElementById('modeBtn');
+  b.classList.toggle('on',edit);
+  b.textContent=edit?'✏️ 编辑模式':'🎮 带团模式';
   renderSide(); renderEntitySide();
 }
 
 // ===== 门配置 =====
-function setDoor(s, t) {
-  const r = room(sel);
+function setDoor(s,t) {
+  const r=room(sel);
   if (!t) delete r.doors[s];
-  else r.doors[s] = { t, note: (r.doors[s]&&r.doors[s].note)||'' };
+  else r.doors[s]={t,note:(r.doors[s]&&r.doors[s].note)||''};
   save(); renderMap(); renderSide();
 }
-function setDoorNote(s, v) { const d = room(sel).doors[s]; if (d) { d.note=v; save(); } }
+function setDoorNote(s,v) { const d=room(sel).doors[s]; if(d){d.note=v;save();} }
 function doorLock(s) {
-  const d = room(sel).doors[s]; if (!d) return;
-  d.t = d.t==='lock' ? 'door' : 'lock';
+  const d=room(sel).doors[s]; if(!d) return;
+  d.t=d.t==='lock'?'door':'lock';
   save(); renderMap(); renderSide();
-  toast(d.t==='lock' ? '🔒 已上锁' : '🔓 已开锁');
+  toast(d.t==='lock'?'🔒 已上锁':'🔓 已开锁');
 }
 function doorsCard(r) {
   if (edit) {
-    const rows = SIDES.map(([s,l,dx,dy]) => {
-      const d = r.doors[s], n = at(r.x+dx,r.y+dy);
+    const rows=SIDES.map(([s,l,dx,dy])=>{
+      const d=r.doors[s], n=at(r.x+dx,r.y+dy);
       return `<div class="drow"><b>${l}</b>
         <select onchange="setDoor('${s}',this.value)"><option value="">▭ 墙</option>${Object.entries(DOOR_T).map(([k,v])=>`<option value="${k}" ${d&&d.t===k?'selected':''}>${v}</option>`).join('')}</select>
         ${d?`<input type="text" value="${esc(d.note)}" placeholder="备注" oninput="setDoorNote('${s}',this.value)">`
            :`<span class="hint">${n?'邻接：'+esc(n.name||'未命名'):'无邻接房间'}</span>`}</div>`;
     }).join('');
-    return `<div class="card"><h3>🚪 门与通道 <span class="hint">不必连接房间</span></h3>${rows}</div>`;
+    return `<div class="card"><h3>🚪 门与通道</h3>${rows}</div>`;
   }
-  const list = SIDES.filter(([s])=>r.doors[s]).map(([s,l,dx,dy]) => {
-    const d = r.doors[s], n = at(r.x+dx,r.y+dy);
-    const dest = ` ${d.t==='in'?'←':'→'} ${n?esc(n.name||'未命名'):'外部'}`;
+  const list=SIDES.filter(([s])=>r.doors[s]).map(([s,l,dx,dy])=>{
+    const d=r.doors[s], n=at(r.x+dx,r.y+dy);
+    const dest=` ${d.t==='in'?'←':'→'} ${n?esc(n.name||'未命名'):'外部'}`;
     return `<div class="drow"><i class="dr ${d.t}">${doorSym(d.t,s)}</i>
       <span style="flex:1">${l} · ${DOOR_T[d.t]}${dest}${d.note?`<span class="hint">　${esc(d.note)}</span>`:''}</span>
       ${d.t==='door'||d.t==='lock'?`<button onclick="doorLock('${s}')">${d.t==='lock'?'🔓 开锁':'🔒 上锁'}</button>`:''}</div>`;
@@ -410,75 +317,73 @@ function descCard(r) {
 }
 
 // ===== 拖拽重排 =====
-let dragType = null, dragSourceId = null;
-function handleHandleDragStart(e, type, id) {
-  dragType = type; dragSourceId = String(id);
+let dragType=null, dragSourceId=null;
+function handleHandleDragStart(e,type,id) {
+  dragType=type; dragSourceId=String(id);
   e.stopPropagation();
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', String(id));
-  const card = e.target.closest('.item');
-  if (card) setTimeout(() => card.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',String(id));
+  const card=e.target.closest('.item');
+  if (card) setTimeout(()=>card.classList.add('dragging'),0);
 }
 function handleCardDragOver(e) {
-  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-  const card = e.currentTarget;
-  if (!card || card.dataset.id === String(dragSourceId)) return;
-  const mid = card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2;
-  if (e.clientY < mid) { card.classList.add('drag-over-top'); card.classList.remove('drag-over-bottom'); }
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  const card=e.currentTarget;
+  if (!card||card.dataset.id===String(dragSourceId)) return;
+  const mid=card.getBoundingClientRect().top+card.getBoundingClientRect().height/2;
+  if (e.clientY<mid) { card.classList.add('drag-over-top'); card.classList.remove('drag-over-bottom'); }
   else { card.classList.add('drag-over-bottom'); card.classList.remove('drag-over-top'); }
 }
 function handleCardDragLeave(e) {
-  const card = e.currentTarget;
+  const card=e.currentTarget;
   if (card) card.classList.remove('drag-over-top','drag-over-bottom');
 }
 function handleCardDragEnd(e) {
-  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top','drag-over-bottom','dragging'));
-  dragType = null; dragSourceId = null;
+  document.querySelectorAll('.item').forEach(c=>c.classList.remove('drag-over-top','drag-over-bottom','dragging'));
+  dragType=null; dragSourceId=null;
 }
-function handleCardDrop(e, type, targetId) {
+function handleCardDrop(e,type,targetId) {
   e.preventDefault(); e.stopPropagation();
-  const card = e.currentTarget;
-  const isTop = card && card.classList.contains('drag-over-top');
-  document.querySelectorAll('.item').forEach(c => c.classList.remove('drag-over-top','drag-over-bottom','dragging'));
-  targetId = String(targetId);
-  if (dragType !== type || !dragSourceId || dragSourceId === targetId) return;
-
-  if (type === 'day') {
-    const fromIdx = +dragSourceId, toRawIdx = +targetId;
+  const card=e.currentTarget;
+  const isTop=card&&card.classList.contains('drag-over-top');
+  document.querySelectorAll('.item').forEach(c=>c.classList.remove('drag-over-top','drag-over-bottom','dragging'));
+  targetId=String(targetId);
+  if (dragType!==type||!dragSourceId||dragSourceId===targetId) return;
+  if (type==='day') {
+    const fromIdx=+dragSourceId, toRawIdx=+targetId;
     if (isNaN(fromIdx)||isNaN(toRawIdx)) return;
-    const curObj = D.days[D.curDay];
-    const [moved] = D.days.splice(fromIdx, 1);
-    let toIdx = fromIdx < toRawIdx ? (isTop ? toRawIdx-1 : toRawIdx) : (isTop ? toRawIdx : toRawIdx+1);
-    toIdx = Math.max(0, Math.min(D.days.length, toIdx));
-    D.days.splice(toIdx, 0, moved);
-    D.curDay = D.days.indexOf(curObj);
-    dayView = D.days.indexOf(moved);
+    const curObj=D.days[D.curDay];
+    const [moved]=D.days.splice(fromIdx,1);
+    let toIdx=fromIdx<toRawIdx?(isTop?toRawIdx-1:toRawIdx):(isTop?toRawIdx:toRawIdx+1);
+    toIdx=Math.max(0,Math.min(D.days.length,toIdx));
+    D.days.splice(toIdx,0,moved);
+    D.curDay=D.days.indexOf(curObj); dayView=D.days.indexOf(moved);
     save(); renderDays(); return;
   }
-  if (type === 'event') {
-    const events = D.days[dayView].events;
-    const fromIdx = events.findIndex(ev => String(ev.id)===dragSourceId);
+  if (type==='event') {
+    const events=D.days[dayView].events;
+    const fromIdx=events.findIndex(ev=>String(ev.id)===dragSourceId);
     if (fromIdx===-1) return;
-    const [moved] = events.splice(fromIdx, 1);
-    let toIdx = events.findIndex(ev => String(ev.id)===targetId);
+    const [moved]=events.splice(fromIdx,1);
+    let toIdx=events.findIndex(ev=>String(ev.id)===targetId);
     if (toIdx===-1) events.push(moved);
-    else { if (!isTop) toIdx++; events.splice(toIdx, 0, moved); }
+    else { if(!isTop) toIdx++; events.splice(toIdx,0,moved); }
     save(); renderDays(); return;
   }
-  const r = room(sel); if (!r) return;
-  const list = type==='item' ? r.items : r.entities;
-  const fromIdx = list.findIndex(x => String(x.id)===dragSourceId);
+  const r=room(sel); if(!r) return;
+  const list=type==='item'?r.items:r.entities;
+  const fromIdx=list.findIndex(x=>String(x.id)===dragSourceId);
   if (fromIdx===-1) return;
-  const [moved] = list.splice(fromIdx, 1);
-  let toIdx = list.findIndex(x => String(x.id)===targetId);
+  const [moved]=list.splice(fromIdx,1);
+  let toIdx=list.findIndex(x=>String(x.id)===targetId);
   if (toIdx===-1) list.push(moved);
-  else { if (!isTop) toIdx++; list.splice(toIdx, 0, moved); }
+  else { if(!isTop) toIdx++; list.splice(toIdx,0,moved); }
   save(); renderSide();
 }
 
 function entityListCard(r) {
-  const list = (r.entities||[]).map(en => {
-    const isCur = selEntity && selEntity.id===en.id;
+  const list=(r.entities||[]).map(en=>{
+    const isCur=selEntity&&selEntity.id===en.id;
     return `<div class="item compact npc" style="${isCur?'outline:2px solid var(--accent)':''}"
       data-id="${en.id}"
       ${edit?`ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'entity','${en.id}')"` : ''}
@@ -497,14 +402,14 @@ function entityListCard(r) {
 }
 
 function renderSide() {
-  const s = document.getElementById('side');
-  const r = room(sel);
+  const s=document.getElementById('side');
+  const r=room(sel);
   if (!r) { s.classList.remove('open'); s.innerHTML=''; return; }
   s.classList.add('open');
-  const keep = s.scrollTop;
-  const listItems = edit ? r.items : [...r.items.filter(i=>!i.consumed),...r.items.filter(i=>i.consumed)];
-  const here = playersIn(r.id);
-  s.innerHTML = `
+  const keep=s.scrollTop;
+  const listItems=edit?r.items:[...r.items.filter(i=>!i.consumed),...r.items.filter(i=>i.consumed)];
+  const here=playersIn(r.id);
+  s.innerHTML=`
   <div class="sidehead">
     <input type="text" value="${esc(r.name)}" placeholder="房间名" oninput="upd('name',this.value)">
     ${edit?`<button class="danger" onclick="delRoom('${r.id}')">删除</button>`:''}
@@ -523,26 +428,26 @@ function renderSide() {
     <textarea style="min-height:50px" oninput="upd('poolNote',this.value)" placeholder="如：搜索检定 DC12…">${esc(r.poolNote)}</textarea>
     <div id="items">${listItems.map(edit?itemHtml:itemCompact).join('')||'<p class="hint">暂无物资</p>'}</div>
   </div>`;
-  s.scrollTop = keep;
+  s.scrollTop=keep;
 }
 
 // ===== 实体侧栏 =====
 function openEntity(id) {
-  const r = room(sel); if (!r) return;
-  selEntity = (r.entities||[]).find(e => e.id===id);
+  const r=room(sel); if(!r) return;
+  selEntity=(r.entities||[]).find(e=>e.id===id);
   renderSide(); renderEntitySide();
 }
 function closeEntitySide() { selEntity=null; renderSide(); renderEntitySide(); }
 function createEntity() {
-  const r = room(sel); if (!r) return;
-  const en = newEntity(); r.entities.push(en); selEntity = en;
+  const r=room(sel); if(!r) return;
+  const en=newEntity(); r.entities.push(en); selEntity=en;
   save(); renderMap(); renderSide(); renderEntitySide();
 }
 function deleteCurEntity() {
   if (!confirm('确定删除该实体？')) return;
-  const r = room(sel); if (!r||!selEntity) return;
-  r.entities = r.entities.filter(e => e.id!==selEntity.id);
-  selEntity = null; save(); renderMap(); renderSide(); renderEntitySide();
+  const r=room(sel); if(!r||!selEntity) return;
+  r.entities=r.entities.filter(e=>e.id!==selEntity.id);
+  selEntity=null; save(); renderMap(); renderSide(); renderEntitySide();
 }
 function entityDescBox(en) {
   if (edit) return `<div class="card"><h3>📖 外观与台词</h3>
@@ -555,7 +460,7 @@ function entityDescBox(en) {
 }
 function entityActionsBox(en) {
   if (edit) {
-    const actsHtml = en.actions.map((act,idx) => `
+    const actsHtml=en.actions.map((act,idx)=>`
       <div class="act-item"><div class="act-head">
         <span style="font-size:12px;color:var(--accent);font-weight:bold">触发 #${idx+1}</span>
         <input type="text" value="${esc(act.trigger)}" placeholder="触发时机" oninput="selEntity.actions[${idx}].trigger=this.value;save()">
@@ -567,7 +472,7 @@ function entityActionsBox(en) {
       <button class="primary" onclick="selEntity.actions.push({trigger:'',effect:''});save();renderEntitySide()">＋ 添加行为</button></h3>
       ${actsHtml||'<p class="hint">暂未配置</p>'}</div>`;
   }
-  const actsCompact = en.actions.map((act,idx) => `
+  const actsCompact=en.actions.map((act,idx)=>`
     <div class="item compact en-copy act" onclick="copyEntityAction(${idx})">
       <div class="row"><span class="tag static" style="background:#e07b5e;color:#fff">触发 #${idx+1}</span>
         <div class="memo"><b>${esc(act.trigger)||'（未设定）'}</b>
@@ -576,17 +481,17 @@ function entityActionsBox(en) {
   return `<div class="card" style="margin-top:10px"><h3>⚡ 触发后果</h3>${actsCompact||'<p class="hint">未配置</p>'}</div>`;
 }
 function renderEntitySide() {
-  const es = document.getElementById('entitySide');
+  const es=document.getElementById('entitySide');
   if (!sel||!selEntity) { es.classList.remove('open'); es.innerHTML=''; return; }
   es.classList.add('open');
-  const en = selEntity;
-  const attrsHtml = en.attrs.map((a,idx) => `
+  const en=selEntity;
+  const attrsHtml=en.attrs.map((a,idx)=>`
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <input type="text" style="width:100px;flex:none" value="${esc(a.name)}" placeholder="属性名" ${!edit?'disabled':''} oninput="selEntity.attrs[${idx}].name=this.value;save()">
       <input type="text" style="flex:1" value="${esc(a.val)}" placeholder="值" oninput="selEntity.attrs[${idx}].val=this.value;save()">
       ${edit?`<button class="danger" onclick="selEntity.attrs.splice(${idx},1);save();renderEntitySide()">✕</button>`:''}
     </div>`).join('');
-  es.innerHTML = `
+  es.innerHTML=`
     <div class="sidehead">
       <b style="color:var(--accent);font-size:15px">🎭 实体详情</b><div class="spacer"></div>
       ${edit?`<button class="danger" onclick="deleteCurEntity()">删除实体</button>`:''}
@@ -615,18 +520,18 @@ function renderEntitySide() {
     <div class="card"><h3>🔒 DM 备注</h3>
       <textarea placeholder="战术策略、动机…" oninput="selEntity.dmNote=this.value;save()">${esc(en.dmNote)}</textarea></div>`;
 }
-function upd(k, v) { const r=room(sel); r[k]=v; save(); if(k==='name'){renderMap();if(!edit)renderSide();} }
+function upd(k,v) { const r=room(sel); r[k]=v; save(); if(k==='name'){renderMap();if(!edit)renderSide();} }
 
 // ===== 物资卡片 =====
 function pbtnsHtml(i) {
-  return D.players.map((p,idx) => {
-    const on = i.owners.includes(idx), c = pcolor(idx);
-    const st = on?`background:${c};border-color:${c};color:#111`:`border-color:${c}88`;
+  return D.players.map((p,idx)=>{
+    const on=i.owners.includes(idx), c=pcolor(idx);
+    const st=on?`background:${c};border-color:${c};color:#111`:`border-color:${c}88`;
     return `<button class="pbtn ${on?'on':''}" style="${st}" onclick="toggleOwner('${i.id}',${idx})">${esc(pname(idx))}</button>`;
   }).join('');
 }
 function itemHtml(i) {
-  const t = i.type==='clue';
+  const t=i.type==='clue';
   return `<div class="item ${t?'clue':''} ${i.consumed?'consumed':''}" data-id="${i.id}"
     ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'item','${i.id}')">
     <div class="row">
@@ -644,7 +549,7 @@ function itemHtml(i) {
     </div></div>`;
 }
 function itemCompact(i) {
-  const t = i.type==='clue';
+  const t=i.type==='clue';
   return `<div class="item compact ${t?'clue':''} ${i.consumed?'consumed':''}" onclick="copyDesc('${i.id}')">
     <div class="row"><span class="tag static ${i.type}">${t?'线索':'道具'}</span>
       <div class="memo"><b>${esc(i.name)||'（未命名）'}</b>
@@ -659,10 +564,10 @@ function addItem() { room(sel).items.push(newItem()); save(); renderSide(); rend
 function delItem(id) { const r=room(sel); r.items=r.items.filter(i=>i.id!==id); save(); renderSide(); renderMap(); }
 function itemType(id) { const i=getItem(id); i.type=i.type==='clue'?'item':'clue'; save(); renderSide(); }
 function itemUpd(id,k,v) { getItem(id)[k]=v; save(); }
-function toggleOwner(id, idx) {
+function toggleOwner(id,idx) {
   const f=findItem(id), i=f.item;
-  const had = i.owners.includes(idx);
-  i.owners = had ? i.owners.filter(x=>x!==idx) : [...i.owners,idx].sort((a,b)=>a-b);
+  const had=i.owners.includes(idx);
+  i.owners=had?i.owners.filter(x=>x!==idx):[...i.owners,idx].sort((a,b)=>a-b);
   addLog('item',`${pname(idx)} ${had?'失去':'获得'}「${i.name||'未命名'}」`,pcolor(idx));
   save(); renderSide(); renderMap();
 }
@@ -673,17 +578,17 @@ function toggleConsumed(id) {
 }
 
 // ===== 日程 =====
-const dayDlg = document.getElementById('dayDlg');
+const dayDlg=document.getElementById('dayDlg');
 function updateDayBar() {
-  const t = dayLabel(D.curDay);
-  document.getElementById('dayBtn').textContent = '📅 ' + t;
-  document.getElementById('endDayBtn').textContent = t + ' 结束 ▶';
+  const t=dayLabel(D.curDay);
+  document.getElementById('dayBtn').textContent='📅 '+t;
+  document.getElementById('endDayBtn').textContent=t+' 结束 ▶';
 }
 function openDays() { dayView=D.curDay; renderDays(); dayDlg.showModal(); }
 function renderDays() {
-  if (dayView >= D.days.length) dayView = D.days.length-1;
-  const nav = document.getElementById('dayNav');
-  nav.innerHTML = D.days.map((d,i) => {
+  if (dayView>=D.days.length) dayView=D.days.length-1;
+  const nav=document.getElementById('dayNav');
+  nav.innerHTML=D.days.map((d,i)=>{
     const n=d.events.length, dn=d.events.filter(e=>e.done).length;
     return `<div class="item day-card ${i===dayView?'on':''} ${i===D.curDay?'cur':''}"
       data-id="${i}"
@@ -694,11 +599,10 @@ function renderDays() {
         <b style="font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dayLabel(i))}</b>
         <span class="dtag">${i===D.curDay?'🚩':d.ended?'✔':''}${n?` ${dn}/${n}`:''}</span>
       </div></div>`;
-  }).join('') + `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>`;
-
-  const d = D.days[dayView], isCur = dayView===D.curDay;
-  const keep = document.getElementById('dayMain').scrollTop;
-  const evs = d.events.map(e => `
+  }).join('')+`<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>`;
+  const d=D.days[dayView], isCur=dayView===D.curDay;
+  const keep=document.getElementById('dayMain').scrollTop;
+  const evs=d.events.map(e=>`
     <div class="item ${e.done?'done':''}" data-id="${e.id}"
       ondragover="handleCardDragOver(event)" ondragleave="handleCardDragLeave(event)" ondrop="handleCardDrop(event,'event','${e.id}')">
       <div class="row">
@@ -710,9 +614,8 @@ function renderDays() {
       </div>
       <label class="s">事件详情</label>
       <textarea style="min-height:48px" oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
-    </div>`).join('') || '<p class="hint">这一天还没有事件</p>';
-
-  document.getElementById('dayMain').innerHTML = `
+    </div>`).join('')||'<p class="hint">这一天还没有事件</p>';
+  document.getElementById('dayMain').innerHTML=`
     <div class="dayhead">
       <input type="text" class="nm" style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
         value="${esc(dayLabel(dayView))}" placeholder="Day 名称" oninput="setDayTitle(${dayView},this.value)">
@@ -722,15 +625,15 @@ function renderDays() {
     </div>
     ${evs}
     <button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>`;
-  document.getElementById('dayMain').scrollTop = keep;
+  document.getElementById('dayMain').scrollTop=keep;
   updateDayBar();
 }
-function setDayTitle(i, val) {
-  D.days[i].title = val.trim() || `Day ${i+1}`; save(); updateDayBar();
-  const navItems = document.getElementById('dayNav').querySelectorAll('.day-card');
+function setDayTitle(i,val) {
+  D.days[i].title=val.trim()||`Day ${i+1}`; save(); updateDayBar();
+  const navItems=document.getElementById('dayNav').querySelectorAll('.day-card');
   if (navItems[i]) { const s=navItems[i].querySelector('b'); if(s) s.textContent=dayLabel(i); }
 }
-const evGet = id => D.days[dayView].events.find(e => e.id===id);
+const evGet=id=>D.days[dayView].events.find(e=>e.id===id);
 function evAdd() { D.days[dayView].events.push({id:uid(),time:'',title:'',detail:'',done:false}); save(); renderDays(); }
 function evDel(id) { D.days[dayView].events=D.days[dayView].events.filter(e=>e.id!==id); save(); renderDays(); }
 function evUpd(id,k,v) { evGet(id)[k]=v; save(); }
@@ -792,11 +695,11 @@ function delPlayer(i) {
 function closePlayers() { document.getElementById('playersDlg').close(); renderSide(); }
 
 // ===== 玩家背景与车卡 =====
-const bgDlg = document.getElementById('bgDlg');
-bgDlg.addEventListener('close', () => { renderSide(); });
-function openBg() { if (bgSel>=D.players.length) bgSel=0; renderBg(); if (!bgDlg.open) bgDlg.showModal(); }
+const bgDlg=document.getElementById('bgDlg');
+bgDlg.addEventListener('close',()=>{ renderSide(); });
+function openBg() { if(bgSel>=D.players.length) bgSel=0; renderBg(); if(!bgDlg.open) bgDlg.showModal(); }
 function renderBg() {
-  const keep = document.getElementById('bgMain').scrollTop;
+  const keep=document.getElementById('bgMain').scrollTop;
   document.getElementById('bgNav').innerHTML=D.players.map((p,i)=>
     `<button id="bgn${i}" class="${i===bgSel?'on':''}" style="border-left:4px solid ${pcolor(i)}" onclick="bgSel=${i};renderBg()">${i+1}. ${esc(pname(i))}</button>`).join('');
   const b=D.bg[bgSel], c=b.card, cfg=D.cardCfg;
@@ -895,7 +798,7 @@ function roomOpts(cur) {
   return `<option value="">📥 未分配</option>`+D.rooms.map(r=>
     `<option value="${r.id}" ${r.id===cur?'selected':''}>${esc(r.name)||'未命名'} (${r.x},${r.y})</option>`).join('');
 }
-function poolRow(i, rid) {
+function poolRow(i,rid) {
   const st=i.consumed?'已消耗':i.owners.length?'已给 '+i.owners.map(n=>esc(pname(n))).join('、'):'';
   return `<div class="prow2 ${i.type==='clue'?'clue':''} ${i.consumed?'consumed':''}">
     <div class="l1">
@@ -945,9 +848,9 @@ function poolDel(id) {
 // ===== 导出手册 =====
 let hbMode='dm';
 const hbOpts=()=>({
-  dm:document.getElementById('hbDM').checked,pl:document.getElementById('hbPl').checked,
-  st:document.getElementById('hbSt').checked,dup:document.getElementById('hbDup').checked,
-  bg:document.getElementById('hpBg').checked,fill:document.getElementById('hpFill').checked,
+  dm:document.getElementById('hbDM').checked, pl:document.getElementById('hbPl').checked,
+  st:document.getElementById('hbSt').checked, dup:document.getElementById('hbDup').checked,
+  bg:document.getElementById('hpBg').checked, fill:document.getElementById('hpFill').checked,
   split:document.getElementById('hpSplit').checked
 });
 const hbBuild=()=>hbMode==='dm'?hbHtml(hbOpts()):hpHtml(hbOpts());
@@ -989,6 +892,7 @@ function importData(e) {
       D=migrate(d); sel=null; selEntity=null; save(); lastMin=null; bgSel=0; dayView=D.curDay;
       document.getElementById('modTitle').value=D.title||'';
       renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
+      applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
     } catch(_) { alert('文件格式不正确'); }
   };
   rd.readAsText(f); e.target.value='';
@@ -1001,7 +905,7 @@ function resetAll() {
   renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
 }
 
-// ===== 全局重绘钩子 =====
+// ===== 全局重绘钩子（供 P2P 同步调用）=====
 function renderAllViews() {
   document.getElementById('modTitle').value=D.title||'';
   renderStrip(); renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
@@ -1010,28 +914,10 @@ function renderAllViews() {
   if (document.getElementById('sumDlg').open) renderPool();
   if (document.getElementById('logDlg').open) renderLog();
 }
-// ===== 页面启动初始化 =====
-applyTheme(getStoredTheme());
 
-// 绑定主题按钮（只绑一次，去掉 HTML onclick 避免双触发）
-const _themeBtn = document.getElementById('themeBtn');
-if (_themeBtn) {
-  _themeBtn.removeAttribute('onclick');
-  _themeBtn.addEventListener('click', toggleTheme);
-}
-
-// 绑定联机按钮（id 已统一为 p2pBtn，与 data.js 一致）
-const _p2pBtn = document.getElementById('p2pBtn');
-if (_p2pBtn) {
-  _p2pBtn.removeAttribute('onclick');
-  _p2pBtn.addEventListener('click', handleP2PAction);
-}
-
+// ===== 页面启动 =====
 renderStrip();
 renderMap();
 updateDayBar();
 updatePlayerBar();
-
-if (typeof initP2PSync === 'function') {
-  initP2PSync();
-}
+initP2PSync(); // 定义在 p2p.js，已先行加载
