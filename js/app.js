@@ -663,6 +663,46 @@ function endDay() {
   if (dayDlg.open) renderDays(); else updateDayBar();
   toast(`「${dayLabel(i)}」已结束，进入「${dayLabel(D.curDay)}」`);
 }
+// ===== 房间玩家分配 =====
+function setPlayerRoomFromRoom(pIdx, rid) {
+  const old = D.bg[pIdx].roomId || '';
+  if (old === rid) {
+    // 再次点击同一房间 → 移出（设为未定位）
+    D.bg[pIdx].roomId = '';
+    addLog('move', `${pname(pIdx)}：${rname(rid)} → 未定位`, pcolor(pIdx));
+  } else {
+    D.bg[pIdx].roomId = rid;
+    addLog('move', `${pname(pIdx)}：${rname(old)} → ${rname(rid)}`, pcolor(pIdx));
+  }
+  save();
+  renderStrip();
+  renderSide();
+  renderMap();
+}
+
+function roomPlayersHtml(rid) {
+  if (!D.players.length) return '';
+  const chips = D.players.map((_, i) => {
+    const inThis = D.bg[i].roomId === rid;
+    const inOther = !inThis && D.bg[i].roomId !== '';
+    const otherName = inOther ? rname(D.bg[i].roomId) : '';
+    const title = inThis
+      ? `${pname(i)}（点击移出房间）`
+      : inOther
+        ? `${pname(i)}（当前在：${otherName}，点击移入此房间）`
+        : `${pname(i)}（未定位，点击移入此房间）`;
+    return `<button
+      class="pchip${inThis ? ' on' : ''}${inOther ? ' pchip-other' : ''}"
+      style="border-color:${pcolor(i)};${inThis ? `background:${pcolor(i)}22;color:${pcolor(i)};font-weight:bold;` : ''}"
+      title="${esc(title)}"
+      onclick="setPlayerRoomFromRoom(${i},'${rid}')"
+    ><i class="cdot" style="background:${pcolor(i)}"></i>${esc(pname(i))}</button>`;
+  }).join('');
+  return `
+    <div class="sec-label">👥 此处的玩家</div>
+    <div class="pchip-row">${chips}</div>
+  `;
+}
 
 // ===== 玩家管理 =====
 function updatePlayerBar() { document.getElementById('playersBtn').textContent=`👥 玩家(${D.players.length})`; }
