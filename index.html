@@ -2,148 +2,169 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>TRPG 模组 · DM 工具</title>
+  <title>TRPG 模组 DM 工具</title>
   <link rel="stylesheet" href="style.css">
-  <!-- 引入 PeerJS WebRTC P2P 官方免密客户端 -->
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <!-- WebRTC 多人联机库 -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body class="edit">
+  <!-- 顶部操作栏 -->
   <header>
-    <h1>🎲 模组 DM 工具</h1>
-    <input class="title" id="modTitle" placeholder="模组名称">
-    <div class="spacer"></div>
-    <button id="p2pBtn" onclick="handleP2PAction()" style="border-color:var(--accent)" title="双人实时联机协作">🔗 邀请双人协作</button>
-    <button id="dayBtn" onclick="openDays()" title="查看 / 编辑日程">📅 Day 1</button>
+    <h1>🎲 DM 工作台</h1>
+    <input type="text" id="modTitle" class="title" placeholder="模组名称" title="点击直接修改模组名">
+    <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
+    <button id="dayBtn" onclick="openDays()">📅 Day 1</button>
     <button id="endDayBtn" class="primary" onclick="endDay()">Day 1 结束 ▶</button>
-    <button id="modeBtn" class="on" onclick="toggleMode()" title="切换编辑 / 带团模式">✏️ 编辑模式</button>
-    <button onclick="openBg()">🧑‍🎤 玩家背景</button>
-    <button id="playersBtn" onclick="openPlayers()">👥 玩家</button>
-    <button onclick="openSummary()">📦 物资总览</button>
+    <button id="playersBtn" onclick="openPlayers()">👥 玩家(4)</button>
+    <button onclick="openSummary()">🎒 物资总览</button>
     <button onclick="openLog()">📜 日志</button>
-    <button class="primary" onclick="openHandbook()" title="生成可打印的带团手册 / 玩家发放版">📖 导出手册</button>
-    <button onclick="exportData()" title="导出 JSON 备份文件，可再导入">导出备份</button>
-    <button onclick="document.getElementById('imp').click()">导入</button>
-    <input type="file" id="imp" accept=".json" hidden onchange="importData(event)">
-    <button class="danger" onclick="resetAll()">重置</button>
+    <button onclick="openHandbook()">📖 导出手册</button>
+
+    <div class="spacer"></div>
+
+    <!-- 新增：浅色/深色主题切换按钮 -->
+    <button id="themeBtn" title="切换浅色/深色主题" onclick="toggleTheme()">🌓 配色</button>
+    <!-- 多人联机状态按钮 -->
+    <button id="peerBtn" title="P2P WebRTC 联机状态" onclick="openP2PModal()">📡 联机中...</button>
+    <button onclick="exportData()">💾 导出备份</button>
+    <label class="button" style="display:inline-flex;align-items:center;cursor:pointer;background:var(--card);padding:5px 11px;border-radius:4px;border:1px solid var(--line);font-size:12.5px">
+      📂 导入
+      <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+    </label>
+    <button class="danger" onclick="resetAll()">重置模组</button>
   </header>
 
+  <!-- 主内容区 -->
   <main>
-    <aside id="strip"></aside>
+    <!-- 玩家属性侧栏 -->
+    <div id="strip"></div>
+    <button id="stripOpen" onclick="setStrip(true)">👥 玩家属性</button>
+
+    <!-- 地图平移缩放视窗 -->
     <div id="mapWrap">
       <div id="grid"></div>
-      <button id="stripOpen" title="展开玩家属性栏" onclick="setStrip(true)">▶ 玩家属性</button>
-      <button id="centerBtn" title="把整张地图移回画布中央" onclick="centerView()">🎯 居中视图</button>
-      <div id="panHint">按住空白处或房间拖动 · 滚轮平移</div>
+      <button id="centerBtn" onclick="centerView()">⌖ 视角居中</button>
+      <div id="panHint">按住空白处拖拽画布 · 滚轮上下移动 · Shift+滚轮左右移动</div>
     </div>
-    <aside id="side"></aside>
-    <aside id="entitySide"></aside>
+
+    <!-- 二级房间详情侧栏 -->
+    <div id="side"></div>
+
+    <!-- 三级场景实体/遭遇侧栏 -->
+    <div id="entitySide"></div>
   </main>
 
+  <!-- 浮动通知 Toast -->
   <div id="toast"></div>
 
-  <!-- 对话框部分 -->
-  <dialog id="playersDlg" style="width:500px;max-width:95vw">
-    <h3 style="margin-top:0">玩家名单 <span class="hint" id="plCount"></span></h3>
-    <div class="hint" style="margin-bottom:6px">每行：代表色 · 名字 · 所在房间</div>
-    <div id="playersBox"></div>
-    <div style="display:flex;justify-content:space-between;margin-top:10px">
-      <button onclick="addPlayer()">＋ 新增玩家</button>
-      <button class="primary" onclick="closePlayers()">完成</button>
-    </div>
-  </dialog>
-
-  <dialog id="stripDlg">
-    <h3 style="margin-top:0">属性栏显示设置</h3>
-    <div class="hint" style="margin-bottom:6px">勾选的属性会显示在地图左侧的玩家小视窗里。</div>
-    <div style="display:flex;gap:6px;margin-bottom:6px">
+  <!-- 弹窗 1：属性侧栏配置 -->
+  <dialog id="stripDlg" style="width:360px">
+    <div class="tabs">
+      <b style="color:var(--accent)">⚙ 玩家属性栏设置</b>
+      <div class="spacer"></div>
       <button onclick="stripAll(true)">全选</button>
       <button onclick="stripAll(false)">全不选</button>
+      <button onclick="document.getElementById('stripDlg').close()">✕</button>
     </div>
-    <div id="stripCfgBox" style="max-height:50vh;overflow:auto"></div>
-    <div style="text-align:right;margin-top:10px"><button class="primary" onclick="document.getElementById('stripDlg').close()">完成</button></div>
+    <div id="stripCfgBox" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
   </dialog>
 
-  <dialog id="dayDlg" style="width:880px;max-width:95vw;max-height:90vh">
+  <!-- 弹窗 2：日程管理 -->
+  <dialog id="dayDlg" style="width:780px;max-width:92vw">
     <div class="tabs">
-      <b style="color:var(--accent)">📅 日程</b>
+      <b style="color:var(--accent);font-size:15px">📅 日程推进与事件表</b>
       <div class="spacer"></div>
-      <button onclick="document.getElementById('dayDlg').close()">关闭</button>
+      <button onclick="dayDlg.close()">✕ 关闭</button>
     </div>
     <div class="bgwrap">
-      <div class="bgnav daynav" id="dayNav"></div>
-      <div class="bgmain" id="dayMain"></div>
+      <div id="dayNav" class="bgnav"></div>
+      <div id="dayMain" class="bgmain"></div>
     </div>
   </dialog>
 
-  <dialog id="bgDlg" style="width:880px;max-width:95vw;max-height:90vh">
+  <!-- 弹窗 3：玩家管理 -->
+  <dialog id="playersDlg" style="width:520px;max-width:92vw">
     <div class="tabs">
-      <b style="color:var(--accent)">🧑‍🎤 玩家背景</b>
+      <b style="color:var(--accent);font-size:15px">👥 玩家队伍设置</b>
+      <span id="plCount" class="hint"></span>
       <div class="spacer"></div>
-      <button onclick="document.getElementById('bgDlg').close()">关闭</button>
+      <button class="primary" onclick="addPlayer()">＋ 新增玩家</button>
+      <button onclick="closePlayers()">✕ 完成</button>
+    </div>
+    <div id="playersBox" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
+  </dialog>
+
+  <!-- 弹窗 4：玩家背景与车卡 -->
+  <dialog id="bgDlg" style="width:840px;max-width:94vw">
+    <div class="tabs">
+      <b style="color:var(--accent);font-size:15px">📜 玩家预设背景与车卡</b>
+      <div class="spacer"></div>
+      <button onclick="bgDlg.close()">✕ 关闭</button>
     </div>
     <div class="bgwrap">
-      <div class="bgnav" id="bgNav"></div>
-      <div class="bgmain" id="bgMain"></div>
+      <div id="bgNav" class="bgnav"></div>
+      <div id="bgMain" class="bgmain"></div>
     </div>
   </dialog>
 
-  <dialog id="sumDlg" style="width:760px;max-width:95vw;max-height:88vh">
+  <!-- 弹窗 5：物资总览池 -->
+  <dialog id="sumDlg" style="width:820px;max-width:92vw">
     <div class="tabs">
-      <b style="color:var(--accent)">🗃 物资池总览 / 分配</b>
+      <b style="color:var(--accent);font-size:15px">🎒 物资全览池与分配</b>
       <div class="spacer"></div>
-      <button onclick="document.getElementById('sumDlg').close()">关闭</button>
+      <button class="primary" onclick="addPoolItem()">＋ 新物资</button>
+      <button onclick="document.getElementById('sumDlg').close()">✕ 关闭</button>
     </div>
     <div class="ptool">
-      <input type="text" id="poolQ" placeholder="搜索名称 / 描述 / 条件…" oninput="poolQ=this.value;renderPool()">
+      <input type="text" id="poolQ" placeholder="搜索物资名称、描述、检定条件…" oninput="poolQ=this.value;renderPool()">
       <select id="poolT" onchange="poolT=this.value;renderPool()">
-        <option value="">全部类型</option><option value="clue">仅线索</option><option value="item">仅道具</option>
+        <option value="">全部类型</option>
+        <option value="item">道具</option>
+        <option value="clue">线索</option>
       </select>
-      <button class="primary" onclick="addPoolItem()">＋ 新物资</button>
     </div>
-    <div class="hint" style="margin-bottom:4px">「未分配」是还没放进任何房间的物资。用右侧下拉框可把物资快速移入任意房间，或移回未分配。</div>
-    <div id="poolList" style="overflow:auto;max-height:60vh"></div>
+    <div id="poolList" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
   </dialog>
 
-  <dialog id="logDlg" style="width:760px;max-width:95vw;max-height:90vh">
+  <!-- 弹窗 6：运行日志 -->
+  <dialog id="logDlg" style="width:700px;max-width:92vw">
     <div class="tabs">
-      <b style="color:var(--accent)">📜 日志</b>
-      <span id="logTabs" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      <b style="color:var(--accent);font-size:15px">📜 模组运行日志</b>
+      <div id="logTabs" style="display:flex;gap:4px;margin-left:10px"></div>
       <div class="spacer"></div>
-      <button onclick="copyLog()">📋 复制</button>
-      <button class="danger" onclick="clearLog()">清空</button>
-      <button onclick="document.getElementById('logDlg').close()">关闭</button>
+      <button onclick="copyLog()">📋 复制文本</button>
+      <button class="danger" onclick="clearLog()">清空日志</button>
+      <button onclick="document.getElementById('logDlg').close()">✕ 关闭</button>
     </div>
     <div id="logList"></div>
   </dialog>
 
-  <dialog id="hbDlg" style="width:980px;max-width:96vw;max-height:95vh">
+  <!-- 弹窗 7：导出手册 -->
+  <dialog id="hbDlg" style="width:900px;max-width:96vw">
     <div class="tabs">
-      <button id="hbTabDm" class="on" onclick="setHbMode('dm')">📖 DM 带团手册</button>
-      <button id="hbTabPl" onclick="setHbMode('pl')">🧾 玩家发放版</button>
+      <button id="hbTabDm" class="on" onclick="setHbMode('dm')">📖 DM 完整手册</button>
+      <button id="hbTabPl" onclick="setHbMode('pl')">👥 玩家发放版</button>
       <div class="spacer"></div>
-      <button class="primary" onclick="printHandbook()">🖨 打印 / 另存为 PDF</button>
-      <button onclick="downloadHandbook()">⬇ 下载 HTML</button>
-      <button onclick="document.getElementById('hbDlg').close()">关闭</button>
+      <button onclick="refreshHandbook()">🔄 刷新预览</button>
+      <button onclick="printHandbook()">🖨️ 打印 / 另存为 PDF</button>
+      <button class="primary" onclick="downloadHandbook()">⬇ 下载 HTML 文件</button>
+      <button onclick="document.getElementById('hbDlg').close()">✕ 关闭</button>
     </div>
-    <div class="hbopts" id="hbOptDm">
-      <label><input type="checkbox" id="hbDM" checked onchange="refreshHandbook()">DM 专属内容</label>
-      <label><input type="checkbox" id="hbPl" checked onchange="refreshHandbook()">玩家角色页（背景 + 车卡）</label>
-      <label><input type="checkbox" id="hbSt" onchange="refreshHandbook()">带上当前进度（位置、已获取、已填数值）</label>
+    <div id="hbOptDm" class="hbopts">
+      <label><input type="checkbox" id="hbDM" checked onchange="refreshHandbook()">包含 DM 专属内容</label>
+      <label><input type="checkbox" id="hbPl" checked onchange="refreshHandbook()">包含玩家队伍与背景</label>
+      <label><input type="checkbox" id="hbSt" checked onchange="refreshHandbook()">包含未分配物资池</label>
+      <label><input type="checkbox" id="hbDup" checked onchange="refreshHandbook()">包含地图概览</label>
     </div>
-    <div class="hbopts" id="hbOptPl" style="display:none">
-      <label><input type="checkbox" id="hpBg" checked onchange="refreshHandbook()">包含预设背景（身份 / 技能 / 目的）</label>
-      <label><input type="checkbox" id="hpFill" onchange="refreshHandbook()">预填已有车卡数值（不勾选＝空白车卡）</label>
-      <label><input type="checkbox" id="hpSplit" onchange="refreshHandbook()">背景在正面、车卡在背面（每人 2 页）</label>
+    <div id="hbOptPl" class="hbopts" style="display:none">
+      <label><input type="checkbox" id="hpBg" checked onchange="refreshHandbook()">包含身份与目的</label>
+      <label><input type="checkbox" id="hpFill" checked onchange="refreshHandbook()">预填数值</label>
+      <label><input type="checkbox" id="hpSplit" checked onchange="refreshHandbook()">每位角色独立分页打印</label>
     </div>
-    <div class="hbopts">
-      <label><input type="checkbox" id="hbDup" checked onchange="refreshHandbook()">双面打印优化（章节 / 每位玩家从右页开始，装订侧加宽，带页码）</label>
-    </div>
-    <iframe id="hbFrame" title="手册预览"></iframe>
-    <div class="hint" style="margin-top:6px">打印窗口里选择「A4」，建议关闭「页眉和页脚」，并勾选「双面打印」。每个房间固定从新页开始。</div>
+    <iframe id="hbFrame"></iframe>
   </dialog>
 
-  <!-- 脚本加载 -->
+  <!-- 引入逻辑脚本 -->
   <script src="js/data.js"></script>
   <script src="js/handbook.js"></script>
   <script src="js/app.js"></script>
