@@ -95,18 +95,7 @@ function toggleTheme() {
   toast(`已切换为 ${next === 'light' ? '☀️ 浅色' : '🌙 深色'} 配色`);
 }
 
-function bindThemeButton() {
-  const btn = document.getElementById('themeBtn');
-  if (btn && !btn.dataset.bound) {
-    btn.dataset.bound = 'true';
-    btn.addEventListener('click', e => { e.preventDefault(); toggleTheme(); });
-  }
-}
 
-// ===== P2P 联机（存根，防止点击报错）=====
-function openP2PModal() {
-  toast('📡 联机功能暂未启用，请配置 PeerJS 后使用');
-}
 
 // 如果 p2p.js 存在并定义了 initP2PSync，则由其覆盖上面的存根
 // （保持向后兼容）
@@ -1024,18 +1013,18 @@ function renderAllViews() {
 // ===== 页面启动初始化 =====
 applyTheme(getStoredTheme());
 
-// 绑定主题按钮
+// 绑定主题按钮（只绑一次，去掉 HTML onclick 避免双触发）
 const _themeBtn = document.getElementById('themeBtn');
 if (_themeBtn) {
   _themeBtn.removeAttribute('onclick');
   _themeBtn.addEventListener('click', toggleTheme);
 }
 
-// 绑定联机按钮
-const _peerBtn = document.getElementById('peerBtn');
-if (_peerBtn) {
-  _peerBtn.removeAttribute('onclick');
-  _peerBtn.addEventListener('click', openP2PModal);
+// 绑定联机按钮（id 已统一为 p2pBtn，与 data.js 一致）
+const _p2pBtn = document.getElementById('p2pBtn');
+if (_p2pBtn) {
+  _p2pBtn.removeAttribute('onclick');
+  _p2pBtn.addEventListener('click', handleP2PAction);
 }
 
 renderStrip();
