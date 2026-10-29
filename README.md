@@ -4,6 +4,7 @@
 
 > 🔗 在线访问：[https://lcmdyc.github.io/House-DM](https://lcmdyc.github.io/House-DM)
 
+> 🔗 待上线新功能测试：[https://rawcdn.githack.com/lcmdyc/House-DM/backup-latest/index.html](https://rawcdn.githack.com/lcmdyc/House-DM/backup-latest/index.html)
 ---
 
 ## ✨ 功能特性
