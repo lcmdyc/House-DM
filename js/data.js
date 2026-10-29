@@ -6,7 +6,6 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
-// 如需发布带有预置内容的固定模组，将导出后的 JSON 赋给 DEFAULT_DATA 即可
 const DEFAULT_DATA = null;
 
 const PALETTE = [
@@ -20,7 +19,6 @@ const INFO_FIELDS = [
   ['job', '职业'], ['religion', '宗教'], ['zodiac', '星座']
 ];
 
-// 门的方向：N/E/S/W
 const SIDES = [['N', '北', 0, -1], ['E', '东', 1, 0], ['S', '南', 0, 1], ['W', '西', -1, 0]];
 const OPP = { N: 'S', S: 'N', E: 'W', W: 'E' };
 const sideOf = (dx, dy) => SIDES.find(s => s[2] === dx && s[3] === dy)[0];
@@ -29,12 +27,11 @@ const DOOR_S = { door: '门', open: '通道', lock: '锁门', out: '单向出', 
 const ARW = { out: { N: '↑', E: '→', S: '↓', W: '←' }, in: { N: '↓', E: '←', S: '↑', W: '→' } };
 const doorSym = (t, s) => t === 'door' ? '门' : t === 'open' ? '通' : t === 'lock' ? '锁' : ARW[t][s];
 
-// 实体/遭遇模板
 const newEntity = () => ({
   id: uid(),
   name: '新实体/遭遇',
-  category: 'npc', // npc, monster, trap, object
-  disposition: '中立', // 友善, 中立, 敌对, 警惕, 隐藏
+  category: 'npc',
+  disposition: '中立',
   desc: '',
   attrs: [{ name: 'HP', val: '10' }, { name: 'AC/护甲', val: '10' }],
   actions: [{ trigger: '遭遇/搭话时', effect: '提供线索或发起攻击' }],
@@ -134,3 +131,16 @@ function loadData() {
 function saveData(d) {
   localStorage.setItem(KEY, JSON.stringify(d));
 }
+
+// 全局响应式状态
+let D = loadData();
+
+// 通用查询助手函数
+const room = id => D.rooms.find(r => r.id === id);
+const at = (x, y) => D.rooms.find(r => r.x === x && r.y === y);
+const isGot = i => i.owners.length > 0 || i.consumed;
+const rname = id => id ? ((room(id) || {}).name || '未命名') : '未定位';
+const pcolor = i => (D.bg[i] && D.bg[i].color) || '#888';
+const pname = i => D.players[i] || ('玩家' + (i + 1));
+const cardUsed = c => D.cardCfg.attrs.reduce((s, a) => s + (+c.vals[a.id] || 0), 0);
+const playersIn = rid => D.players.map((_, i) => i).filter(i => D.bg[i].roomId === rid);
