@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TRPG 模组 · DM 工具</title>
 <style>
-  :root{--bg:#1b1a22;--panel:#25242e;--card:#2e2d39;--line:#3d3b4d;--text:#e8e6f0;--mute:#9b98ad;--accent:#d9a441;--clue:#4aa8d8;--item:#8bc34a;--skill:#b27cd8;--danger:#e0605e}
+  :root{--bg:#1b1a22;--panel:#25242e;--card:#2e2d39;--line:#3d3b4d;--text:#e8e6f0;--mute:#9b98ad;--accent:#d9a441;--clue:#4aa8d8;--item:#8bc34a;--skill:#b27cd8;--danger:#e0605e;--npc:#e8853a}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
   header{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -18,7 +18,7 @@
   button.primary{background:var(--accent);color:#222;border-color:var(--accent);font-weight:bold}
   button.danger{color:var(--danger)}
   button.on{background:var(--accent);color:#222}
-  main{flex:1;display:flex;min-height:0}
+  main{flex:1;display:flex;min-height:0;position:relative}
   #mapWrap{flex:1;position:relative;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:20px 20px}
   #mapWrap.dragging{cursor:grabbing}
   #grid{position:absolute;left:0;top:0;display:grid;gap:14px;width:max-content;will-change:transform}
@@ -30,7 +30,7 @@
   .room:hover{border-color:var(--accent)}
   .room.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,164,65,.25)}
   .room .name{font-weight:bold;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
-  .room .stat{font-size:11px;color:var(--mute)}
+  .room .stat{font-size:11px;color:var(--mute);display:flex;justify-content:space-between;align-items:center}
   .room .pl{display:flex;flex-wrap:wrap;gap:2px;max-height:38px;overflow:hidden}
   .chip{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:10px;font-style:normal;font-weight:bold;color:#111;border:1px solid rgba(0,0,0,.35)}
   /* 门标记：房间卡片内侧，各边居中 */
@@ -62,8 +62,11 @@
   .pc .as .z b{color:var(--mute);font-weight:normal}
   .chkrow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
   .chkrow input{width:16px;height:16px}
-  #side{width:420px;max-width:100%;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:none;padding:14px}
+  #side{width:380px;max-width:100%;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:none;padding:14px;position:relative}
   #side.open{display:block}
+  /* 专属实体/NPC侧栏 */
+  #entitySide{width:420px;max-width:100%;background:#22212b;border-left:2px solid var(--accent);overflow-y:auto;display:none;padding:14px;position:relative;z-index:10;box-shadow:-4px 0 16px rgba(0,0,0,.4)}
+  #entitySide.open{display:block}
   .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px}
   .card h3{margin:0 0 6px;font-size:13px;color:var(--accent);display:flex;align-items:center;justify-content:space-between}
   textarea,input[type=text],input[type=number],select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
@@ -71,7 +74,7 @@
   textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent)}
   input[type=color]{width:34px;height:30px;padding:1px;flex:none;background:var(--bg);border:1px solid var(--line);border-radius:6px;cursor:pointer}
   label.s{font-size:12px;color:var(--mute);display:block;margin:6px 0 2px}
-  .sidehead{display:flex;gap:6px;margin-bottom:12px}
+  .sidehead{display:flex;gap:6px;margin-bottom:12px;align-items:center}
   .sidehead input{font-size:16px;font-weight:bold}
   .here{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
   .here span{display:inline-flex;align-items:center;gap:4px}
@@ -79,6 +82,8 @@
   .item.clue{border-left-color:var(--clue)}
   .item.skill{border-left-color:var(--skill)}
   .item.consumed{opacity:.4;filter:grayscale(.7);border-left-color:var(--line)}
+  .item.npc{border-left-color:var(--npc);background:#2c2830}
+  .item.npc:hover{border-color:var(--npc)}
   .item .row{display:flex;gap:6px;align-items:center}
   .item.compact{padding:6px 8px;margin-top:6px;cursor:pointer}
   .item.compact:hover{background:#2b2a35}
@@ -94,7 +99,7 @@
   .item.compact.rd .memo .cd{white-space:pre-wrap;color:var(--text);opacity:.85;margin-top:2px;max-height:11em;overflow:auto}
   .item.compact.rd .memo .cd.emp{color:var(--mute);font-style:italic}
   .tag{font-size:11px;padding:1px 8px;border-radius:10px;color:#111;font-weight:bold;cursor:pointer;white-space:nowrap;border:none}
-  .tag.clue{background:var(--clue)}.tag.item{background:var(--item)}.tag.skill{background:var(--skill)}
+  .tag.clue{background:var(--clue)}.tag.item{background:var(--item)}.tag.skill{background:var(--skill)}.tag.npc{background:var(--npc);color:#fff}
   .tag.static{cursor:inherit}
   .status{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:5px;flex-wrap:wrap;align-items:center}
   .pbtn{padding:2px 9px;border-radius:12px;font-size:12px;background:transparent;color:var(--mute)}
@@ -178,6 +183,10 @@
   .hbopts label{display:flex;align-items:center;gap:6px;cursor:pointer}
   .hbopts input{width:15px;height:15px}
   #hbFrame{width:100%;height:62vh;border:1px solid var(--line);border-radius:6px;background:#fff}
+  /* 行为列表项 */
+  .act-item{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:6px}
+  .act-head{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+  .act-head input{font-weight:bold}
 </style>
 </head>
 <body class="edit">
@@ -207,6 +216,8 @@
     <div id="panHint">按住空白处或房间拖动 · 滚轮平移</div>
   </div>
   <aside id="side"></aside>
+  <!-- 第三级：实体/NPC/怪物独立侧栏 -->
+  <aside id="entitySide"></aside>
 </main>
 <div id="toast"></div>
 
@@ -315,12 +326,10 @@ const KEY='trpg_module_v1';
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ===== 如需发布带有预置内容的模组，把导出的 JSON 粘贴到这里替换 DEFAULT_DATA =====
 const DEFAULT_DATA=null;
 
 const PALETTE=['#e0605e','#e8a13a','#e6d24a','#8bc34a','#4cc9a0','#4aa8d8','#6c7be0','#b27cd8','#e37bb6','#9b8b7a','#ff8a5c','#7fd0e0'];
 const INFO_FIELDS=[['name','姓名'],['gender','性别'],['age','年龄'],['job','职业'],['religion','宗教'],['zodiac','星座']];
-// 门：N/E/S/W 四个方向；单向门以「本房间」为参照
 const SIDES=[['N','北',0,-1],['E','东',1,0],['S','南',0,1],['W','西',-1,0]];
 const OPP={N:'S',S:'N',E:'W',W:'E'};
 const sideOf=(dx,dy)=>SIDES.find(s=>s[2]===dx&&s[3]===dy)[0];
@@ -333,7 +342,20 @@ const blankCard=()=>({info:{name:'',gender:'',age:'',job:'',religion:'',zodiac:'
 const blankBg=(i=0)=>({identity:'',skills:[],goals:[],card:blankCard(),color:PALETTE[i%PALETTE.length],roomId:''});
 const newDay=()=>({id:uid(),ended:false,events:[]});
 const defaultCfg=()=>({points:40,attrs:['力量','技巧','敏捷','勇气','观察','理智','口才'].map(n=>({id:uid(),name:n,show:true}))});
-function blankRoom(x,y,name){return{id:uid(),x,y,name:name||'新房间',desc:'',dm:'',poolNote:'',items:[],doors:{}}}
+
+// 新建实体模板
+const newEntity=()=>({
+id:uid(),
+name:'新实体/遭遇',
+category:'npc', // npc, monster, trap, object
+disposition:'中立', // 友善, 中立, 敌对, 警惕, 隐藏
+desc:'',
+attrs:[{name:'HP',val:'10'},{name:'AC/护甲',val:'10'}], // 键值属性
+actions:[{trigger:'遭遇/搭话时',effect:'提供线索或发起攻击'}], // 触发后果
+dmNote:''
+});
+
+function blankRoom(x,y,name){return{id:uid(),x,y,name:name||'新房间',desc:'',dm:'',poolNote:'',items:[],doors:{},entities:[]}}
 function blankData(){return{title:'我的原创模组',players:Array.from({length:7},(_,i)=>'玩家'+(i+1)),rooms:[],pool:[],cardCfg:defaultCfg(),bg:Array.from({length:7},(_,i)=>blankBg(i)),days:[newDay()],curDay:0,ui:{strip:true,showChar:true},log:[]}}
 function fixItem(i){
 if(!Array.isArray(i.owners)){i.owners=(i.owner!==undefined&&i.owner!=='')?[+i.owner]:[]}
@@ -351,16 +373,17 @@ d.ui=Object.assign({strip:true,showChar:true},d.ui||{});
 if(!Array.isArray(d.days)||!d.days.length)d.days=[newDay()];
 d.days.forEach(x=>{if(!Array.isArray(x.events))x.events=[];if(!x.id)x.id=uid()});
 if(!(d.curDay>=0&&d.curDay<d.days.length))d.curDay=0;
-// 旧存档没有门：把原来相邻的房间自动开成双向门，保持原有连通
 d.rooms.forEach(r=>{
   if(!r.doors||typeof r.doors!=='object'){
     r.doors={};
     SIDES.forEach(([s,,dx,dy])=>{if(d.rooms.some(o=>o.x===r.x+dx&&o.y===r.y+dy))r.doors[s]={t:'door',note:''}});
   }
-  Object.keys(r.doors).forEach(s=>{
-    const x=r.doors[s];
-    if(!OPP[s]||!x||!DOOR_T[x.t])delete r.doors[s];
-    else if(typeof x.note!=='string')x.note='';
+  if(!Array.isArray(r.entities))r.entities=[];
+  r.entities.forEach(en=>{
+    if(!Array.isArray(en.attrs))en.attrs=[];
+    if(!Array.isArray(en.actions))en.actions=[];
+    if(!en.category)en.category='npc';
+    if(!en.disposition)en.disposition='中立';
   });
 });
 d.players.forEach((_,i)=>{
@@ -374,8 +397,6 @@ d.players.forEach((_,i)=>{
   const c=b.card;
   c.info=Object.assign(blankCard().info,c.info||{});
   if(!c.vals||typeof c.vals!=='object')c.vals={};
-  if(typeof c.items!=='string')c.items='';
-  if(typeof c.other!=='string')c.other='';
 });
 d.bg.length=d.players.length;
 const n=d.players.length;
@@ -384,7 +405,8 @@ d.rooms.forEach(r=>r.items.forEach(fixAll));
 d.pool.forEach(fixAll);
 return d;
 }
-let D=load();let sel=null;let edit=true;let poolQ='',poolT='';
+
+let D=load();let sel=null;let selEntity=null;let edit=true;let poolQ='',poolT='';
 
 function load(){
 try{const s=localStorage.getItem(KEY);if(s)return migrate(JSON.parse(s))}catch(e){}
@@ -567,12 +589,16 @@ for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
   if(!r){h+='<div class="cell"></div>';continue}
   const total=r.items.length,got=r.items.filter(isGot).length;
   const here=playersIn(r.id);
+  const nEntity=r.entities?r.entities.length:0;
   const btn=(cls,dx,dy)=>at(x+dx,y+dy)?'':`<button class="add ${cls}" title="向此方向新增房间" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
   h+=`<div class="cell">
     <div class="room ${sel===r.id?'sel':''}" onclick="select('${r.id}')">
       <div class="name">${esc(r.name)||'未命名'}</div>
       <div class="pl">${here.map(chipHtml).join('')}</div>
-      <div class="stat">${total?`📦 ${got}/${total}`:'—'}</div>
+      <div class="stat">
+        <span>${nEntity?`🎭${nEntity}`:''}</span>
+        <span>${total?`📦 ${got}/${total}`:'—'}</span>
+      </div>
     </div>
     ${doorsHtml(r)}
     ${btn('t',0,-1)}${btn('bm',0,1)}${btn('l',-1,0)}${btn('r',1,0)}
@@ -589,7 +615,6 @@ function addFirst(){const r=blankRoom(0,0,'入口');D.rooms.push(r);save();selec
 function addRoom(id,dx,dy){
 const r=room(id);if(at(r.x+dx,r.y+dy))return;
 const n=blankRoom(r.x+dx,r.y+dy);
-// 新建房间时，与来源房间之间默认开一扇双向门，可在侧边栏修改
 r.doors[sideOf(dx,dy)]={t:'door',note:''};
 n.doors[OPP[sideOf(dx,dy)]]={t:'door',note:''};
 D.rooms.push(n);save();select(n.id);
@@ -599,14 +624,30 @@ const r=room(id);
 if(!confirm('确定删除该房间？'+(r.items.length?'\n房间内的物资不会丢失，会回到「未分配」物资池。':'')+(playersIn(id).length?'\n房间里的玩家会变成「未定位」。':'')))return;
 D.pool.push(...r.items);
 D.bg.forEach(b=>{if(b.roomId===id)b.roomId=''});
-D.rooms=D.rooms.filter(x=>x.id!==id);sel=null;save();renderMap();renderSide();
+D.rooms=D.rooms.filter(x=>x.id!==id);
+if(sel===id)closeSide();
+save();renderMap();
 }
-function select(id){sel=id;renderMap();renderSide()}
+function select(id){
+sel=id;
+selEntity=null; // 换房间时收起实体侧栏
+renderMap();
+renderSide();
+renderEntitySide();
+}
+function closeSide(){
+sel=null;
+selEntity=null;
+renderMap();
+renderSide();
+renderEntitySide();
+}
 function toggleMode(){
 edit=!edit;document.body.classList.toggle('edit',edit);
 const b=document.getElementById('modeBtn');b.classList.toggle('on',edit);
 b.textContent=edit?'✏️ 编辑模式':'🎮 带团模式';
 renderSide();
+renderEntitySide();
 }
 
 // ===== 门 =====
@@ -641,7 +682,7 @@ const list=SIDES.filter(([s])=>r.doors[s]).map(([s,l,dx,dy])=>{
 return `<div class="card"><h3>🚪 门与通道</h3>${list||'<span class="hint">这个房间没有门（封闭空间）</span>'}</div>`;
 }
 
-// ===== 侧边栏 =====
+// ===== 侧边栏：房间与实体列表 =====
 function descCard(r){
 if(edit){
   return `<div class="card"><h3>📖 房间描述 <span class="hint">可念给玩家</span></h3>
@@ -656,6 +697,31 @@ return `<div class="item compact rd" title="点击复制房间描述" onclick="c
   </div>
 </div>`;
 }
+
+function entityListCard(r){
+const list = (r.entities||[]).map(en=>{
+  const isCur = selEntity && selEntity.id === en.id;
+  return `<div class="item compact npc ${isCur?'sel':''}" style="${isCur?'outline:2px solid var(--accent)':''}" onclick="openEntity('${en.id}')">
+    <div class="row">
+      <span class="tag static npc">${esc(en.disposition||'中立')}</span>
+      <div class="memo">
+        <b>${esc(en.name)||'未命名实体'}</b>
+        <span class="cd">${esc(en.category.toUpperCase())} · ${en.attrs.map(a=>`${a.name}:${a.val}`).slice(0,3).join(' / ')||'无属性'}</span>
+      </div>
+      <span style="font-size:12px;color:var(--accent)">详情 ❯</span>
+    </div>
+  </div>`;
+}).join('');
+
+return `<div class="card">
+  <h3>🎭 固定场景 / 实体 / 遭遇 (${(r.entities||[]).length})
+    ${edit?'<button class="primary" onclick="createEntity()">＋ 新建实体</button>':''}
+  </h3>
+  <div class="hint" style="margin-bottom:6px">NPC、固定怪、机关陷阱等。点击展开独立属性与后果侧栏。</div>
+  ${list || '<p class="hint">当前房间无固定实体/怪物</p>'}
+</div>`;
+}
+
 function renderSide(){
 const s=document.getElementById('side');
 const r=room(sel);
@@ -668,11 +734,12 @@ s.innerHTML=`
 <div class="sidehead">
   <input type="text" value="${esc(r.name)}" placeholder="房间名" oninput="upd('name',this.value)">
   ${edit?`<button class="danger" onclick="delRoom('${r.id}')">删除</button>`:''}
-  <button onclick="select(null)">✕</button>
+  <button onclick="closeSide()">✕</button>
 </div>
 <div class="card"><h3>📍 此处玩家 <span class="hint">在左侧玩家栏或「👥 玩家」里改位置</span></h3>
   <div class="here">${here.length?here.map(i=>`<span>${chipHtml(i)}${esc(pname(i))}</span>`).join(''):'<span class="hint">暂无玩家</span>'}</div></div>
 ${descCard(r)}
+${entityListCard(r)}
 ${doorsCard(r)}
 <div class="card"><h3>🔒 DM 专属内容 <span class="hint">仅 DM 可见</span></h3>
   <textarea oninput="upd('dm',this.value)" placeholder="陷阱、NPC、隐藏机关、遭遇、注意事项…">${esc(r.dm)}</textarea></div>
@@ -684,6 +751,120 @@ ${doorsCard(r)}
 </div>`;
 s.scrollTop=keep;
 }
+
+// ===== 三级侧栏：实体/遭遇 (NPC/怪物/机关) 详情 =====
+function openEntity(id){
+const r=room(sel);if(!r)return;
+selEntity = (r.entities||[]).find(e=>e.id===id);
+renderSide(); // 刷新高亮
+renderEntitySide();
+}
+function closeEntitySide(){
+selEntity=null;
+renderSide();
+renderEntitySide();
+}
+function createEntity(){
+const r=room(sel);if(!r)return;
+const en=newEntity();
+r.entities.push(en);
+selEntity=en;
+save();
+renderMap();
+renderSide();
+renderEntitySide();
+}
+function deleteCurEntity(){
+if(!confirm('确定删除该实体？此操作不可撤销。'))return;
+const r=room(sel);if(!r||!selEntity)return;
+r.entities=r.entities.filter(e=>e.id!==selEntity.id);
+selEntity=null;
+save();
+renderMap();
+renderSide();
+renderEntitySide();
+}
+
+function renderEntitySide(){
+const es=document.getElementById('entitySide');
+if(!sel||!selEntity){es.classList.remove('open');es.innerHTML='';return}
+es.classList.add('open');
+const en=selEntity;
+
+// 属性组
+const attrsHtml = en.attrs.map((a,idx)=>`
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+    <input type="text" style="width:100px;flex:none" value="${esc(a.name)}" placeholder="属性名" ${!edit?'disabled':''} oninput="selEntity.attrs[${idx}].name=this.value;save()">
+    <input type="text" style="flex:1" value="${esc(a.val)}" placeholder="值 (如 18 / DC14 / 敏捷+2)" oninput="selEntity.attrs[${idx}].val=this.value;save()">
+    ${edit?`<button class="danger" onclick="selEntity.attrs.splice(${idx},1);save();renderEntitySide()">✕</button>`:''}
+  </div>
+`).join('');
+
+// 行为 / 触发后果
+const actsHtml = en.actions.map((act,idx)=>`
+  <div class="act-item">
+    <div class="act-head">
+      <span style="font-size:12px;color:var(--accent);font-weight:bold">触发 #${idx+1}</span>
+      <input type="text" value="${esc(act.trigger)}" placeholder="触发时机/行为 (例: 受到攻击时 / 成功交涉 DC15)" ${!edit?'disabled':''} oninput="selEntity.actions[${idx}].trigger=this.value;save()">
+      ${edit?`<button class="danger" style="padding:2px 6px" onclick="selEntity.actions.splice(${idx},1);save();renderEntitySide()">✕</button>`:''}
+    </div>
+    <label class="s">结果 / 连锁反应 / 惩罚：</label>
+    <textarea style="min-height:50px" placeholder="详细后果、战斗反应、提供情报或掉落…" oninput="selEntity.actions[${idx}].effect=this.value;save()">${esc(act.effect)}</textarea>
+  </div>
+`).join('');
+
+es.innerHTML=`
+  <div class="sidehead">
+    <b style="color:var(--accent);font-size:15px">🎭 场景实体详情</b>
+    <div class="spacer"></div>
+    ${edit?`<button class="danger" onclick="deleteCurEntity()">删除实体</button>`:''}
+    <button onclick="closeEntitySide()">✕</button>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input type="text" value="${esc(en.name)}" placeholder="实体名称 (如: 守门石像鬼)" oninput="selEntity.name=this.value;save();renderSide();renderMap()">
+      <select style="width:110px;flex:none" onchange="selEntity.category=this.value;save();renderSide()">
+        <option value="npc" ${en.category==='npc'?'selected':''}>NPC</option>
+        <option value="monster" ${en.category==='monster'?'selected':''}>怪物</option>
+        <option value="trap" ${en.category==='trap'?'selected':''}>陷阱/机关</option>
+        <option value="object" ${en.category==='object'?'selected':''}>交互物件</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span style="font-size:12px;color:var(--mute);flex:none">初始态度：</span>
+      <input type="text" value="${esc(en.disposition)}" placeholder="中立 / 敌对 / 伪装等" oninput="selEntity.disposition=this.value;save();renderSide()">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📖 外观与台词 / 呈现设定</h3>
+    <textarea placeholder="念给玩家的外观、声音或初始动作…" oninput="selEntity.desc=this.value;save()">${esc(en.desc)}</textarea>
+  </div>
+
+  <div class="card">
+    <h3>📊 属性与参数设定
+      ${edit?`<button onclick="selEntity.attrs.push({name:'新属性',val:''});save();renderEntitySide()">＋ 属性</button>`:''}
+    </h3>
+    <div class="hint" style="margin-bottom:6px">如血量、护甲、豁免、攻击加值、侦测难度等</div>
+    ${attrsHtml||'<p class="hint">暂无属性</p>'}
+  </div>
+
+  <div class="card">
+    <h3>⚡ 触发行为与后果判定
+      ${edit?`<button class="primary" onclick="selEntity.actions.push({trigger:'',effect:''});save();renderEntitySide()">＋ 添加行为</button>`:''}
+    </h3>
+    <div class="hint" style="margin-bottom:6px">玩家做出不同交互（攻击/搭话/激怒/破解）时的具体判定与后果</div>
+    ${actsHtml||'<p class="hint">暂未配置触发后果</p>'}
+  </div>
+
+  <div class="card">
+    <h3>🔒 DM 幕后备注</h3>
+    <textarea placeholder="战术策略、动机、秘密弱点、击败后的剧情走向…" oninput="selEntity.dmNote=this.value;save()">${esc(en.dmNote)}</textarea>
+  </div>
+`;
+}
+
 function upd(k,v){const r=room(sel);r[k]=v;save();if(k==='name'){renderMap();if(!edit)renderSide()}}
 function pbtnsHtml(i){
 return D.players.map((p,idx)=>{
@@ -1070,6 +1251,8 @@ tr{break-inside:avoid}
 .note{color:#666;font-size:11.5px}
 .toc td.n{width:36px;text-align:center}
 .tight{margin:0;padding-left:18px}
+.hb-entity{border:1px solid #444;border-radius:4px;padding:8px 10px;margin-top:8px;background:#fdfdfd;break-inside:avoid}
+.hb-entity-title{font-size:14px;font-weight:bold;color:#222;margin-bottom:4px;display:flex;justify-content:space-between}
 `;
 const HB_DUP=`
 @page :right{margin:16mm 15mm 16mm 22mm}
@@ -1126,7 +1309,7 @@ h+=`<section class="ch"><div class="part">目 录</div>
   <table class="toc"><tr><th class="c">章节</th><th>内容</th></tr>
   <tr><td class="n">一</td><td>日程与事件</td></tr>
   <tr><td class="n">二</td><td>地图总览（含门与通道）与房间索引</td></tr>
-  <tr><td class="n">三</td><td>房间详解（每间房独立一页：场景、门、DM 备注、物资）</td></tr>
+  <tr><td class="n">三</td><td>房间详解（每间房独立一页：场景、实体/遭遇、门、DM 备注、物资）</td></tr>
   ${o.pl?'<tr><td class="n">四</td><td>玩家角色（预设背景 + 车卡，每人一页）</td></tr>':''}
   <tr><td class="n">${o.pl?'五':'四'}</td><td>附录：物资总表、属性追踪表、笔记页</td></tr></table>
   <h3 class="sub">玩家一览</h3>
@@ -1157,8 +1340,8 @@ else{
       ${doorList(r).map(([s])=>`<i class="hd ${r.doors[s].t} ${s}">${doorSym(r.doors[s].t,s)}</i>`).join('')}</div>`;
   }
   h+=`</div><p class="note">上北下南，左西右东。房间内侧每条边正中的小方块即该方向的门：<b>门</b>＝双向门　<b>通</b>＝敞开通道（虚线）　<b>锁</b>＝锁住的门（黑底）　<b>箭头</b>＝单向门（灰底，箭头方向为通行方向）。没有标记的边是墙；门不一定通向另一个房间。</p>`;
-  h+=`<h3 class="sub">房间索引</h3><table><tr><th class="c">编号</th><th>房间</th><th>坐标</th><th>门与出口</th><th class="c">物资</th></tr>`+
-    rooms.map(r=>`<tr><td class="c">${num.get(r.id)}</td><td><b>${esc(r.name)||'未命名'}</b></td><td>(${r.x},${r.y})</td><td>${dShort(r)}</td><td class="c">${r.items.length}</td></tr>`).join('')+'</table>';
+  h+=`<h3 class="sub">房间索引</h3><table><tr><th class="c">编号</th><th>房间</th><th>坐标</th><th>门与出口</th><th class="c">实体</th><th class="c">物资</th></tr>`+
+    rooms.map(r=>`<tr><td class="c">${num.get(r.id)}</td><td><b>${esc(r.name)||'未命名'}</b></td><td>(${r.x},${r.y})</td><td>${dShort(r)}</td><td class="c">${(r.entities||[]).length}</td><td class="c">${r.items.length}</td></tr>`).join('')+'</table>';
 }
 h+='</section>';
 
@@ -1169,6 +1352,21 @@ rooms.forEach((r,idx)=>{
   h+=`<div class="rm ${idx?'':'f'}"><h2><span class="no">${num.get(r.id)}</span>${esc(r.name)||'未命名'}</h2>
     <div class="meta2">坐标 (${r.x},${r.y})${here.length?`　｜　当前在此：${here.map(pn).join('、')}`:''}</div>
     <div class="lb">场景描述（可念给玩家）</div>${hTxt(r.desc,3)}`;
+  
+  // 呈现该房间的实体与遭遇
+  if((r.entities||[]).length){
+    h+=`<div class="lb">🎭 场景固定实体 / 遭遇 / NPC</div>`;
+    r.entities.forEach(en=>{
+      h+=`<div class="hb-entity">
+        <div class="hb-entity-title"><span>【${esc(en.category.toUpperCase())}】${esc(en.name)}</span><span>态度：${esc(en.disposition)}</span></div>
+        ${en.desc?`<div style="font-size:12px;color:#333;margin-bottom:4px"><b>外貌台词：</b>${esc(en.desc)}</div>`:''}
+        ${en.attrs.length?`<div style="font-size:12px;margin-bottom:4px"><b>属性：</b>${en.attrs.map(a=>`<u>${esc(a.name)}: ${esc(a.val)}</u>`).join('　')}</div>`:''}
+        ${en.actions.length?`<table style="margin-top:4px"><tr><th style="width:30%">交互 / 触发时机</th><th>判定与后果反应</th></tr>${en.actions.map(act=>`<tr><td><b>${esc(act.trigger)}</b></td><td class="pre">${esc(act.effect)}</td></tr>`).join('')}</table>`:''}
+        ${o.dm&&en.dmNote?`<div style="font-size:11.5px;color:#555;margin-top:2px">🔒 <b>幕后备注：</b>${esc(en.dmNote)}</div>`:''}
+      </div>`;
+    });
+  }
+
   if(o.dm)h+=`<div class="lb">🔒 DM 专属内容</div>${hTxt(r.dm,3,'dm')}`;
   h+=`<div class="lb">物资判定 / 备注</div>${hTxt(r.poolNote,1)}`;
   h+=`<div class="lb">门与通道</div>`;
@@ -1183,7 +1381,7 @@ rooms.forEach((r,idx)=>{
       r.items.map(i=>`<tr><td class="c">${hBx(o.st&&isGot(i))}</td><td>${typeL(i.type)}</td><td><b>${esc(i.name)||'（未命名）'}</b></td><td class="pre">${esc(i.desc)}</td><td class="pre">${esc(i.cond)}</td>
         <td>${o.st?(i.consumed?'已消耗 ':'')+i.owners.map(pn).join('、'):''}</td></tr>`).join('')+'</table>';
   }else h+='<p class="note">（此房间没有物资）</p>';
-  h+='<div class="lb">本房间记录</div>'+hLines(4)+'</div>';
+  h+='<div class="lb">本房间记录</div>'+hLines(3)+'</div>';
 });
 h+='</section>';
 
@@ -1212,7 +1410,6 @@ h+=`<section class="ch"><div class="part">笔记</div>${hLines(30)}</section>`;
 return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · DM 带团手册</title><style>${HB_CSS}${o.dup?HB_DUP:''}</style></head><body class="${o.dup?'dup':''}">${h}</body></html>`;
 }
 
-// 玩家发放版：每人一张（或正反两页）
 function hpHtml(o){
 const title=D.title||'未命名模组';
 const head=i=>`<div class="ph"><span>${esc(title)}</span><span>玩家角色卡</span></div>
@@ -1269,15 +1466,15 @@ const f=e.target.files[0];if(!f)return;
 const rd=new FileReader();
 rd.onload=()=>{try{
   const d=JSON.parse(rd.result);if(!Array.isArray(d.rooms))throw 0;
-  D=migrate(d);sel=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
-  document.getElementById('modTitle').value=D.title||'';renderMap();renderSide();updateDayBar();updatePlayerBar();
+  D=migrate(d);sel=null;selEntity=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
+  document.getElementById('modTitle').value=D.title||'';renderMap();renderSide();renderEntitySide();updateDayBar();updatePlayerBar();
 }catch(_){alert('文件格式不正确')}};
 rd.readAsText(f);e.target.value='';
 }
 function resetAll(){
 if(!confirm('将清空全部内容（建议先导出备份），确定吗？'))return;
-D=migrate(DEFAULT_DATA?JSON.parse(JSON.stringify(DEFAULT_DATA)):blankData());sel=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
-document.getElementById('modTitle').value=D.title;renderMap();renderSide();updateDayBar();updatePlayerBar();
+D=migrate(DEFAULT_DATA?JSON.parse(JSON.stringify(DEFAULT_DATA)):blankData());sel=null;selEntity=null;save();lastMin=null;bgSel=0;dayView=D.curDay;
+document.getElementById('modTitle').value=D.title;renderMap();renderSide();renderEntitySide();updateDayBar();updatePlayerBar();
 }
 renderStrip();renderMap();updateDayBar();updatePlayerBar();
 </script>
