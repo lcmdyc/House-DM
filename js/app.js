@@ -1,5 +1,6 @@
 // js/app.js — UI 逻辑主文件
 // 依赖：data.js, theme.js, p2p.js（均已在 index.html 中先行加载）
+const MOD_INDEX_URL = './modules/index.json';
 
 let sel = null;
 let selEntity = null;
@@ -965,7 +966,6 @@ updatePlayerBar();
 initP2PSync(); // 定义在 p2p.js，已先行加载
 // ===== 📦 模组库 =====
 
-const MOD_INDEX_URL = './modules/index.json';
 
 async function openModuleLib() {
   const dlg = document.getElementById('modLibDlg');
