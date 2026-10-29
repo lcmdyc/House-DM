@@ -395,12 +395,7 @@ function npcStripCheckAll(val) {
 
 // ─── 地图：NPC 头像注入（在 renderMap 之后调用）──────────────
 // 通过 MutationObserver 监听地图渲染完成后自动注入
-(function patchMapForNpc() {
-  const grid = document.getElementById('grid');
-  if (!grid) return;
-  const observer = new MutationObserver(() => injectNpcChips());
-  observer.observe(grid, { childList: true, subtree: true });
-})();
+
 
 function injectNpcChips() {
   // 找出所有 showOnMap=true 且有 roomId 的 NPC
