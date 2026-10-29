@@ -3,7 +3,7 @@
 一个运行在浏览器里的 TRPG（桌面角色扮演游戏）DM 辅助工具，支持地图编辑、玩家管理、日程推进、物资分配、多人协作等功能，并内置模组库，可一键导入预制模组。
 
 > 🔗 在线访问：[https://lcmdyc.github.io/House-DM](https://lcmdyc.github.io/House-DM)
-
+> 🔗 测试自用：[https://rawcdn.githack.com/lcmdyc/House-DM/backup-latest/index.html](https://rawcdn.githack.com/lcmdyc/House-DM/backup-latest/index.html)
 ---
 
 ## ✨ 功能特性
