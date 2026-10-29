@@ -961,3 +961,82 @@ renderMap();
 updateDayBar();
 updatePlayerBar();
 initP2PSync(); // 定义在 p2p.js，已先行加载
+// ===== 📦 模组库 =====
+
+const MOD_INDEX_URL = './modules/index.json';
+
+async function openModuleLib() {
+  const dlg = document.getElementById('modLibDlg');
+  const list = document.getElementById('modLibList');
+  const count = document.getElementById('modLibCount');
+  list.innerHTML = '<p class="hint" style="padding:20px">正在加载模组库…</p>';
+  dlg.showModal();
+
+  try {
+    const res = await fetch(MOD_INDEX_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('无法加载 modules/index.json');
+    const mods = await res.json();
+    count.textContent = `共 ${mods.length} 个模组`;
+
+    if (!mods.length) {
+      list.innerHTML = '<p class="hint" style="padding:20px;text-align:center">模组库暂时还是空的，快去上传第一个模组吧！</p>';
+      return;
+    }
+
+    list.innerHTML = mods.map((m, i) => `
+      <div class="mod-card">
+        <div class="mod-body">
+          <div class="mod-title">🎲 ${esc(m.name)}</div>
+          <div class="mod-meta">
+            ${m.players ? `👥 ${esc(m.players)}` : ''}
+            ${m.duration ? `　⏱ ${esc(m.duration)}` : ''}
+            ${m.author   ? `　✍️ ${esc(m.author)}`   : ''}
+          </div>
+          <div class="mod-desc">${esc(m.desc)}</div>
+          <div class="mod-tags">
+            ${(m.tags||[]).map(t => `<span class="mod-tag">${esc(t)}</span>`).join('')}
+          </div>
+          <button class="primary mod-import-btn" onclick="importModFromLib(${i})">
+            ⬇ 导入此模组
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    window._modLibCache = mods;
+
+  } catch(e) {
+    list.innerHTML = `<p class="hint" style="padding:20px;color:var(--danger)">
+      ❌ 加载失败：${esc(e.message)}<br>
+      <span style="font-size:12px">请确认 modules/index.json 文件已上传到仓库</span>
+    </p>`;
+  }
+}
+
+async function importModFromLib(idx) {
+  const mods = window._modLibCache;
+  if (!mods || !mods[idx]) return;
+  const m = mods[idx];
+
+  if (!confirm(`确定导入「${m.name}」？\n⚠️ 当前模组数据将被覆盖，建议先导出备份。`)) return;
+
+  try {
+    toast('正在下载模组文件…');
+    const res = await fetch('./' + m.file + '?t=' + Date.now());
+    if (!res.ok) throw new Error('文件下载失败：' + m.file);
+    const d = await res.json();
+    if (!Array.isArray(d.rooms)) throw new Error('文件格式不正确');
+
+    D = migrate(d);
+    sel = null; selEntity = null;
+    save(); lastMin = null; bgSel = 0; dayView = D.curDay;
+    document.getElementById('modTitle').value = D.title || '';
+    renderMap(); renderSide(); renderEntitySide(); updateDayBar(); updatePlayerBar();
+    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+
+    document.getElementById('modLibDlg').close();
+    toast(`✅ 已导入「${m.name}」`);
+  } catch(e) {
+    toast('❌ 导入失败：' + e.message);
+  }
+}
