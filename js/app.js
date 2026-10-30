@@ -1,256 +1,86 @@
-// js/app.js — 启动 · 导入导出 · 模组库 · 模式切换
-// 依赖顺序：data.js → core.js → theme.js → p2p.js → handbook.js
-//           → map.js → side.js → npc.js → players.js
-//           → schedule.js → pool.js → relation.js → app.js
+// js/app.js — 模块入口与全局绑定
 
-// ════════════════════════════════════════════════════════════
-// 一、编辑 / 预览模式切换
-// ════════════════════════════════════════════════════════════
-function toggleMode() {
-  edit = !edit;
-  document.body.classList.toggle('edit', edit);
-  const btn = document.getElementById('modeBtn');
-  if (btn) {
-    btn.textContent = edit ? '✏️ 编辑模式' : '👁 预览模式';
-    btn.classList.toggle('on', edit);
-  }
-  renderBg();   // 预设区块两种模式渲染不同，必须重绘
-}
+import * as data from './data.js';
+import * as core from './core.js';
+import * as theme from './theme.js';
+import * as p2p from './p2p.js';
+import * as map from './map.js';
+import * as side from './side.js';
+import * as npc from './npc.js';
+import * as players from './players.js';
+import * as schedule from './schedule.js';
+import * as pool from './pool.js';
+import * as relation from './relation.js';
+import * as handbook from './handbook.js';
+import * as wheel from './wheel.js'; // 👈 核心修复：补上漏掉的滚轮模块！
 
-// ════════════════════════════════════════════════════════════
-// 二、模组库
-// ════════════════════════════════════════════════════════════
-let modList = [];
+// 将 wheel 也加入模块集合
+const allModules = { data, core, theme, p2p, map, side, npc, players, schedule, pool, relation, handbook, wheel };
 
-function openModLib() {
-  loadModLib();
-  document.getElementById('modLibDlg').showModal();
-}
-async function loadModLib() {
-  const el = document.getElementById('modLibList');
-  if (!el) return;
-  el.innerHTML = '<p class="hint">加载中…</p>';
-  try {
-    const res = await fetch('modules/index.json');
-    // 检查响应类型，防止把 404 HTML 当 JSON 解析
-    if (!res.ok) {
-      el.innerHTML = `<p class="hint">⚠️ 暂无内置模组库（${res.status}）<br>
-        你可以通过「导入备份」加载自己的存档。</p>`;
-      return;
-    }
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('json')) {
-      el.innerHTML = '<p class="hint">⚠️ modules/index.json 格式不正确</p>';
-      return;
-    }
-    modList = await res.json();
-    renderModLib();
-  } catch (e) {
-    el.innerHTML = `<p class="hint">⚠️ 无法加载模组列表<br><small>${e.message}</small></p>`;
-  }
-}
+// 1. 将所有模块导出的数据和函数批量挂载到全局 window
+Object.values(allModules).forEach(mod => {
+  Object.assign(window, mod);
+});
 
+window.addEventListener('DOMContentLoaded', () => {
+  console.log("🚀 DM 工具模块加载完毕，开始初始化界面与事件...");
 
-function renderModLib() {
-  const el = document.getElementById('modLibList');
-  if (!el) return;
-  if (!modList.length) { el.innerHTML = '<p class="hint">暂无模组</p>'; return; }
-  el.innerHTML = modList.map((m, i) => `
-    <div class="mod-card">
-      <div class="mod-head">
-        <span class="mod-name">${esc(m.name || '未命名模组')}</span>
-        <span class="mod-tag">${esc(m.tag || '')}</span>
-      </div>
-      <p class="mod-desc">${esc(m.desc || '暂无简介')}</p>
-      <div class="mod-meta">
-        ${m.players  ? `👥 ${m.players}人`  : ''}
-        ${m.duration ? `⏱ ${m.duration}`    : ''}
-        ${m.author   ? `✍️ ${m.author}`      : ''}
-      </div>
-      <div class="mod-actions">
-        <button class="primary" onclick="importMod(${i})">导入此模组</button>
-        ${m.preview ? `<button onclick="previewMod(${i})">预览</button>` : ''}
-      </div>
-    </div>`
-  ).join('');
-}
-
-async function importMod(i) {
-  const m = modList[i];
-  if (!m || !m.file) { toast('模组文件路径缺失'); return; }
-  if (!confirm(`确定导入「${m.name}」？当前数据将被覆盖。`)) return;
-  try {
-    const res  = await fetch(`modules/${m.file}`);
-    const data = await res.json();
-    D = migrate(data);
-    initNewData();
-    saveData(D);
-    document.getElementById('modLibDlg').close();
-    fullRefresh();
-    toast(`✅ 已导入模组「${m.name}」`);
-    addLog('sys', `导入模组「${m.name}」`);
-  } catch (e) {
-    toast('导入失败：' + e.message);
-  }
-}
-
-function previewMod(i) {
-  const m = modList[i]; if (!m) return;
-  alert(`【${m.name}】\n\n${m.desc || '暂无简介'}\n\n玩家数：${m.players || '?'}\n时长：${m.duration || '?'}\n作者：${m.author || '?'}`);
-}
-
-// ════════════════════════════════════════════════════════════
-// 三、导入 / 导出
-// ════════════════════════════════════════════════════════════
-function exportData() {
-  const json = JSON.stringify(D, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  // 文件名格式：模组名-house-dm-日期.json
-  const modName = (D.title || '未命名模组').replace(/[\\/:*?"<>|]/g, '_');
-  a.download = `${modName}-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('📤 已导出存档');
-}
-
-
-function importData(e) {
-  if (e && e.target && e.target.files) {
-    _doImport(e.target.files[0]);
-    return;
-  }
-  const inp    = document.createElement('input');
-  inp.type     = 'file';
-  inp.accept   = '.json,application/json';
-  inp.onchange = ev => _doImport(ev.target.files[0]);
-  inp.click();
-}
-
-async function _doImport(file) {
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const raw  = JSON.parse(text);
-    D = migrate(raw);
-    initNewData();
-    saveData(D);
-    fullRefresh();
-    toast(`✅ 已导入「${file.name}」`);
-    addLog('sys', `导入存档「${file.name}」`);
-  } catch (err) {
-    toast('❌ 导入失败：' + err.message);
-  }
-}
-
-function resetData() {
-  if (!confirm('确定重置所有数据？此操作不可撤销。')) return;
-  D = migrate(blankData());
-  initNewData();
-  saveData(D);
-  fullRefresh();
-  toast('🔄 已重置数据');
-  addLog('sys', '重置数据');
-}
-
-// ════════════════════════════════════════════════════════════
-// 四、导入后初始化新字段
-// ════════════════════════════════════════════════════════════
-function initNewData() {
-  D.relations = D.relations || [];
-  D.pool      = D.pool      || [];
-  D.npcs      = D.npcs      || [];
-  D.days      = D.days      || [newDay(0)];
-  D.curDay    = D.curDay    ?? 0;
-  D.players   = D.players   || [];
-  D.rooms     = D.rooms     || [];
-  D.log       = D.log       || [];
-
-  D.ui = D.ui || {};
-  if (typeof D.ui.npcStrip !== 'boolean') D.ui.npcStrip = true;
-  if (!Array.isArray(D.ui.npcVisible)) D.ui.npcVisible = [];
-
-  D.bg = D.bg || [];
-  D.players.forEach((_, i) => {
-    D.bg[i] = D.bg[i] || {};
-    D.bg[i].dead         = D.bg[i].dead        ?? false;
-    D.bg[i].customFields = D.bg[i].customFields || [];
-    D.bg[i].dmNote       = D.bg[i].dmNote       ?? '';   // ← DM备注
+  // 2. 自动扫描并执行所有模块中的“初始化”和“事件绑定”函数
+  Object.values(allModules).forEach(mod => {
+    Object.keys(mod).forEach(fnName => {
+      if (typeof mod[fnName] === 'function' && 
+         (fnName.startsWith('init') || fnName.startsWith('bind') || fnName.startsWith('setup'))) {
+        try {
+          mod[fnName]();
+          console.log(`✅ 成功绑定事件/初始化: ${fnName}`);
+        } catch(e) {
+          console.warn(`⚠️ 执行 ${fnName} 时出现小问题:`, e);
+        }
+      }
+    });
   });
 
-  D.npcs.forEach(n => {
-    n.dead         = n.dead         ?? false;
-    n.customFields = n.customFields || [];
-    n.color        = n.color        || '#b27cd8';
-  });
+  // 3. 初始渲染界面
+  if (typeof window.loadData === 'function') window.loadData();
+  if (typeof window.init === 'function') window.init();
+  if (typeof window.renderMap === 'function') window.renderMap();
+  if (typeof window.renderSide === 'function') window.renderSide();
+  if (typeof window.renderStrip === 'function') window.renderStrip();
+  if (typeof window.renderNpcStrip === 'function') window.renderNpcStrip();
+  if (typeof window.renderDays === 'function') window.renderDays();
+  if (typeof window.renderPool === 'function') window.renderPool();
 
-  // 重置运行时状态
-  dayView   = D.curDay;
-  sel       = null;
-  selEntity = null;
-  selNpcId  = null;
-  edit      = false;
-  poolQ     = '';
-  poolT     = '';
-  if (typeof relPositions !== 'undefined') relPositions = {};
+  window.dispatchEvent(new CustomEvent('trpg-data-loaded'));
+  window.dispatchEvent(new CustomEvent('trpg-ui-update'));
 
-  // 同步模式按钮外观
-  document.body.classList.toggle('edit', edit);
-  const btn = document.getElementById('modeBtn');
-  if (btn) {
-    btn.textContent = edit ? '✏️ 编辑模式' : '👁 带团模式';
-    btn.classList.toggle('on', edit);
+  // 4. 地图拖拽原生兜底
+  const mapWrap = document.getElementById('mapWrap');
+  if (mapWrap) {
+    let isDraggingMap = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    mapWrap.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.room') || e.target.closest('.dr') || e.target.closest('.add') || e.target.closest('button')) return;
+      isDraggingMap = true;
+      mapWrap.classList.add('dragging');
+      startX = e.pageX - mapWrap.offsetLeft;
+      startY = e.pageY - mapWrap.offsetTop;
+      scrollLeft = mapWrap.scrollLeft;
+      scrollTop = mapWrap.scrollTop;
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingMap = false;
+      mapWrap.classList.remove('dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingMap) return;
+      e.preventDefault();
+      const x = e.pageX - mapWrap.offsetLeft;
+      const y = e.pageY - mapWrap.offsetTop;
+      mapWrap.scrollLeft = scrollLeft - (x - startX);
+      mapWrap.scrollTop = scrollTop - (y - startY);
+    });
   }
-}
-
-// ════════════════════════════════════════════════════════════
-// 五、全局刷新
-// ════════════════════════════════════════════════════════════
-function fullRefresh() {
-  const titleEl = document.getElementById('modTitle');
-  if (titleEl) titleEl.value = D.title || '';
-
-  renderMap();
-  renderStrip();
-  renderSide();
-
-  if (typeof updatePlayerBar === 'function') updatePlayerBar();
-  if (typeof updateDayBar    === 'function') updateDayBar();
-  if (typeof renderNpcStrip  === 'function') setTimeout(renderNpcStrip, 0);
-
-  // 资料库按当前激活子页刷新
-  const activeSub = document.querySelector('.lib-tab.on');
-  if (activeSub) {
-    if (activeSub.id === 'libTabBg'       && typeof renderBg           === 'function') renderBg();
-    if (activeSub.id === 'libTabNpc'      && typeof renderNpcLib       === 'function') renderNpcLib();
-    if (activeSub.id === 'libTabRelation' && typeof renderRelationLib  === 'function') renderRelationLib();
-  }
-
-  if (document.getElementById('sumDlg')?.open && typeof renderPool === 'function') renderPool();
-  if (document.getElementById('dayDlg')?.open && typeof renderDays === 'function') renderDays();
-  if (document.getElementById('logDlg')?.open) renderLog();
-}
-
-// ════════════════════════════════════════════════════════════
-// 六、启动
-// ════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    const raw = localStorage.getItem(KEY);
-    D = raw ? migrate(JSON.parse(raw)) : migrate(blankData());
-  } catch {
-    D = migrate(blankData());
-  }
-
-  initNewData();
-
-  initMapEvents();   // map.js（theme.js 为 IIFE 已自执行）
-
-  fullRefresh();
-
-  if (typeof initP2P === 'function') initP2P();
-
-  console.log('[House-DM] 启动完成');
 });

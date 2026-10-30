@@ -1,18 +1,29 @@
-// js/pool.js — 物资总览池与分配
-// 依赖：data.js（D, uid, esc, saveData, room, findItem, getItem, newItem, pname）
-// 依赖：core.js（save, toast, renderSide, renderMap）
+// js/pool.js — 物资总览池与分配 (ES6 Module)
+import { D, esc, room, pname } from './data.js';
+import { uiState, save, newItem, findItem, getItem } from './core.js';
 
-let poolQ = '';
-let poolT = '';
+// ════════════════════════════════════════════════════════════
+// 1. 局部状态与事件监听
+// ════════════════════════════════════════════════════════════
+// 将搜索状态挂载到 uiState (或者保持局部变量也可，这里为了统一模式)
+uiState.poolQ = '';
+uiState.poolT = '';
 
-// ── 打开弹窗 ──────────────────────────────────────────────────
-function openSummary() {
+window.addEventListener('trpg-ui-update', () => {
+  if (document.getElementById('sumDlg')?.open) {
+    renderPool();
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// 2. 弹窗与渲染
+// ════════════════════════════════════════════════════════════
+export function openSummary() {
   if (!Array.isArray(D.pool)) D.pool = [];
   renderPool();
   document.getElementById('sumDlg').showModal();
 }
 
-// ── 房间下拉（含"未分配"选项）────────────────────────────────
 function roomOpts(cur) {
   return `<option value="">📥 未分配</option>` +
     D.rooms.map(r =>
@@ -20,7 +31,6 @@ function roomOpts(cur) {
     ).join('');
 }
 
-// ── 单行物资渲染 ──────────────────────────────────────────────
 function poolRow(i, rid) {
   const st = i.consumed
     ? '已消耗'
@@ -42,16 +52,15 @@ function poolRow(i, rid) {
   </div>`;
 }
 
-// ── 主渲染函数 ────────────────────────────────────────────────
-function renderPool() {
+export function renderPool() {
   if (!Array.isArray(D.pool)) D.pool = [];
 
   const body = document.getElementById('poolList');
   if (!body) return;
 
-  const q = poolQ.trim().toLowerCase();
+  const q = uiState.poolQ.trim().toLowerCase();
   const ok = i =>
-    (!poolT || i.type === poolT) &&
+    (!uiState.poolT || i.type === uiState.poolT) &&
     (!q || [i.name, i.desc, i.cond].some(s => String(s || '').toLowerCase().includes(q)));
 
   const groups = [
@@ -77,69 +86,73 @@ function renderPool() {
     : h + '<p class="hint">还没有任何物资。</p>';
 }
 
-// ── 新增物资到未分配池 ────────────────────────────────────────
-function addPoolItem() {
+// ════════════════════════════════════════════════════════════
+// 3. 物资操作
+// ════════════════════════════════════════════════════════════
+export function addPoolItem() {
   if (!Array.isArray(D.pool)) D.pool = [];
   D.pool.push(newItem());
-  save();
-  poolQ = '';
-  poolT = '';
+  
+  uiState.poolQ = '';
+  uiState.poolT = '';
   const qEl = document.getElementById('poolQ');
   const tEl = document.getElementById('poolT');
   if (qEl) qEl.value = '';
   if (tEl) tEl.value = '';
-  renderPool();
-  const list = document.getElementById('poolList');
-  if (list) list.scrollTop = 0;
+  
+  save(); // 触发 renderPool
+  
+  // 滚动到顶部需要在 DOM 更新后执行
+  setTimeout(() => {
+    const list = document.getElementById('poolList');
+    if (list) list.scrollTop = 0;
+  }, 0);
 }
 
-// ── 搬移物资（房间 ↔ 未分配池）──────────────────────────────
-function moveItem(id, to) {
+export function moveItem(id, to) {
   const f = findItem(id);
   if (!f) return;
   f.list.splice(f.list.indexOf(f.item), 1);
   (to === '' ? D.pool : room(to).items).push(f.item);
   save();
-  renderMap();
-  renderSide();
-  renderPool();
 }
 
-// ── 字段更新 ──────────────────────────────────────────────────
-function poolUpd(id, k, v) {
+export function poolUpd(id, k, v) {
   const f = findItem(id);
   if (!f) return;
   f.item[k] = v;
   save();
-  renderSide();
 }
 
-// ── 切换类型（道具/线索）────────────────────────────────────
-function poolType(id) {
+export function poolType(id) {
   const i = getItem(id);
   if (!i) return;
   i.type = i.type === 'clue' ? 'item' : 'clue';
   save();
-  renderSide();
-  renderPool();
 }
 
-// ── 删除物资 ──────────────────────────────────────────────────
-function poolDel(id) {
+export function poolDel(id) {
   if (!confirm('确定删除这件物资？')) return;
   const f = findItem(id);
   if (!f) return;
   f.list.splice(f.list.indexOf(f.item), 1);
   save();
-  renderMap();
-  renderSide();
-  renderPool();
 }
 
-// ── 搜索/筛选输入绑定（页面加载后调用）──────────────────────
-function initPoolSearch() {
+// ════════════════════════════════════════════════════════════
+// 4. 初始化与挂载
+// ════════════════════════════════════════════════════════════
+export function initPoolSearch() {
   const qEl = document.getElementById('poolQ');
   const tEl = document.getElementById('poolT');
-  if (qEl) qEl.addEventListener('input', e => { poolQ = e.target.value; renderPool(); });
-  if (tEl) tEl.addEventListener('change', e => { poolT = e.target.value; renderPool(); });
+  if (qEl) qEl.addEventListener('input', e => { uiState.poolQ = e.target.value; renderPool(); });
+  if (tEl) tEl.addEventListener('change', e => { uiState.poolT = e.target.value; renderPool(); });
 }
+
+// 页面加载后自动初始化搜索绑定
+document.addEventListener('DOMContentLoaded', initPoolSearch);
+
+// 挂载全局方法
+Object.assign(window, {
+  openSummary, addPoolItem, moveItem, poolUpd, poolType, poolDel
+});

@@ -1,7 +1,6 @@
-// js/handbook-css.js — 手册打印样式常量
-// 必须在 handbook.js 之前加载
+// js/handbook-css.js — 手册打印样式常量 (ES6 Module)
 
-const HB_CSS = `
+export const HB_CSS = `
 @page{size:A4;margin:16mm 15mm}
 *{box-sizing:border-box}
 body{margin:0;padding:14px;color:#1d1d1d;background:#fff;font:13px/1.65 "Songti SC","Noto Serif SC","Source Han Serif SC","SimSun","STSong",serif}
@@ -64,7 +63,7 @@ tr{break-inside:avoid}
 .day-title{font-size:15px;font-weight:bold;font-family:"PingFang SC","Microsoft YaHei",sans-serif;margin-bottom:5px}
 `;
 
-const HB_DUP = `
+export const HB_DUP = `
 @page :right{margin:16mm 15mm 16mm 22mm}
 @page :left{margin:16mm 22mm 16mm 15mm}
 @page{@bottom-center{content:counter(page);font:10px sans-serif;color:#666}}

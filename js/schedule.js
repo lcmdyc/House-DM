@@ -1,12 +1,23 @@
-// js/schedule.js — 日程系统（Day/事件管理）
-// 依赖：data.js  （D, uid, esc, saveData, newDay, dayLabel）
-// 依赖：app.js   （edit, dayView, dragSourceId, toast, addLog, copyText,
-//                  handleHandleDragStart, handleCardDragEnd,
-//                  handleCardDragOver, handleCardDragLeave, handleCardDrop）
-// 依赖：players.js（renderStrip）
+// js/schedule.js — 日程系统 (Day/事件管理) (ES6 Module)
+import { D, uid, esc, newDay, dayLabel } from './data.js';
+import { uiState, save, toast, addLog, copyText } from './core.js';
 
-// ── 工具栏按钮文字同步 ───────────────────────────────────────
-function updateDayBar() {
+// ════════════════════════════════════════════════════════════
+// 1. 自动响应 UI 更新事件
+// ════════════════════════════════════════════════════════════
+window.addEventListener('trpg-ui-update', () => {
+  updateDayBar();
+  if (document.getElementById('dayDlg')?.open) {
+    renderDays();
+  }
+});
+
+window.addEventListener('trpg-data-loaded', updateDayBar);
+
+// ════════════════════════════════════════════════════════════
+// 2. 工具栏按钮文字同步
+// ════════════════════════════════════════════════════════════
+export function updateDayBar() {
   const t = dayLabel(D.curDay);
   const dayBtn    = document.getElementById('dayBtn');
   const endDayBtn = document.getElementById('endDayBtn');
@@ -14,34 +25,35 @@ function updateDayBar() {
   if (endDayBtn) endDayBtn.textContent = t + ' 结束 ▶';
 }
 
-// ── 打开弹窗 ─────────────────────────────────────────────────
-function openDays() {
-  dayView = D.curDay;
+// ════════════════════════════════════════════════════════════
+// 3. 弹窗与主渲染
+// ════════════════════════════════════════════════════════════
+export function openDays() {
+  uiState.dayView = D.curDay;
   renderDays();
   document.getElementById('dayDlg').showModal();
 }
 
-// ── 主渲染 ───────────────────────────────────────────────────
-function renderDays() {
-  if (dayView >= D.days.length) dayView = D.days.length - 1;
+export function renderDays() {
+  if (uiState.dayView >= D.days.length) uiState.dayView = D.days.length - 1;
 
   const navEl  = document.getElementById('dayNav');
   const mainEl = document.getElementById('dayMain');
   if (!navEl || !mainEl) return;
 
-  // ── 左侧 Day 标签列 ──────────────────────────────────────
+  // ── 左侧 Day 标签列 ──
   navEl.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
-    return `<div class="item day-card${i === dayView ? ' on' : ''}${i === D.curDay ? ' cur' : ''}"
+    return `<div class="item day-card${i === uiState.dayView ? ' on' : ''}${i === D.curDay ? ' cur' : ''}"
       data-id="${i}"
-      ${edit ? `ondragover="handleCardDragOver(event)"
-        ondragleave="handleCardDragLeave(event)"
-        ondrop="handleCardDrop(event,'day',${i})"` : ''}
-      onclick="dayView=${i};renderDays()">
+      ${uiState.edit ? `ondragover="window.handleCardDragOver(event)"
+        ondragleave="window.handleCardDragLeave(event)"
+        ondrop="window.handleCardDrop(event,'day',${i})"` : ''}
+      onclick="uiState.dayView=${i};renderDays()">
       <div class="row" style="gap:4px">
-        ${edit ? `<span class="drag-handle" draggable="true"
-          ondragstart="handleHandleDragStart(event,'day',${i})"
-          ondragend="handleCardDragEnd(event)"
+        ${uiState.edit ? `<span class="drag-handle" draggable="true"
+          ondragstart="window.handleHandleDragStart(event,'day',${i})"
+          ondragend="window.handleCardDragEnd(event)"
           onclick="event.stopPropagation()">⠿</span>` : ''}
         <b style="font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
           ${esc(dayLabel(i))}
@@ -50,27 +62,27 @@ function renderDays() {
       </div>
     </div>`;
   }).join('') +
-  (edit ? `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>` : '');
+  (uiState.edit ? `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>` : '');
 
-  // ── 右侧当天详情 ─────────────────────────────────────────
-  const d = D.days[dayView];
+  // ── 右侧当天详情 ──
+  const d = D.days[uiState.dayView];
   if (!d) { mainEl.innerHTML = ''; return; }
-  const isCur  = dayView === D.curDay;
+  const isCur  = uiState.dayView === D.curDay;
   const keep   = mainEl.scrollTop;
 
   const evs = d.events.length
-    ? d.events.map(e => edit ? evEditHtml(e) : evCompactHtml(e)).join('')
+    ? d.events.map(e => uiState.edit ? evEditHtml(e) : evCompactHtml(e)).join('')
     : '<p class="hint">这一天还没有事件</p>';
 
   mainEl.innerHTML = `
     <div class="dayhead">
-      ${edit
+      ${uiState.edit
         ? `<input type="text" class="nm"
              style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
-             value="${esc(dayLabel(dayView))}"
+             value="${esc(dayLabel(uiState.dayView))}"
              placeholder="Day 名称"
-             oninput="setDayTitle(${dayView},this.value)">`
-        : `<span class="nm" style="font-size:16px;font-weight:bold">${esc(dayLabel(dayView))}</span>`
+             oninput="setDayTitle(${uiState.dayView},this.value)">`
+        : `<span class="nm" style="font-size:16px;font-weight:bold">${esc(dayLabel(uiState.dayView))}</span>`
       }
       ${isCur
         ? '<span class="badge2 cur">当前日</span>'
@@ -79,32 +91,34 @@ function renderDays() {
           : '<span class="badge2">未开始</span>'
       }
       ${isCur
-        ? `<button class="primary" onclick="endDay()">${esc(dayLabel(dayView))} 结束 ▶</button>`
-        : `<button onclick="setCur(${dayView})">设为当前日</button>`
+        ? `<button class="primary" onclick="endDay()">${esc(dayLabel(uiState.dayView))} 结束 ▶</button>`
+        : `<button onclick="setCur(${uiState.dayView})">设为当前日</button>`
       }
-      ${edit && D.days.length > 1
+      ${uiState.edit && D.days.length > 1
         ? `<button class="danger" onclick="delDay()">删除这一天</button>`
         : ''
       }
     </div>
     ${evs}
-    ${edit ? `<button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>` : ''}`;
+    ${uiState.edit ? `<button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>` : ''}`;
 
   mainEl.scrollTop = keep;
   updateDayBar();
 }
 
-// ── 编辑态事件卡片 ───────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// 4. 事件卡片 HTML 生成
+// ════════════════════════════════════════════════════════════
 function evEditHtml(e) {
   return `
     <div class="item${e.done ? ' done' : ''}" data-id="${e.id}"
-      ondragover="handleCardDragOver(event)"
-      ondragleave="handleCardDragLeave(event)"
-      ondrop="handleCardDrop(event,'event','${e.id}')">
+      ondragover="window.handleCardDragOver(event)"
+      ondragleave="window.handleCardDragLeave(event)"
+      ondrop="window.handleCardDrop(event,'event','${e.id}')">
       <div class="row">
         <span class="drag-handle" draggable="true"
-          ondragstart="handleHandleDragStart(event,'event','${e.id}')"
-          ondragend="handleCardDragEnd(event)"
+          ondragstart="window.handleHandleDragStart(event,'event','${e.id}')"
+          ondragend="window.handleCardDragEnd(event)"
           onclick="event.stopPropagation()">⠿</span>
         <input type="checkbox" ${e.done ? 'checked' : ''} onchange="evDone('${e.id}',this.checked)">
         <input type="text" style="width:85px;flex:none" value="${esc(e.time)}"
@@ -119,7 +133,6 @@ function evEditHtml(e) {
     </div>`;
 }
 
-// ── 带团态事件卡片（只读 + 点击复制）───────────────────────
 function evCompactHtml(e) {
   return `
     <div class="item compact${e.done ? ' consumed' : ''}" onclick="copyEventDetail('${e.id}')">
@@ -144,8 +157,7 @@ function evCompactHtml(e) {
     </div>`;
 }
 
-// ── 复制事件内容 ─────────────────────────────────────────────
-function copyEventDetail(id) {
+export function copyEventDetail(id) {
   const ev = D.days.flatMap(d => d.events).find(e => e.id === id);
   if (!ev) return;
   const txt = [
@@ -157,12 +169,13 @@ function copyEventDetail(id) {
   copyText(txt).then(ok => toast(ok ? '📋 已复制事件内容' : '复制失败'));
 }
 
-// ── Day 标题修改 ─────────────────────────────────────────────
-function setDayTitle(i, val) {
+// ════════════════════════════════════════════════════════════
+// 5. Day 操作
+// ════════════════════════════════════════════════════════════
+export function setDayTitle(i, val) {
   D.days[i].title = val.trim() || `Day ${i + 1}`;
-  saveData(D);
-  updateDayBar();
-  // 只更新左侧对应标签文字，不整体重绘
+  save();
+  // 局部更新左侧对应标签文字，避免输入时失焦
   const navItems = document.getElementById('dayNav').querySelectorAll('.day-card');
   if (navItems[i]) {
     const b = navItems[i].querySelector('b');
@@ -170,36 +183,31 @@ function setDayTitle(i, val) {
   }
 }
 
-// ── Day 操作 ─────────────────────────────────────────────────
-function addDay() {
+export function addDay() {
   D.days.push(newDay(D.days.length));
-  dayView = D.days.length - 1;
-  saveData(D);
-  renderDays();
+  uiState.dayView = D.days.length - 1;
+  save();
 }
 
-function delDay() {
-  if (!confirm(`删除「${dayLabel(dayView)}」？`)) return;
-  D.days.splice(dayView, 1);
-  if (dayView < D.curDay)       D.curDay--;
-  else if (dayView === D.curDay) D.curDay = Math.min(D.curDay, D.days.length - 1);
-  dayView = Math.min(dayView, D.days.length - 1);
-  saveData(D);
-  renderDays();
+export function delDay() {
+  if (!confirm(`删除「${dayLabel(uiState.dayView)}」？`)) return;
+  D.days.splice(uiState.dayView, 1);
+  if (uiState.dayView < D.curDay) D.curDay--;
+  else if (uiState.dayView === D.curDay) D.curDay = Math.min(D.curDay, D.days.length - 1);
+  uiState.dayView = Math.min(uiState.dayView, D.days.length - 1);
+  save();
 }
 
-function setCur(i) {
+export function setCur(i) {
   D.curDay = i;
   D.days[i].ended = false;
-  dayView = i;
+  uiState.dayView = i;
   addLog('day', '当前进度：' + dayLabel(i));
-  saveData(D);
-  renderDays();
-  renderStrip();
+  save();
   toast('当前进度：' + dayLabel(i));
 }
 
-function endDay() {
+export function endDay() {
   const i = D.curDay, d = D.days[i];
   const undone = d.events.filter(e => !e.done);
   if (!confirm(`确认结束「${dayLabel(i)}」？` +
@@ -219,39 +227,72 @@ function endDay() {
   }
 
   D.curDay = i + 1;
-  dayView  = D.curDay;
-  saveData(D);
-
-  const dlg = document.getElementById('dayDlg');
-  if (dlg && dlg.open) renderDays();
-  else updateDayBar();
-
-  renderStrip();
+  uiState.dayView = D.curDay;
+  save();
   toast(`「${dayLabel(i)}」已结束，进入「${dayLabel(D.curDay)}」`);
 }
 
-// ── 事件操作 ─────────────────────────────────────────────────
-const evGet = id => D.days[dayView].events.find(e => e.id === id);
+// ════════════════════════════════════════════════════════════
+// 6. 事件操作
+// ════════════════════════════════════════════════════════════
+const evGet = id => D.days[uiState.dayView].events.find(e => e.id === id);
 
-function evAdd() {
-  D.days[dayView].events.push({ id:uid(), time:'', title:'', detail:'', done:false });
-  saveData(D);
-  renderDays();
+export function evAdd() {
+  D.days[uiState.dayView].events.push({ id:uid(), time:'', title:'', detail:'', done:false });
+  save();
 }
 
-function evDel(id) {
-  D.days[dayView].events = D.days[dayView].events.filter(e => e.id !== id);
-  saveData(D);
-  renderDays();
+export function evDel(id) {
+  D.days[uiState.dayView].events = D.days[uiState.dayView].events.filter(e => e.id !== id);
+  save();
 }
 
-function evUpd(id, k, v) {
+export function evUpd(id, k, v) {
   evGet(id)[k] = v;
-  saveData(D);
+  save();
 }
 
-function evDone(id, v) {
+export function evDone(id, v) {
   evGet(id).done = v;
-  saveData(D);
-  renderDays();
+  save();
 }
+
+// ════════════════════════════════════════════════════════════
+// 7. 拖拽处理 (供 side.js 调用)
+// ════════════════════════════════════════════════════════════
+export function handleScheduleDrop(e, type, targetId, isTop) {
+  if (type === 'day') {
+    const fromIdx = +uiState.dragSourceId;
+    const toIdx   = +targetId;
+    if (fromIdx === toIdx) return;
+    const [moved] = D.days.splice(fromIdx, 1);
+    D.days.splice(isTop ? toIdx : toIdx + 1, 0, moved);
+    
+    // 修正 curDay 指向
+    if (D.curDay === fromIdx) D.curDay = isTop ? toIdx : toIdx + 1;
+    else if (D.curDay > fromIdx && D.curDay <= toIdx) D.curDay--;
+    else if (D.curDay < fromIdx && D.curDay >= toIdx) D.curDay++;
+    
+    uiState.dayView = D.curDay;
+    save();
+  } else if (type === 'event') {
+    const list = D.days[uiState.dayView].events;
+    const fromIdx = list.findIndex(x => x.id === uiState.dragSourceId);
+    let toIdx = list.findIndex(x => x.id === targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = list.splice(fromIdx, 1);
+    if (!isTop) toIdx++;
+    list.splice(toIdx, 0, moved);
+    save();
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 8. 挂载全局方法
+// ════════════════════════════════════════════════════════════
+Object.assign(window, {
+  openDays, renderDays, updateDayBar,
+  setDayTitle, addDay, delDay, setCur, endDay,
+  evAdd, evDel, evUpd, evDone, copyEventDetail,
+  handleScheduleDrop
+});

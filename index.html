@@ -3,23 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <title>TRPG 模组 DM 工具</title>
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/layout.css">
-<link rel="stylesheet" href="css/map.css">
-<link rel="stylesheet" href="css/strip.css">
-<link rel="stylesheet" href="css/items.css">
-<link rel="stylesheet" href="css/npc.css">
-<link rel="stylesheet" href="css/library.css">
-<link rel="stylesheet" href="css/dialogs.css">
-<link rel="stylesheet" href="css/misc.css">
+  <!-- 引入所有拆分后的 CSS 文件 -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/relation.css">
 
+  <link rel="stylesheet" href="css/bg.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/strip.css">
+  <link rel="stylesheet" href="css/items.css">
+  <link rel="stylesheet" href="css/npc.css">
+  <link rel="stylesheet" href="css/library.css">
+  <link rel="stylesheet" href="css/dialogs.css">
+  <link rel="stylesheet" href="css/misc.css">
+
+
+  <!-- PeerJS 联机库 -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body class="edit">
   <header>
     <h1>🎲 DM 工具</h1>
     <input type="text" id="modTitle" class="title" placeholder="模组名称">
-      <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
+    <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
     <div class="spacer"></div>
     <button id="themeBtn" title="切换浅色/深色主题">🌙 深色</button>
     <button id="p2pBtn" title="点击复制邀请链接">🔗 启动多人协作</button>
@@ -28,7 +34,7 @@
     <label style="display:inline-flex;align-items:center;cursor:pointer;background:var(--card);padding:5px 11px;border-radius:4px;border:1px solid var(--line);font-size:12.5px;color:var(--text)">
       📂 导入<input type="file" accept=".json" onchange="importData(event)" style="display:none">
     </label>
-<button class="danger" onclick="resetData()">重置模组</button>
+    <button class="danger" onclick="resetData()">重置模组</button>
   </header>
 
   <nav id="tabBar">
@@ -45,7 +51,6 @@
       <button onclick="openSummary()">🎒 物资总览</button>
       <button onclick="openLog()">📜 日志</button>
       <button onclick="openHandbook()">📖 导出手册</button>
-
     </div>
     <main id="wbMain">
       <div id="strip"></div>
@@ -181,22 +186,8 @@
     <div id="modLibList" style="max-height:70vh;overflow-y:auto"></div>
   </dialog>
 
-<script src="js/data.js"></script>
-<script src="js/wheel.js"></script>
-<script src="js/core.js"></script>
-<script src="js/theme.js"></script>
-<script src="js/p2p.js"></script>
-<script src="js/map.js"></script>
-<script src="js/side.js"></script>
-<script src="js/npc.js"></script>
-<script src="js/players.js"></script>
-<script src="js/schedule.js"></script>
-<script src="js/pool.js"></script>
-<script src="js/relation.js"></script>
-<script src="js/handbook-css.js"></script>
-<script src="js/handbook.js"></script>
-<script src="js/app.js"></script>
-
+  <!-- ES6 模块入口：只需引入 app.js，它会自动 import 其他所有 JS 文件 -->
+  <script type="module" src="js/app.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,62 @@
+
+
+/* ==========================================================================
+   10. relation.css — 关系图谱专属样式 (已移除硬编码颜色)
+   ========================================================================== */
+.rel-layout { display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+.rel-page-wrapper { display: flex; flex-direction: column; height: 100%; padding: 0; }
+
+.rel-sidebar-left { width: 240px; flex-shrink: 0; border-right: 1px solid var(--line); display: flex; flex-direction: column; background: var(--panel); }
+.rel-canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
+.rel-canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.rel-sidebar-right { width: 380px; flex-shrink: 0; border-left: 1px solid var(--line); display: flex; flex-direction: column; background: var(--panel); }
+
+.rel-header { padding: 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: var(--panel); }
+.rel-header h3 { margin: 0; font-size: 16px; color: var(--text); }
+.rel-content { flex: 1; overflow-y: auto; padding: 16px; }
+.rel-no-padding { padding: 0; }
+
+.rel-char-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; transition: var(--transition); }
+.rel-char-item:hover { background: var(--card-hover); }
+.rel-char-name { font-size: 13.5px; color: var(--text); display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.rel-char-color { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); box-shadow: var(--shadow-sm); }
+.rel-char-item input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
+
+.rel-controls { position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+.rel-controls-row { display: flex; gap: 10px; }
+.rel-btn { padding: 8px 14px; background: var(--card); border: 1px solid var(--line); color: var(--text); border-radius: var(--radius-sm); cursor: pointer; box-shadow: var(--shadow-sm); pointer-events: auto; transition: var(--transition); font-size: 13px; }
+.rel-btn:hover { background: var(--card-hover); border-color: var(--mute); transform: translateY(-1px); }
+.rel-btn.active { background: var(--open); border-color: var(--open); color: #fff; font-weight: bold; }
+
+.rel-panel { background: var(--panel); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--line); pointer-events: auto; box-shadow: var(--shadow-md); }
+.rel-flex-col { flex-direction: column; gap: 10px; width: fit-content; }
+.rel-panel-title { font-size: 12.5px; color: var(--mute); font-weight: bold; margin-bottom: 4px; }
+
+.rel-list-hint { text-align: center; margin-top: 40px; color: var(--mute); font-size: 14px; }
+.rel-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px; box-shadow: var(--shadow-sm); transition: var(--transition); }
+.rel-card:hover { border-color: var(--mute); box-shadow: var(--shadow-md); }
+.rel-card-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.rel-card-arrow { font-weight: bold; flex-shrink: 0; color: var(--accent); }
+.rel-card-select { flex: 1; min-width: 0; padding: 8px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: var(--transition); }
+.rel-card-select:focus { border-color: var(--accent); outline: none; }
+.rel-card-input { flex: 1; min-width: 0; padding: 8px 10px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 13.5px; transition: var(--transition); }
+.rel-card-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2); }
+
+.rel-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.rel-tag { padding: 4px 12px; font-size: 12.5px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--mute); cursor: pointer; transition: var(--transition); }
+.rel-tag:hover { color: var(--text); border-color: var(--mute); background: var(--card-hover); }
+.rel-tag-sm { padding: 3px 10px; font-size: 11.5px; }
+
+.mb-10 { margin-bottom: 12px; } .mb-0 { margin-bottom: 0; } .mt-4 { margin-top: 6px; }
+
+.rel-btn-add { padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; }
+.rel-btn-danger { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12.5px; cursor: pointer; flex-shrink: 0; }
+.rel-btn-danger.full { width: 100%; padding: 8px; margin-top: 4px; }
+
+.rel-popup { position: absolute; background: var(--panel); border: 1px solid var(--line); padding: 16px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 20; width: 280px; }
+.rel-popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.rel-popup-title { font-weight: bold; font-size: 14px; color: var(--text); }
+.rel-popup-close { background: none; border: none; color: var(--mute); cursor: pointer; font-size: 16px; box-shadow: none; padding: 0; }
+.rel-popup-close:hover { color: var(--danger); background: transparent; transform: scale(1.1); }
+.rel-popup-actions { display: flex; gap: 8px; flex-direction: column; }
+.rel-popup-input { width: 100%; box-sizing: border-box; margin-bottom: 8px; }

@@ -1,5 +1,10 @@
-// js/handbook.js
+// js/handbook.js — 手册生成与导出 (ES6 Module)
+import { D, esc, pname, pcolor, rname, playersIn, doorSym, DOOR_T, DOOR_S, SIDES, at, cardUsed, isGot } from './data.js';
+import { HB_CSS, HB_DUP } from './handbook-css.js';
 
+// ════════════════════════════════════════════════════════════
+// 1. 基础 HTML 渲染辅助函数
+// ════════════════════════════════════════════════════════════
 const typeL = t => t === 'clue' ? '线索' : t === 'skill' ? '技能' : '道具';
 const hLines = n => '<div class="ln"></div>'.repeat(n);
 const hTxt = (s, n = 3, cls = '') => s && String(s).trim() ? `<div class="tx ${cls}">${esc(s)}</div>` : `<div>${hLines(n)}</div>`;
@@ -32,7 +37,6 @@ function cardBlock(i, sv) {
     </tr>`;
   }
 
-  // infoFields 自定义字段，每两个一行
   const fields = c.infoFields || [];
   let infoRows = '';
   for (let k = 0; k < fields.length; k += 2) {
@@ -45,7 +49,6 @@ function cardBlock(i, sv) {
         : '<td class="k"></td><td class="v"></td>'}
     </tr>`;
   }
-  // 字段数为奇数时补一行空行
   if (!fields.length) {
     infoRows = `<tr><td class="k">（无自定义信息）</td><td class="v" colspan="3"></td></tr>`;
   }
@@ -61,8 +64,9 @@ function cardBlock(i, sv) {
     <div class="lb">其他背景（性格、外貌、经历）</div>${hTxt(sv ? c.other : '', 5)}`;
 }
 
-
-// ── 日程章节 ──────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// 2. 章节构建辅助
+// ════════════════════════════════════════════════════════════
 function buildDaySection(o, chNum) {
   let h = `<section class="ch"><div class="part">${chNum}　日程与事件</div>`;
   if (!D.days || !D.days.length) {
@@ -92,7 +96,6 @@ function buildDaySection(o, chNum) {
   return h;
 }
 
-// ── NPC/怪物章节 ──────────────────────────────────────────────
 function buildNpcSection(o, chNum) {
   let h = `<section class="ch"><div class="part">${chNum}　NPC / 怪物档案</div>`;
   const npcs = (D.npcs || []);
@@ -165,7 +168,112 @@ function buildNpcSection(o, chNum) {
   return h;
 }
 
-// ── DM 完整手册 ───────────────────────────────────────────────
+function buildRelSection(o, chNum) {
+  let h = `<section class="ch"><div class="part">${chNum}　关系图谱</div>`;
+  if (!D.relations || !D.relations.length) {
+    return h + '<p class="note">尚未建立任何关系。</p></section>';
+  }
+  
+  // 收集节点
+  const players = (D.players || []).map((_, i) => {
+    const b = D.bg[i];
+    const dispName = (b && b.card && b.card.name) ? `${b.card.name}(${pname(i)})` : pname(i);
+    return { id: `p_${i}`, type: 'player', rawId: i, name: dispName, color: pcolor(i), dead: b && b.dead };
+  });
+  const npcs = (D.npcs || []).map((n, i) => {
+    const rawId = n.id !== undefined ? n.id : (n.uuid !== undefined ? n.uuid : i);
+    return { id: `n_${rawId}`, type: 'npc', rawId: rawId, name: n.name || '未知', color: n.color || '#b27cd8', dead: n.dead };
+  });
+  const allNodes = [...players, ...npcs];
+  const nodes = allNodes.filter(n => !(D.ui?.relHidden?.[n.id]));
+  
+  if (!nodes.length) return h + '<p class="note">没有可见的关系节点。</p></section>';
+  
+  // 计算边界
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const pos = D.ui?.relPositions || {};
+  nodes.forEach(n => {
+    const p = pos[n.id] || {x: 400, y: 300};
+    minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+  });
+  if (minX === Infinity) { minX = 0; maxX = 800; minY = 0; maxY = 600; }
+  
+  const pad = 60;
+  const width = Math.max(maxX - minX + pad * 2, 400);
+  const height = Math.max(maxY - minY + pad * 2, 300);
+  const vbX = minX - pad;
+  const vbY = minY - pad;
+
+  const REL_STYLES = {
+    normal:  { color: '#888888', dash: false },
+    ally:    { color: '#4cc9a0', dash: false },
+    hostile: { color: '#e0605e', dash: false },
+    family:  { color: '#e8a13a', dash: false },
+    secret:  { color: '#b27cd8', dash: true  },
+  };
+
+  // SVG 箭头定义
+  let defs = `<defs>`;
+  Object.entries(REL_STYLES).forEach(([k, v]) => {
+    defs += `<marker id="arr_${k}" markerWidth="10" markerHeight="10" refX="26" refY="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="${v.color}" />
+    </marker>`;
+  });
+  defs += `</defs>`;
+
+  // 绘制连线
+  let edgesHtml = '';
+  D.relations.forEach(r => {
+    const fk = r.fromType === 'player' ? `p_${r.fromId}` : `n_${r.fromId}`;
+    const tk = r.toType === 'player' ? `p_${r.toId}` : `n_${r.toId}`;
+    if (D.ui?.relHidden?.[fk] || D.ui?.relHidden?.[tk]) return;
+    
+    const fp = pos[fk], tp = pos[tk];
+    if (!fp || !tp) return;
+
+    const st = REL_STYLES[r.style] || REL_STYLES.normal;
+    const isDash = st.dash ? 'stroke-dasharray="8,6"' : '';
+    const markerEnd = `marker-end="url(#arr_${r.style})"`;
+    const markerStart = r.dir === 'both' ? `marker-start="url(#arr_${r.style})"` : '';
+
+    const mx = (fp.x + tp.x) / 2;
+    const my = (fp.y + tp.y) / 2;
+    
+    edgesHtml += `<line x1="${fp.x}" y1="${fp.y}" x2="${tp.x}" y2="${tp.y}" stroke="${st.color}" stroke-width="2.5" ${isDash} ${markerEnd} ${markerStart} />`;
+    
+    if (r.label) {
+      const lw = r.label.length * 12 + 16;
+      edgesHtml += `<rect x="${mx - lw/2}" y="${my - 10}" width="${lw}" height="20" rx="10" fill="#fff" stroke="${st.color}" stroke-width="1.5" />`;
+      edgesHtml += `<text x="${mx}" y="${my}" fill="${st.color}" font-size="11" font-weight="bold" text-anchor="middle" dominant-baseline="central">${esc(r.label)}</text>`;
+    }
+  });
+
+  // 绘制节点
+  let nodesHtml = '';
+  nodes.forEach(n => {
+    const p = pos[n.id] || {x: 400, y: 300};
+    const w = Math.max(40, n.name.length * 13 + 24);
+    const h = 32;
+    const rx = p.x - w/2;
+    const ry = p.y - h/2;
+    const fill = n.dead ? '#888' : n.color;
+    const op = n.dead ? '0.6' : '1';
+    
+    nodesHtml += `<rect x="${rx}" y="${ry}" width="${w}" height="${h}" rx="16" fill="${fill}" stroke="#fff" stroke-width="3" opacity="${op}" style="filter:drop-shadow(0px 1px 2px rgba(0,0,0,0.3))" />`;
+    nodesHtml += `<text x="${p.x}" y="${p.y}" fill="#fff" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central" style="text-shadow:0px 1px 2px rgba(0,0,0,0.5)">${esc(n.name)}</text>`;
+  });
+
+  h += `<svg viewBox="${vbX} ${vbY} ${width} ${height}" width="100%" height="auto" style="max-height:800px; border:1px solid #ddd; border-radius:8px; background:#fafafa; margin-top:10px; font-family:sans-serif;">
+    ${defs}${edgesHtml}${nodesHtml}
+  </svg></section>`;
+  
+  return h;
+}
+
+// ════════════════════════════════════════════════════════════
+// 3. DM 完整手册生成
+// ════════════════════════════════════════════════════════════
 function hbHtml(o) {
   const title = D.title || '未命名模组';
   const rooms = [...D.rooms].sort((a, b) => a.y - b.y || a.x - b.x);
@@ -177,7 +285,9 @@ function hbHtml(o) {
     return `${l}${DOOR_S[t]}${t === 'in' ? '←' : '→'}${n ? num.get(n.id) : '外'}`;
   }).join('　') || '无';
   const today = new Date().toLocaleDateString('zh-CN');
+  
   const hasNpc = (D.npcs || []).length > 0;
+  const hasRel = (D.relations || []).length > 0;
 
   let chIdx = 1;
   const ch = () => ['一','二','三','四','五','六','七','八'][chIdx++ - 1] || String(chIdx - 1);
@@ -195,6 +305,7 @@ function hbHtml(o) {
   const tocRows = [
     [ch(), '日程与事件（每日事件表）'],
     hasNpc ? [ch(), 'NPC / 怪物档案（属性、描述、对话、DM备注）'] : null,
+    hasRel ? [ch(), '关系图谱'] : null,
     [ch(), '地图总览（含门与通道）与房间索引'],
     [ch(), '房间详解（每间房：场景、实体/遭遇、门、DM 备注、物资）'],
     o.pl ? [ch(), '玩家角色（预设背景 + 车卡，每人一页）'] : null,
@@ -215,6 +326,7 @@ function hbHtml(o) {
   chIdx = 1;
   h += buildDaySection(o, ch());
   if (hasNpc) h += buildNpcSection(o, ch());
+  if (hasRel) h += buildRelSection(o, ch()); // 插入关系图谱
 
   // 地图总览
   h += `<section class="ch"><div class="part">${ch()}　地图总览</div>`;
@@ -305,7 +417,9 @@ function hbHtml(o) {
   return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · DM 带团手册</title><style>${HB_CSS}${o.dup ? HB_DUP : ''}</style></head><body class="${o.dup ? 'dup' : ''}">${h}</body></html>`;
 }
 
-// ── 玩家发放版 ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// 4. 玩家发放版生成
+// ════════════════════════════════════════════════════════════
 function hpHtml(o) {
   const title = D.title || '未命名模组';
   const head = i => `<div class="ph"><span>${esc(title)}</span><span>玩家角色卡</span></div>
@@ -320,7 +434,6 @@ function hpHtml(o) {
     return `<section class="hp ${i ? '' : 'f'}">${head(i)}${bg}${card}</section>`;
   }).join('');
 
-  // 玩家版：仅输出 NPC 公开描述（无 DM 备注）
   if (o.npcPub && (D.npcs || []).length) {
     const pubNpcs = D.npcs.filter(n => n.desc && n.desc.trim());
     if (pubNpcs.length) {
@@ -340,10 +453,14 @@ function hpHtml(o) {
     }
   }
 
-  // ✅ 修复：${h} → ${pages}
   return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>${esc(title)} · 玩家发放版</title><style>${HB_CSS}${o.dup ? HB_DUP : ''}</style></head><body class="${o.dup ? 'dup' : ''}">${pages}</body></html>`;
 }
-// ── 弹窗选项读取 ──────────────────────────────────────────────
+
+// ════════════════════════════════════════════════════════════
+// 5. 弹窗交互与导出
+// ════════════════════════════════════════════════════════════
+let hbOpts = { _mode: 'dm' };
+
 function getHbOpts() {
   const mode = hbOpts._mode || 'dm';
   if (mode === 'dm') {
@@ -366,22 +483,17 @@ function getHbOpts() {
   }
 }
 
-// ── 弹窗选项状态 ──────────────────────────────────────────────
-let hbOpts = { _mode: 'dm' };
-
-function openHandbook() {
+export function openHandbook() {
   hbOpts._mode = 'dm';
-  // 重置 tab 高亮
   document.getElementById('hbTabDm').classList.add('on');
   document.getElementById('hbTabPl').classList.remove('on');
-  // 显示/隐藏选项区
   document.getElementById('hbOptDm').style.display = '';
   document.getElementById('hbOptPl').style.display = 'none';
   refreshHandbook();
   document.getElementById('hbDlg').showModal();
 }
 
-function setHbMode(mode) {
+export function setHbMode(mode) {
   hbOpts._mode = mode;
   document.getElementById('hbTabDm').classList.toggle('on', mode === 'dm');
   document.getElementById('hbTabPl').classList.toggle('on', mode === 'pl');
@@ -390,7 +502,7 @@ function setHbMode(mode) {
   refreshHandbook();
 }
 
-function refreshHandbook() {
+export function refreshHandbook() {
   const o = getHbOpts();
   const frame = document.getElementById('hbFrame');
   if (!frame) return;
@@ -402,7 +514,7 @@ function refreshHandbook() {
   }
 }
 
-function printHandbook() {
+export function printHandbook() {
   const o = getHbOpts();
   const html = o._mode === 'pl' ? hpHtml(o) : hbHtml(o);
   const w = window.open('', '_blank');
@@ -411,7 +523,7 @@ function printHandbook() {
   w.onload = () => w.print();
 }
 
-function downloadHandbook() {
+export function downloadHandbook() {
   const o = getHbOpts();
   const html = o._mode === 'pl' ? hpHtml(o) : hbHtml(o);
   const title = (D.title || '手册').replace(/[\\/:*?"<>|]/g, '_');
@@ -421,3 +533,7 @@ function downloadHandbook() {
   a.download = fname;
   a.click();
 }
+
+Object.assign(window, {
+  openHandbook, setHbMode, refreshHandbook, printHandbook, downloadHandbook
+});

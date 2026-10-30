@@ -1,4 +1,6 @@
-// js/p2p.js — WebRTC/PeerJS 多人联机引擎
+// js/p2p.js — WebRTC/PeerJS 多人联机引擎 (ES6 Module)
+import { D, migrate, KEY } from './data.js';
+import { toast } from './core.js';
 
 let peer = null;
 let p2pConnections = [];
@@ -6,6 +8,9 @@ let targetHostId = new URLSearchParams(window.location.search).get('peer') || nu
 let myPeerId = null;
 const isHost = !targetHostId;
 
+// ════════════════════════════════════════════════════════════
+// 1. UI 状态更新
+// ════════════════════════════════════════════════════════════
 function updateP2PBtn() {
   const btn = document.getElementById('p2pBtn');
   if (!btn) return;
@@ -24,22 +29,25 @@ function updateP2PBtn() {
   }
 }
 
-function initP2PSync() {
+// ════════════════════════════════════════════════════════════
+// 2. 初始化与连接建立
+// ════════════════════════════════════════════════════════════
+export function initP2PSync() {
   if (!window.Peer) {
     console.warn('PeerJS 未加载，联机功能不可用');
     return;
   }
-  peer = new Peer();
+  peer = new window.Peer();
 
   peer.on('open', id => {
     myPeerId = id;
     updateP2PBtn();
     if (targetHostId) {
-      if (typeof toast === 'function') toast('正在连入房主房间...');
+      toast('正在连入房主房间...');
       const conn = peer.connect(targetHostId, { reliable: true });
       setupP2PConn(conn);
     } else {
-      if (typeof toast === 'function') toast('📡 联机就绪，点击按钮复制邀请链接');
+      toast('📡 联机就绪，点击按钮复制邀请链接');
     }
   });
 
@@ -47,7 +55,7 @@ function initP2PSync() {
 
   peer.on('error', err => {
     console.error('PeerJS 错误:', err);
-    if (typeof toast === 'function') toast('联机异常: ' + (err.type || '连接中断'));
+    toast('联机异常: ' + (err.type || '连接中断'));
   });
 }
 
@@ -55,18 +63,25 @@ function setupP2PConn(conn) {
   conn.on('open', () => {
     p2pConnections.push(conn);
     updateP2PBtn();
-    if (typeof toast === 'function')
-      toast(`🎉 新成员加入！当前共 ${p2pConnections.length + 1} 人`);
+    toast(`🎉 新成员加入！当前共 ${p2pConnections.length + 1} 人`);
     if (isHost) conn.send({ type: 'FULL_SYNC', data: D });
   });
 
   conn.on('data', msg => {
     if (!msg || typeof msg !== 'object') return;
     if (msg.type === 'FULL_SYNC' || msg.type === 'DIFF_SYNC') {
-      D = migrate(msg.data);
+      const newData = migrate(msg.data);
+      
+      // 安全地更新导入的常量 D，保持引用不变
+      Object.keys(D).forEach(k => delete D[k]);
+      Object.assign(D, newData);
+      
       localStorage.setItem(KEY, JSON.stringify(D));
-      if (typeof toast === 'function') toast('⚡ 收到实时同步');
-      if (typeof renderAllViews === 'function') renderAllViews();
+      toast('⚡ 收到实时同步');
+      
+      // 触发全局数据加载事件，各个模块会自动重绘
+      window.dispatchEvent(new Event('trpg-data-loaded'));
+      
       // 房主中继转发
       if (isHost) {
         p2pConnections.forEach(c => {
@@ -79,20 +94,22 @@ function setupP2PConn(conn) {
   conn.on('close', () => {
     p2pConnections = p2pConnections.filter(c => c !== conn);
     updateP2PBtn();
-    if (typeof toast === 'function')
-      toast(`有成员退出 (剩余 ${p2pConnections.length + 1} 人)`);
+    toast(`有成员退出 (剩余 ${p2pConnections.length + 1} 人)`);
   });
 }
 
-function broadcastP2P(data) {
+// ════════════════════════════════════════════════════════════
+// 3. 广播与交互
+// ════════════════════════════════════════════════════════════
+export function broadcastP2P(data) {
   p2pConnections.forEach(conn => {
     if (conn.open) conn.send({ type: 'DIFF_SYNC', data });
   });
 }
 
-function handleP2PAction() {
+export function handleP2PAction() {
   if (!myPeerId) {
-    if (typeof toast === 'function') toast('联机初始化中，请稍等...');
+    toast('联机初始化中，请稍等...');
     return;
   }
   const hostId = isHost ? myPeerId : targetHostId;
@@ -103,15 +120,20 @@ function handleP2PAction() {
   // 优先用 clipboard API，降级用 prompt
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(link).then(() => {
-      if (typeof toast === 'function') toast('📋 邀请链接已复制！发给其他 DM 即可加入');
+      toast('📋 邀请链接已复制！发给其他 DM 即可加入');
     }).catch(() => prompt('请手动复制邀请链接：', link));
   } else {
     prompt('请手动复制邀请链接：', link);
   }
 }
 
-// 绑定按钮（在 theme.js 之后、app.js 之前加载）
-(function () {
-  const btn = document.getElementById('p2pBtn');
-  if (btn) btn.addEventListener('click', handleP2PAction);
-})();
+// ════════════════════════════════════════════════════════════
+// 4. 挂载与绑定
+// ════════════════════════════════════════════════════════════
+Object.assign(window, {
+  initP2PSync, broadcastP2P, handleP2PAction
+});
+
+// 绑定按钮 (type="module" 脚本执行时 DOM 已就绪)
+const btn = document.getElementById('p2pBtn');
+if (btn) btn.addEventListener('click', handleP2PAction);
