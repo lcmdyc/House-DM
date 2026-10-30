@@ -1819,7 +1819,16 @@
     "npcVisible": [],
     "npcStrip": true
   },
-  "log": [],
+  "log": [
+    {
+      "id": "9xmmsow",
+      "ts": 1793358566546,
+      "day": 1,
+      "type": "sys",
+      "text": "导入存档「寄生者之间-2026-10-30.json」",
+      "color": ""
+    }
+  ],
   "npcs": [
     {
       "id": "199miwz",
