@@ -30,7 +30,7 @@
         },
         {
           "id": "i73x3k8",
-          "type": "item",
+          "type": "clue",
           "name": "照片A",
           "desc": "一幅家庭照，五个成年人，一个小孩和一条狗，脸都已经看不清了。照片下有铭牌——克罗特家族。看上去曾经是个很大的家族，但出乎某些原因，他们都不在了。\n照片使你依稀记起来，那是一宗发生在十年前的惨剧：克罗特们和他们的客人在一次聚会中被凶残的匪徒袭击，所有人都被残忍杀害了，连尸体都分不清只能将他们联合下葬。不光如此，凶案现场也遭到了破坏，前来处理的警察意外身亡…很多人都说这幢房子被诅咒了，然而就像很多凶杀案一样，没用多久人们就忘记了这件事。",
           "cond": "看墙",
@@ -39,7 +39,7 @@
         },
         {
           "id": "syi2syd",
-          "type": "item",
+          "type": "clue",
           "name": "油画",
           "desc": "你注意到这幅画框要比画作古老得多…你小心翼翼拆开它，发现底下还有另一幅画——它画着一幅悬浮在海面上的镜子，镜子里外都是无尽的大海，但只有镜子里的大海中似乎有一对对窥视着的眼睛。",
           "cond": "",
@@ -78,7 +78,7 @@
       "items": [
         {
           "id": "fwyip8k",
-          "type": "item",
+          "type": "clue",
           "name": "2个雕塑（茧壳）",
           "desc": "两个全身人物像，一位穿着上世纪的经典蓬蓬裙，表情带着奇异的微笑，一只手朝大门的方向张开。另一个看起来是位农夫，像他的头已经不见了，手也同样朝大门张开。它们做得栩栩如生，也许会是什么大师的作品，可是它们是不是也做的太真实了呢?你总有一种被盯着的错觉。",
           "cond": "",
@@ -87,7 +87,7 @@
         },
         {
           "id": "4ldhz2y",
-          "type": "item",
+          "type": "clue",
           "name": "照片B",
           "desc": "一组人们在房子外拿着猎枪合影的照片，黑白色调看不清楚天气好不好，可是从他们收获的猎物数量看来，运气应该还不错。\n你发现他们手上并没有像其他狩猎照一样直接抓着猎物，而是放在了布袋子里，从中渗出可能是血迹的东西。\n看了半天后，你终于意识到那个布袋是人头的形状……这是一个恶作剧吗?!!",
           "cond": "",
@@ -183,7 +183,7 @@
       "items": [
         {
           "id": "kufnhyj",
-          "type": "item",
+          "type": "clue",
           "name": "地面",
           "desc": "你找到了一个变形的铁盒子，里面的纸张边缘焦黑：\n亲爱的吉蒂，感谢你邀请我来参加克罗特家的狩猎游戏，很不幸我要拒绝你的邀请了，由于我妻子的信仰，我不能参加任何对活物的狩猎…另外出于老朋友的建议，我希望你也能减少狩猎，虽然你家散养的牡鹿和野狐都十分活跃，但狩猎这种事还是太残忍了。每当我听见它们的哀鸣都仿佛看见一名人类蜷缩在地上痛苦地求饶……老朋友，我可能是有点头脑不清醒，但减少狩猎也不是太奇怪的事不是吗?我相信教会会支持这件事的。\n祝你生活愉快，你忠实的朋友，比恩斯。\n\n信件下方有人用红笔写著刺眼的文字：不知好歹",
           "cond": "*巴特写",
@@ -214,7 +214,7 @@
       "items": [
         {
           "id": "o1yvaga",
-          "type": "item",
+          "type": "clue",
           "name": "桌",
           "desc": "桌子上刻有一句话：在恰当的地方用餐使食物更香甜【餐厅内进食饥饱值+1】",
           "cond": "",
@@ -358,7 +358,7 @@
       "items": [
         {
           "id": "816jcwi",
-          "type": "item",
+          "type": "clue",
           "name": "血迹",
           "desc": "你听见了撕心裂肺的惨叫，很多人在奔跑，有几个穿着本市警服的还有一些别的人…你看不见追逐他们的东西，但他们露出恐惧的表情边跑边回头看，然后一个个被袭击消失。其中有一名男性在消失前似乎朝你的方向看了一眼，将一片纸塞进了皮椅的夹层里接着便消失了。",
           "cond": "",
@@ -367,7 +367,7 @@
         },
         {
           "id": "8kmkbma",
-          "type": "item",
+          "type": "clue",
           "name": "椅子",
           "desc": "一张陈旧的纸片上面画了一个法阵，是一个圆圈中画着倒三角形，法阵内有许多字符但你无法明白它，部分文字染上了血迹：\n…相反的!我明白了!我们出不去…是因为一切都是相反的!等等…我还有机会吗?我很想念你，请原谅我…",
           "cond": "",
@@ -376,7 +376,7 @@
         },
         {
           "id": "8w2n5ip",
-          "type": "item",
+          "type": "clue",
           "name": "墙壁",
           "desc": "再次仔细搜索，你意外地发现了其中一面墻竟然是空心的…但你该怎么弄开它呢?",
           "cond": "",
@@ -1409,25 +1409,71 @@
   "bg": [
     {
       "identity": "",
-      "skills": [],
-      "goals": [],
+      "skills": [
+        ""
+      ],
+      "goals": [
+        ""
+      ],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {
-          "bykjset": 0
+          "bykjset": 0,
+          "61gvg4g": 0,
+          "gvrif9z": 0
         },
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#e0605e",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": "",
+      "presetAttrs": [
+        {
+          "key": "",
+          "val": 20,
+          "name": "HP",
+          "show": true
+        },
+        {
+          "id": "61cjna4",
+          "name": "饥饿",
+          "val": 10,
+          "show": false
+        },
+        {
+          "id": "wv1mgck",
+          "name": "？？",
+          "val": 0,
+          "show": true
+        }
+      ]
     },
     {
       "identity": "",
@@ -1435,12 +1481,7 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {
           "bykjset": 0,
@@ -1448,10 +1489,36 @@
           "gvrif9z": 0
         },
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#e8a13a",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": "",
+      "presetAttrs": []
     },
     {
       "identity": "",
@@ -1459,19 +1526,39 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {},
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#e6d24a",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": ""
     },
     {
       "identity": "",
@@ -1479,19 +1566,41 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
-        "vals": {},
+        "vals": {
+          "gvrif9z": 0
+        },
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#8bc34a",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": ""
     },
     {
       "identity": "",
@@ -1499,19 +1608,39 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {},
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#4cc9a0",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": ""
     },
     {
       "identity": "",
@@ -1519,19 +1648,39 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {},
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#4aa8d8",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": ""
     },
     {
       "identity": "",
@@ -1539,33 +1688,54 @@
       "goals": [],
       "card": {
         "info": {
-          "name": "",
-          "gender": "",
-          "age": "",
-          "job": "",
-          "religion": "",
-          "zodiac": ""
+          "name": ""
         },
         "vals": {},
         "items": "",
-        "other": ""
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
       },
       "color": "#6c7be0",
-      "roomId": ""
+      "roomId": "",
+      "customFields": [],
+      "dead": false,
+      "dmNote": ""
     }
   ],
   "days": [
     {
       "id": "38cqnd3",
-      "title": "跑前须知",
+      "title": "团前准备",
       "ended": false,
       "events": [
         {
           "id": "x4ryd8d",
-          "time": "发选HO",
-          "title": "/一句话选HO",
+          "time": "选HO",
+          "title": "一句话选HO",
           "detail": "A-过去的从未过去，它仍然日日夜夜煎熬著你\nB-你亲自为自己掘墓，但在躺进去前总得拉个垫背的\nC-为达目的无所不用其极，就别管是不是脑子一热了\nD-那个人一直在等你，这也是你的幻想吗？\nE-多奢侈啊，你只想平平淡淡地活著罢了\nF-人生有许多条分岔路，在你脚下这条是要往星星上去的\nG-从一个笼牢到另一个笼牢，你缺的只是一把钥匙，或者一把刀",
-          "done": false
+          "done": false,
+          "type": "normal"
         }
       ]
     },
@@ -1646,178 +1816,49 @@
   "ui": {
     "strip": true,
     "showChar": true,
-    "npcVisible": [
-      "4o3yc69"
-    ],
+    "npcVisible": [],
     "npcStrip": true
   },
-  "log": [
-    {
-      "id": "ayowy17",
-      "ts": 1793299420820,
-      "day": 1,
-      "type": "move",
-      "text": "养子：未定位 → 墓地",
-      "color": "#e0605e"
-    },
-    {
-      "id": "451u3yp",
-      "ts": 1793299421881,
-      "day": 1,
-      "type": "move",
-      "text": "养子：墓地 → 未定位",
-      "color": "#e0605e"
-    },
-    {
-      "id": "zwc8vkq",
-      "ts": 1793299427185,
-      "day": 1,
-      "type": "move",
-      "text": "养子：未定位 → 墓地",
-      "color": "#e0605e"
-    },
-    {
-      "id": "ou3okgo",
-      "ts": 1793299427512,
-      "day": 1,
-      "type": "move",
-      "text": "暴徒：未定位 → 墓地",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "anvtbz2",
-      "ts": 1793299427818,
-      "day": 1,
-      "type": "move",
-      "text": "警察：未定位 → 墓地",
-      "color": "#e6d24a"
-    },
-    {
-      "id": "35ka3t6",
-      "ts": 1793299428158,
-      "day": 1,
-      "type": "move",
-      "text": "疯子：未定位 → 墓地",
-      "color": "#8bc34a"
-    },
-    {
-      "id": "sv4n694",
-      "ts": 1793299428710,
-      "day": 1,
-      "type": "move",
-      "text": "祭品：未定位 → 墓地",
-      "color": "#4cc9a0"
-    },
-    {
-      "id": "8os7r3n",
-      "ts": 1793299428998,
-      "day": 1,
-      "type": "move",
-      "text": "神秘学家：未定位 → 墓地",
-      "color": "#4aa8d8"
-    },
-    {
-      "id": "xaheebb",
-      "ts": 1793299429542,
-      "day": 1,
-      "type": "move",
-      "text": "小偷：未定位 → 墓地",
-      "color": "#6c7be0"
-    },
-    {
-      "id": "amdrm68",
-      "ts": 1793299432058,
-      "day": 1,
-      "type": "move",
-      "text": "小偷：墓地 → 未定位",
-      "color": "#6c7be0"
-    },
-    {
-      "id": "74m155e",
-      "ts": 1793299432912,
-      "day": 1,
-      "type": "move",
-      "text": "养子：墓地 → 未定位",
-      "color": "#e0605e"
-    },
-    {
-      "id": "jc4kcwl",
-      "ts": 1793299433159,
-      "day": 1,
-      "type": "move",
-      "text": "暴徒：墓地 → 未定位",
-      "color": "#e8a13a"
-    },
-    {
-      "id": "2srv0fv",
-      "ts": 1793299433445,
-      "day": 1,
-      "type": "move",
-      "text": "警察：墓地 → 未定位",
-      "color": "#e6d24a"
-    },
-    {
-      "id": "irdiquk",
-      "ts": 1793299433731,
-      "day": 1,
-      "type": "move",
-      "text": "疯子：墓地 → 未定位",
-      "color": "#8bc34a"
-    },
-    {
-      "id": "x697hrm",
-      "ts": 1793299434029,
-      "day": 1,
-      "type": "move",
-      "text": "祭品：墓地 → 未定位",
-      "color": "#4cc9a0"
-    },
-    {
-      "id": "29q3p5w",
-      "ts": 1793299434299,
-      "day": 1,
-      "type": "move",
-      "text": "神秘学家：墓地 → 未定位",
-      "color": "#4aa8d8"
-    }
-  ],
+  "log": [],
   "npcs": [
     {
-      "id": "4o3yc69",
-      "name": "安奈林",
+      "id": "199miwz",
+      "name": "安奈林 A",
       "category": "npc",
       "disposition": "友好",
       "color": "#b27cd8",
-      "roomId": "0a4v9wb",
+      "roomId": "",
       "desc": "",
       "dmNote": "",
       "attrs": [
         {
-          "id": "ph5jrta",
+          "id": "l6bgffb",
           "name": "HP",
           "val": "10"
         },
         {
-          "id": "n6d5vwh",
+          "id": "gdcy9i9",
           "name": "AC",
           "val": "10"
         }
       ],
       "dialogs": [
         {
-          "id": "ruqddlg",
+          "id": "8fgb8w4",
           "trigger": "初次见面",
-          "line": ""
+          "line": "",
+          "used": false
         }
-      ]
+      ],
+      "dead": false,
+      "customFields": []
     },
-    
     {
       "id": "whincor",
       "name": "幽灵",
       "category": "monster",
       "disposition": "敌对",
-      "color": "#ededed",
+      "color": "#919191",
       "roomId": "",
       "desc": "",
       "dmNote": "",
@@ -1839,7 +1880,95 @@
           "trigger": "初次见面",
           "line": ""
         }
-      ]
+      ],
+      "dead": false,
+      "customFields": []
+    }
+  ],
+  "relations": [
+    {
+      "id": "a6lp0r9",
+      "fromType": "player",
+      "fromId": 1,
+      "toType": "player",
+      "toId": 0,
+      "label": "给克罗特家供给小孩",
+      "style": "ally"
+    },
+    {
+      "id": "lt6j06w",
+      "fromType": "npc",
+      "fromId": "4o3yc69",
+      "toType": "player",
+      "toId": 3,
+      "label": "十年前的恋人",
+      "style": "family",
+      "dir": "both"
+    },
+    {
+      "id": "n0dkp1b",
+      "fromType": "player",
+      "fromId": 2,
+      "toType": "player",
+      "toId": 0,
+      "label": "调查案件",
+      "style": "hostile"
+    },
+    {
+      "id": "tayex2n",
+      "fromType": "player",
+      "fromId": 0,
+      "toType": "player",
+      "toId": 4,
+      "label": "杀死目标",
+      "style": "hostile"
+    },
+    {
+      "id": "v8misan",
+      "fromType": "player",
+      "fromId": 6,
+      "toType": "player",
+      "toId": 1,
+      "label": "小时候被卖后逃跑",
+      "style": "hostile",
+      "dir": "both"
+    },
+    {
+      "id": "wzmjwdp",
+      "fromType": "player",
+      "fromId": 5,
+      "toType": "player",
+      "toId": 0,
+      "label": "调查黑魔法",
+      "style": "normal"
+    },
+    {
+      "id": "fqiw0mg",
+      "fromType": "player",
+      "fromId": 2,
+      "toType": "player",
+      "toId": 1,
+      "label": "逮捕目标",
+      "style": "hostile"
+    },
+    {
+      "id": "pnukc49",
+      "fromType": "player",
+      "fromId": 2,
+      "toType": "player",
+      "toId": 6,
+      "label": "逮捕目标",
+      "style": "hostile"
+    },
+    {
+      "id": "0gaj6et",
+      "fromType": "player",
+      "fromId": 0,
+      "toType": "npc",
+      "toId": "4o3yc69",
+      "label": "十年前的师生",
+      "style": "normal",
+      "dir": "both"
     }
   ]
 }
