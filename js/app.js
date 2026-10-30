@@ -26,19 +26,30 @@ function openModLib() {
   loadModLib();
   document.getElementById('modLibDlg').showModal();
 }
-
 async function loadModLib() {
   const el = document.getElementById('modLibList');
   if (!el) return;
   el.innerHTML = '<p class="hint">加载中…</p>';
   try {
     const res = await fetch('modules/index.json');
-    modList   = await res.json();
+    // 检查响应类型，防止把 404 HTML 当 JSON 解析
+    if (!res.ok) {
+      el.innerHTML = `<p class="hint">⚠️ 暂无内置模组库（${res.status}）<br>
+        你可以通过「导入备份」加载自己的存档。</p>`;
+      return;
+    }
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      el.innerHTML = '<p class="hint">⚠️ modules/index.json 格式不正确</p>';
+      return;
+    }
+    modList = await res.json();
     renderModLib();
-  } catch {
-    el.innerHTML = '<p class="hint">⚠️ 无法加载模组列表（modules/index.json）</p>';
+  } catch (e) {
+    el.innerHTML = `<p class="hint">⚠️ 无法加载模组列表<br><small>${e.message}</small></p>`;
   }
 }
+
 
 function renderModLib() {
   const el = document.getElementById('modLibList');
@@ -189,7 +200,7 @@ function initNewData() {
   document.body.classList.toggle('edit', edit);
   const btn = document.getElementById('modeBtn');
   if (btn) {
-    btn.textContent = edit ? '✏️ 编辑模式' : '👁 预览模式';
+    btn.textContent = edit ? '✏️ 编辑模式' : '👁 带团模式';
     btn.classList.toggle('on', edit);
   }
 }

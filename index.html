@@ -23,6 +23,7 @@
     <div class="spacer"></div>
     <button id="themeBtn" title="切换浅色/深色主题">🌙 深色</button>
     <button id="p2pBtn" title="点击复制邀请链接">🔗 启动多人协作</button>
+    <button onclick="openModLib()">📦 模组库</button>
     <button onclick="exportData()">💾 导出备份</button>
     <label style="display:inline-flex;align-items:center;cursor:pointer;background:var(--card);padding:5px 11px;border-radius:4px;border:1px solid var(--line);font-size:12.5px;color:var(--text)">
       📂 导入<input type="file" accept=".json" onchange="importData(event)" style="display:none">
@@ -44,7 +45,7 @@
       <button onclick="openSummary()">🎒 物资总览</button>
       <button onclick="openLog()">📜 日志</button>
       <button onclick="openHandbook()">📖 导出手册</button>
-<button onclick="openModLib()">📦 模组库</button>
+
     </div>
     <main id="wbMain">
       <div id="strip"></div>
