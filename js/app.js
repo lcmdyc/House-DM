@@ -97,11 +97,14 @@ function exportData() {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `house-dm-${new Date().toISOString().slice(0, 10)}.json`;
+  // 文件名格式：模组名-house-dm-日期.json
+  const modName = (D.title || '未命名模组').replace(/[\\/:*?"<>|]/g, '_');
+  a.download = `${modName}-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast('📤 已导出存档');
 }
+
 
 function importData(e) {
   if (e && e.target && e.target.files) {
