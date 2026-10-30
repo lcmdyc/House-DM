@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>TRPG 模组 DM 工具</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/map.css">
+<link rel="stylesheet" href="css/strip.css">
+<link rel="stylesheet" href="css/items.css">
+<link rel="stylesheet" href="css/npc.css">
+<link rel="stylesheet" href="css/library.css">
+<link rel="stylesheet" href="css/dialogs.css">
+<link rel="stylesheet" href="css/misc.css">
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body class="edit">
+  <header>
+    <h1>🎲 DM 工具</h1>
+    <input type="text" id="modTitle" class="title" placeholder="模组名称">
+      <button id="modeBtn" class="on" onclick="toggleMode()">✏️ 编辑模式</button>
+    <div class="spacer"></div>
+    <button id="themeBtn" title="切换浅色/深色主题">🌙 深色</button>
+    <button id="p2pBtn" title="点击复制邀请链接">🔗 启动多人协作</button>
+    <button onclick="exportData()">💾 导出备份</button>
+    <label style="display:inline-flex;align-items:center;cursor:pointer;background:var(--card);padding:5px 11px;border-radius:4px;border:1px solid var(--line);font-size:12.5px;color:var(--text)">
+      📂 导入<input type="file" accept=".json" onchange="importData(event)" style="display:none">
+    </label>
+<button class="danger" onclick="resetData()">重置模组</button>
+  </header>
+
+  <nav id="tabBar">
+    <button id="tabWorkbench" class="tab-btn on" onclick="switchTab('workbench')">🎲 工作台</button>
+    <button id="tabLibrary"   class="tab-btn"    onclick="switchTab('library')">📖 资料库</button>
+  </nav>
+
+  <!-- 工作台页 -->
+  <div id="pageWorkbench" class="tab-page">
+    <div id="wbToolbar">
+      <button id="dayBtn" onclick="openDays()">📅 Day 1</button>
+      <button id="endDayBtn" class="primary" onclick="endDay()">Day 1 结束 ▶</button>
+      <button id="playersBtn" onclick="openPlayers()">👥 玩家(7)</button>
+      <button onclick="openSummary()">🎒 物资总览</button>
+      <button onclick="openLog()">📜 日志</button>
+      <button onclick="openHandbook()">📖 导出手册</button>
+<button onclick="openModLib()">📦 模组库</button>
+    </div>
+    <main id="wbMain">
+      <div id="strip"></div>
+      <div id="npcStrip"></div>
+      <div id="mapWrap">
+        <div id="grid"></div>
+        <button id="centerBtn" onclick="centerView()">⌖ 视角居中</button>
+        <div id="panHint">按住空白处拖拽画布 · 滚轮上下移动 · Shift+滚轮左右移动</div>
+      </div>
+      <div id="side"></div>
+      <div id="entitySide"></div>
+    </main>
+  </div>
+
+  <!-- 资料库页 -->
+  <div id="pageLibrary" class="tab-page" style="display:none">
+    <div id="libToolbar">
+      <button id="libTabBg"       class="lib-tab on" onclick="switchLibTab('bg')">📜 玩家背景／车卡</button>
+      <button id="libTabNpc"      class="lib-tab"    onclick="switchLibTab('npc')">👾 NPC／怪物</button>
+      <button id="libTabRelation" class="lib-tab"    onclick="switchLibTab('relation')">🕸 关系图谱</button>
+    </div>
+
+    <div id="libPageBg" class="lib-page">
+      <div class="bgwrap">
+        <div id="bgNav"  class="bgnav"></div>
+        <div id="bgMain" class="bgmain"></div>
+      </div>
+    </div>
+
+    <div id="libPageNpc" class="lib-page" style="display:none">
+      <div id="npcLibToolbar">
+        <button class="primary" onclick="addNpcToLib()">＋ 新增 NPC/怪物</button>
+        <input type="text" id="npcLibQ" placeholder="搜索名称、描述…" oninput="renderNpcLib()">
+        <select id="npcLibCat" onchange="renderNpcLib()">
+          <option value="">全部类型</option>
+          <option value="npc">NPC</option>
+          <option value="monster">怪物</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div id="npcLibBody" style="flex:1;display:flex;overflow:hidden;min-height:0">
+        <div id="npcLibList"></div>
+        <div id="npcLibDetail"></div>
+      </div>
+    </div>
+
+    <div id="libPageRelation" class="lib-page" style="display:none;flex:1;overflow:auto"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- 弹窗 -->
+  <dialog id="stripDlg" style="width:360px">
+    <div class="tabs"><b style="color:var(--accent)">⚙ 玩家属性栏设置</b><div class="spacer"></div>
+      <button onclick="stripAll(true)">全选</button><button onclick="stripAll(false)">全不选</button>
+      <button onclick="document.getElementById('stripDlg').close()">✕</button></div>
+    <div id="stripCfgBox" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto"></div>
+  </dialog>
+
+  <dialog id="npcStripDlg" style="width:380px">
+    <div class="tabs"><b style="color:var(--accent)">⚙ NPC栏显示设置</b><div class="spacer"></div>
+      <button onclick="npcStripCheckAll(true)">全选</button>
+      <button onclick="npcStripCheckAll(false)">全不选</button>
+      <button onclick="document.getElementById('npcStripDlg').close()">✕</button></div>
+    <p class="hint" style="margin:8px 12px 4px">勾选要在工作台侧栏显示的 NPC/怪物：</p>
+    <div id="npcStripCfgBox" style="display:flex;flex-direction:column;gap:4px;max-height:60vh;overflow-y:auto;padding:0 12px 12px"></div>
+  </dialog>
+
+  <dialog id="dayDlg" style="width:780px;max-width:92vw">
+    <div class="tabs"><b style="color:var(--accent);font-size:15px">📅 日程推进与事件表</b><div class="spacer"></div>
+      <button onclick="document.getElementById('dayDlg').close()">✕ 关闭</button></div>
+    <div class="bgwrap"><div id="dayNav" class="bgnav"></div><div id="dayMain" class="bgmain"></div></div>
+  </dialog>
+
+  <dialog id="playersDlg" style="width:520px;max-width:92vw">
+    <div class="tabs"><b style="color:var(--accent);font-size:15px">👥 玩家队伍设置</b>
+      <span id="plCount" class="hint"></span><div class="spacer"></div>
+      <button class="primary" onclick="addPlayer()">＋ 新增玩家</button>
+      <button onclick="closePlayers()">✕ 完成</button></div>
+    <div id="playersBox" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
+  </dialog>
+
+  <dialog id="sumDlg" style="width:820px;max-width:92vw">
+    <div class="tabs"><b style="color:var(--accent);font-size:15px">🎒 物资全览池与分配</b><div class="spacer"></div>
+      <button class="primary" onclick="addPoolItem()">＋ 新物资</button>
+      <button onclick="document.getElementById('sumDlg').close()">✕ 关闭</button></div>
+    <div class="ptool">
+      <input type="text" id="poolQ" placeholder="搜索物资名称、描述、检定条件…" oninput="poolQ=this.value;renderPool()">
+      <select id="poolT" onchange="poolT=this.value;renderPool()">
+        <option value="">全部类型</option><option value="item">道具</option><option value="clue">线索</option>
+      </select>
+    </div>
+    <div id="poolList" style="max-height:60vh;overflow-y:auto;padding-right:4px"></div>
+  </dialog>
+
+  <dialog id="logDlg" style="width:700px;max-width:92vw">
+    <div class="tabs"><b style="color:var(--accent);font-size:15px">📜 模组运行日志</b>
+      <div id="logTabs" style="display:flex;gap:4px;margin-left:10px"></div><div class="spacer"></div>
+      <button onclick="copyLog()">📋 复制文本</button>
+      <button class="danger" onclick="clearLog()">清空日志</button>
+      <button onclick="document.getElementById('logDlg').close()">✕ 关闭</button></div>
+    <div id="logList"></div>
+  </dialog>
+
+  <dialog id="hbDlg" style="width:900px;max-width:96vw">
+    <div class="tabs">
+      <button id="hbTabDm" class="on" onclick="setHbMode('dm')">📖 DM 完整手册</button>
+      <button id="hbTabPl" onclick="setHbMode('pl')">👥 玩家发放版</button>
+      <div class="spacer"></div>
+      <button onclick="refreshHandbook()">🔄 刷新预览</button>
+      <button onclick="printHandbook()">🖨️ 打印/PDF</button>
+      <button class="primary" onclick="downloadHandbook()">⬇ 下载 HTML</button>
+      <button onclick="document.getElementById('hbDlg').close()">✕ 关闭</button></div>
+    <div id="hbOptDm" class="hbopts">
+      <label><input type="checkbox" id="hbDM"  checked onchange="refreshHandbook()">含 DM 专属内容</label>
+      <label><input type="checkbox" id="hbPl"  checked onchange="refreshHandbook()">含玩家背景</label>
+      <label><input type="checkbox" id="hbSt"  checked onchange="refreshHandbook()">含未分配物资</label>
+      <label><input type="checkbox" id="hbDup" checked onchange="refreshHandbook()">含地图概览</label>
+    </div>
+    <div id="hbOptPl" class="hbopts" style="display:none">
+      <label><input type="checkbox" id="hpBg"    checked onchange="refreshHandbook()">含玩家背景</label>
+      <label><input type="checkbox" id="hpFill"  checked onchange="refreshHandbook()">含车卡</label>
+      <label><input type="checkbox" id="hpSplit" checked onchange="refreshHandbook()">每人单独一页</label>
+    </div>
+    <iframe id="hbFrame" style="width:100%;height:60vh;border:none;border-top:1px solid var(--line);margin-top:8px"></iframe>
+  </dialog>
+
+  <dialog id="modLibDlg" style="width:860px;max-width:96vw">
+    <div class="tabs"><b style="color:var(--accent);font-size:15px">📦 模组库</b>
+      <span id="modLibCount" class="hint"></span>
+      <div class="spacer"></div>
+      <button onclick="document.getElementById('modLibDlg').close()">✕ 关闭</button></div>
+    <div id="modLibList" style="max-height:70vh;overflow-y:auto"></div>
+  </dialog>
+
+<script src="js/data.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/core.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/p2p.js"></script>
+<script src="js/map.js"></script>
+<script src="js/side.js"></script>
+<script src="js/npc.js"></script>
+<script src="js/players.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/pool.js"></script>
+<script src="js/relation.js"></script>
+<script src="js/handbook-css.js"></script>
+<script src="js/handbook.js"></script>
+<script src="js/app.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+/* strip.css — 玩家侧栏卡片 + NPC侧栏卡片 */
+
+/* ===== 侧栏标题 ===== */
+.sthead {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.sthead button { padding: 2px 6px; font-size: 11px; }
+
+/* ===== 玩家卡片 ===== */
+.pc {
+  background: var(--card);
+  border-radius: 4px;
+  border-top: 3px solid #888;
+  padding: 5px 7px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background .15s;
+}
+.pc:hover { background: var(--card-hover); }
+.pc.dead  { opacity: .6; }
+
+/* 名字 + 定位下拉同行 */
+.pc .pn-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pc .pn-row .pn {
+  flex: 1;
+  font-weight: bold;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pc .pn-row select.prm {
+  flex-shrink: 0;
+  max-width: 86px;
+  font-size: 10.5px;
+  padding: 1px 3px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--mute);
+  border-radius: 3px;
+}
+
+/* 属性芯片网格 */
+.pc .as {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 4px;
+  font-size: 11px;
+  margin-top: 1px;
+}
+.pc .as span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--mute);
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: all .15s;
+}
+.pc .as span:hover {
+  background: rgba(var(--accent-rgb), .2);
+  color: var(--accent);
+  cursor: ns-resize;
+}
+.pc .as span:hover b { color: var(--text); font-weight: bold; }
+.pc .as span b { color: var(--text); font-weight: normal; }
+.pc .as span.z b { opacity: .4; }
+
+.dead-badge { font-size: 10px; color: var(--danger); margin-left: 2px; }
+
+/* ===== NPC 卡片 ===== */
+.nc {
+  background: var(--card);
+  border-radius: 4px;
+  border-left: 4px solid var(--npc);
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: background .15s;
+}
+.nc:hover { background: var(--card-hover); }
+.nc .pn { font-weight: bold; font-size: 13px; }
+.nc .cn { font-size: 11px; color: var(--mute); }
+.nc select.prm {
+  font-size: 11px;
+  padding: 2px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 3px;
+  width: 100%;
+}
+
+/* NPC 属性芯片网格 */
+.nc .as {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px 6px;
+  font-size: 11px;
+  margin-top: 2px;
+}
+.nc .as span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--mute);
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: all .15s;
+}
+.nc .as span:hover {
+  background: rgba(178, 124, 216, .2);
+  color: var(--npc);
+  cursor: ns-resize;
+}
+.nc .as span b { color: var(--text); font-weight: normal; }
+.nc .as span.z b { opacity: .4; }
+
+/* NPC 可见性配置 */
+.npc-strip-empty { font-size: 11px; text-align: center; margin-top: 8px; }
+.npc-cfg-empty   { padding: 8px; }
+.npc-vis-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  cursor: pointer;
+}
+.npc-vis-chk { margin: 0; cursor: pointer; accent-color: var(--npc); }
+.npc-vis-label { border-left: 3px solid; padding-left: 6px; }
+.npc-vis-type  { color: var(--mute); margin-left: 4px; }
+.nc-vis-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background .15s;
+}
+.nc-vis-toggle:hover { background: var(--card-hover); color: var(--text); }
+.nc-vis-toggle input { margin: 0; cursor: pointer; accent-color: var(--npc); }

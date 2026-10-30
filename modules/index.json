@@ -1,0 +1,22 @@
+[
+  {
+    "name": "示例模组：废弃医院（空白占位勿点）",
+    "desc": "都市恐怖风格，玩家需要在废弃医院中寻找失踪的朋友，揭开背后的秘密。",
+    "players": "4-5人",
+    "duration": "约3小时",
+    "tags": ["恐怖", "都市", "解谜"],
+    "file": "modules/废弃医院.json",
+    "author": "lcmdyc",
+    "version": "1.0"
+  },
+  {
+    "name": "寄生者之间",
+    "desc": "古宅探险。",
+    "players": "固定7人",
+    "duration": "约30小时",
+    "tags": ["解谜", "pvp", "类狼人杀"],
+    "file": "modules/寄生者之间by猫鸟.json",
+    "author": "猫鸟",
+    "version": "1.0"
+  }
+]

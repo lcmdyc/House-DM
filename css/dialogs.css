@@ -1,0 +1,49 @@
+/* dialogs.css — 弹窗、tabs、prow、chkrow */
+
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .3);
+}
+dialog::backdrop {
+  background: rgba(10, 12, 16, .6);
+  backdrop-filter: blur(2px);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.chkrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.prow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.prow span { width: 16px; font-size: 12px; color: var(--mute); text-align: center; }
+.prow input[type=color] {
+  width: 26px; height: 26px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.prow input[type=text] { flex: 1; }
+.prow select { width: 130px; }

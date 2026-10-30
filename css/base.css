@@ -1,0 +1,178 @@
+/* base.css — CSS变量、reset、全局元素 */
+
+:root {
+  --bg: #14161b;
+  --panel: #1c1f26;
+  --card: #232732;
+  --card-hover: #2a2f3d;
+  --line: #2e3444;
+  --text: #e1e4ea;
+  --mute: #8b92a4;
+  --accent: #d8893a;
+  --accent-rgb: 216, 137, 58;
+  --danger: #d9534f;
+  --item: #4aa8d8;
+  --clue: #e8a13a;
+  --npc: #b27cd8;
+  --door: #c8955a;
+  --open: #4cc9a0;
+  --lock: #e0605e;
+  --out: #9b8b7a;
+  --in: #6c7be0;
+  --map-grid: rgba(255, 255, 255, .03);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  transition: background .15s ease, color .15s ease;
+}
+
+h1 {
+  font-size: 15px;
+  margin: 0;
+  color: var(--accent);
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+.spacer { flex: 1; }
+
+/* 按钮 */
+button {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 5px 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+button:hover { background: var(--card-hover); border-color: var(--mute); }
+button.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+button.primary:hover { filter: brightness(1.1); }
+button.danger {
+  color: var(--danger);
+  border-color: rgba(217, 83, 79, .4);
+}
+button.danger:hover {
+  background: rgba(217, 83, 79, .15);
+  border-color: var(--danger);
+}
+button.on {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), .15);
+  color: var(--accent);
+}
+
+/* 表单元素 */
+textarea, input[type=text], select {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+}
+textarea:focus, input[type=text]:focus, select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+input.title {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  width: 170px;
+}
+input.title:focus {
+  border-color: var(--accent);
+  background: var(--card);
+  outline: none;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: all .2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 通用 hint */
+.hint {
+  font-size: 11.5px;
+  color: var(--mute);
+  font-weight: normal;
+}
+
+/* 日志 */
+#logList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 62vh;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 12px;
+}
+.lg {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: var(--card);
+}
+.lg .ld { color: var(--accent); font-weight: bold; flex: none; }
+.lg .lt { color: var(--mute); font-size: 11px; flex: none; }
+.lg .lx { flex: 1; word-break: break-all; }
+.lg .cdot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.lg.day { background: rgba(var(--accent-rgb), .12); }
