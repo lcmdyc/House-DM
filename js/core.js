@@ -286,20 +286,6 @@ export function toggleMode() {
 }
 
 // ════════════════════════════════════════════════════════════
-// 8. 挂载全局函数 (供 HTML 中的 onclick 直接调用)
-// ════════════════════════════════════════════════════════════
-Object.assign(window, {
-  exportData,
-  importData,
-  resetData,
-  switchTab,
-  switchLibTab,
-  openLog,
-  copyLog,
-  clearLog,
-  toggleMode
-});
-// ════════════════════════════════════════════════════════════
 // 9. 顶部模组名称双向绑定
 // ════════════════════════════════════════════════════════════
 window.addEventListener('trpg-data-loaded', () => {
@@ -315,4 +301,85 @@ window.addEventListener('trpg-data-loaded', () => {
       toast('✅ 模组名称已保存');
     };
   }
+});
+// ════════════════════════════════════════════════════════════
+// 10. 模组库 (Module Library)
+// ════════════════════════════════════════════════════════════
+export async function openModLib() {
+  const dlg = document.getElementById('modLibDlg');
+  const listEl = document.getElementById('modLibList');
+  const countEl = document.getElementById('modLibCount');
+  if (!dlg || !listEl) return;
+
+  dlg.showModal();
+  listEl.innerHTML = '<p class="hint" style="padding:20px;text-align:center">🔄 正在加载模组列表...</p>';
+
+  try {
+    // 💡 修复：按照你的实际目录结构，请求 modules/index.json
+    const res = await fetch('modules/index.json');
+    if (!res.ok) throw new Error('无法获取模组列表');
+    const mods = await res.json();
+
+    countEl.textContent = `共 ${mods.length} 个模组`;
+
+    listEl.innerHTML = mods.map(m => `
+      <div class="card" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <h3 style="margin:0; font-size: 16px; color: var(--accent);">
+            ${esc(m.name)} <span style="font-size:12px;color:var(--mute);font-weight:normal">v${esc(m.version || '1.0')}</span>
+          </h3>
+          <button class="primary" onclick="loadModuleFromLib('${esc(m.file)}')">⬇️ 载入此模组</button>
+        </div>
+        <div style="font-size: 12px; color: var(--mute);">
+          ✍️ 作者: ${esc(m.author || '未知')} | 👥 人数: ${esc(m.players || '未知')} | ⏳ 时长: ${esc(m.duration || '未知')}
+        </div>
+        <div style="font-size: 13px; color: var(--text); line-height: 1.5;">${esc(m.desc)}</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          ${(m.tags || []).map(t => `<span class="tag static" style="background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--text);">${esc(t)}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error("模组库加载失败:", err);
+    listEl.innerHTML = '<p class="hint" style="padding:20px;text-align:center;color:var(--danger)">加载失败。请确保 modules/index.json 文件存在且格式正确。</p>';
+  }
+}
+
+export async function loadModuleFromLib(fileUrl) {
+  if (!confirm('⚠️ 载入新模组将覆盖当前所有数据（请确保已导出备份）。确定要继续吗？')) return;
+  
+  try {
+    toast('🔄 正在下载模组数据...');
+    // 根据 JSON 中配置的 file 路径（如 "modules/寄生者之间by猫鸟.json"）去请求
+    const res = await fetch(fileUrl);
+    if (!res.ok) throw new Error('无法下载模组文件');
+    const parsed = await res.json();
+    
+    // 使用 data.js 提供的 saveData 彻底覆盖并保存
+    saveData(parsed);
+    
+    toast('✅ 模组载入成功，正在刷新...');
+    setTimeout(() => location.reload(), 500);
+  } catch (err) {
+    console.error("模组载入失败:", err);
+    alert('载入失败：' + err.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// 8. 挂载全局函数 (供 HTML 中的 onclick 直接调用)
+// ════════════════════════════════════════════════════════════
+
+Object.assign(window, {
+  exportData,
+  importData,
+  resetData,
+  switchTab,
+  switchLibTab,
+  openLog,
+  copyLog,
+  clearLog,
+  toggleMode,
+  openModLib,          // 👈 新增：打开模组库弹窗
+  loadModuleFromLib    // 👈 新增：点击载入模组
 });
