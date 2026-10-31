@@ -46,3 +46,44 @@
 .bgnav-actions button:hover { background: var(--line); color: var(--text); transform: translateY(-1px); }
 .bgnav-actions button.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 .bgnav-actions svg { width: 16px; height: 16px; fill: currentColor; }
+/* ==========================================================================
+   统一详情面板样式 (Unified Detail Panel) - 双栏纵向布局
+   ========================================================================== */
+.u-panel { display: flex; gap: 16px; align-items: flex-start; padding-bottom: 20px; flex-wrap: wrap; }
+/* 左侧栏：放基础信息、模组预设、数值属性 */
+.u-col-left { flex: 1.2; display: flex; flex-direction: column; gap: 16px; min-width: 340px; }
+/* 右侧栏：放DM备注、文本属性、线索道具栏 */
+.u-col-right { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 300px; }
+
+.u-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm); transition: var(--transition); }
+.u-card:hover { box-shadow: var(--shadow-md); border-color: var(--mute); }
+.u-card-title { display: flex; align-items: center; justify-content: space-between; font-size: 15px; font-weight: bold; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 4px; }
+.u-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.u-field { display: flex; flex-direction: column; gap: 6px; }
+.u-field label { font-size: 12px; color: var(--mute); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.u-input, .u-select, .u-textarea { background: var(--bg); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; width: 100%; transition: var(--transition); font-family: inherit; }
+.u-input:focus, .u-select:focus, .u-textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2); }
+.u-textarea { resize: vertical; min-height: 60px; }
+.u-row { display: flex; gap: 8px; align-items: center; }
+.u-btn-sm { background: transparent; border: 1px solid var(--line); color: var(--text); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; cursor: pointer; transition: var(--transition); }
+.u-btn-sm:hover { background: var(--card-hover); border-color: var(--mute); }
+.u-del-btn { color: var(--danger); background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 0 4px; }
+.u-del-btn:hover { background: rgba(217, 83, 79, 0.1); border-radius: 4px; }
+.u-num-ctrl { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.u-num-ctrl button { background: transparent; border: none; color: var(--text); padding: 4px 8px; cursor: pointer; transition: var(--transition); }
+.u-num-ctrl button:hover { background: var(--card-hover); color: var(--accent); }
+.u-num-ctrl input { width: 40px; text-align: center; background: transparent; border: none; border-left: 1px solid var(--line); border-right: 1px solid var(--line); color: var(--text); font-size: 13px; font-weight: bold; padding: 4px 0; }
+.u-num-ctrl input:focus { outline: none; }
+.u-item-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+/* ==========================================================================
+   统一详情面板 - 辅助与交互样式
+   ========================================================================== */
+/* 点击复制文本块 (非编辑模式) */
+.u-copy-text { padding: 8px 10px; background: var(--bg); border: 1px dashed var(--line); border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; transition: var(--transition); white-space: pre-wrap; word-break: break-word; position: relative; }
+.u-copy-text:hover { border-color: var(--accent); background: var(--card-hover); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1); }
+.u-copy-text:hover::after { content: '点击复制'; position: absolute; right: 8px; top: 8px; font-size: 11px; color: var(--accent); opacity: 0.8; background: var(--bg); padding: 2px 4px; border-radius: 4px; }
+.u-copy-text:active { transform: scale(0.99); }
+
+/* 文本属性压缩行 (编辑模式) */
+.u-text-attr-row { display: flex; align-items: flex-start; gap: 8px; border-bottom: 1px dashed var(--line); padding-bottom: 8px; margin-bottom: 8px; }
+.u-text-attr-row:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }

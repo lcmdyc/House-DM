@@ -43,16 +43,13 @@ export const newEntity = () => ({
 
 export const blankCard = () => ({
   info: { name: '' },
-  infoFields: [
-    { key: '性别', val: '' }, { key: '年龄', val: '' },
-    { key: '职业', val: '' }, { key: '宗教', val: '' }, { key: '星座', val: '' }
-  ],
-  vals: {}, items: '', other: ''
+  vals: {}
 });
 
 export const blankBg = (i=0) => ({
-  identity:'', skills:[], goals:[], customFields:[], card:blankCard(),
-  color: PALETTE[i % PALETTE.length], roomId:'', dead:false, dmNote:''
+  identity:'', skills:[], goals:[], card:blankCard(),
+  color: PALETTE[i % PALETTE.length], roomId:'', dead:false, dmNote:'',
+  gender: '', disposition: '中立', textAttrs: [] // 统一的新增字段
 });
 
 export const newEvent = () => ({ id:uid(), text:'', type:'normal', done:false, detail:'' });
@@ -66,14 +63,14 @@ export const defaultCfg = () => ({
 export const blankRoom = (x, y, name) => ({
   id:uid(), x, y, name:name||'新房间', desc:'', dm:'', poolNote:'', items:[], doors:{}, entities:[]
 });
-
 export const blankData = () => ({
   title:'我的原创模组',
   players: Array.from({length:7},(_,i)=>'玩家'+(i+1)),
   rooms:[], pool:[], cardCfg: defaultCfg(),
   bg: Array.from({length:7},(_,i)=>blankBg(i)),
   days:[newDay(0)], curDay:0,
-  ui:{strip:true,showChar:true}, log:[]
+  ui:{strip:true,showChar:true}, log:[],
+  npcs: [], relations: []
 });
 
 // ════════════════════════════════════════════════════════════
@@ -89,13 +86,12 @@ export function migrate(d) {
   if (!Array.isArray(d.pool))  d.pool  = [];
   if (!Array.isArray(d.bg))    d.bg    = [];
   if (!Array.isArray(d.log))   d.log   = [];
+  if (!Array.isArray(d.npcs))  d.npcs  = []; 
+  if (!Array.isArray(d.relations)) d.relations = []; 
+  
   if (!d.cardCfg||!Array.isArray(d.cardCfg.attrs)) d.cardCfg = defaultCfg();
-  if (typeof d.cardCfg.points!=='number') d.cardCfg.points = 40;
-  d.cardCfg.attrs.forEach(a => { if (typeof a.show!=='boolean') a.show=true; });
-  d.ui = Object.assign({strip:true,showChar:true}, d.ui||{});
-
-  // days 迁移
   if (!Array.isArray(d.days)||!d.days.length) d.days = [newDay(0)];
+  
   d.days.forEach((x, idx) => {
     if (!x.id) x.id = uid();
     if (typeof x.title!=='string'||!x.title.trim()) x.title = `Day ${idx+1}`;
@@ -110,7 +106,6 @@ export function migrate(d) {
   });
   if (!(d.curDay >= 0 && d.curDay < d.days.length)) d.curDay = 0;
 
-  // rooms 迁移
   d.rooms.forEach(r => {
     if (!r.doors||typeof r.doors!=='object') {
       r.doors={};
@@ -127,25 +122,27 @@ export function migrate(d) {
     });
   });
 
-  // bg 迁移
+  // bg 迁移 (统一玩家数据结构)
   d.players.forEach((_,i) => {
     const b = d.bg[i] || (d.bg[i] = blankBg(i));
     if (!Array.isArray(b.skills)) b.skills = [];
     if (!Array.isArray(b.goals)) b.goals = [];
-    if (!Array.isArray(b.customFields)) b.customFields = [];
     if (typeof b.identity !== 'string') b.identity = '';
     if (typeof b.dead !== 'boolean') b.dead = false;
     if (typeof b.color!=='string'||!b.color) b.color = PALETTE[i%PALETTE.length];
     if (!d.rooms.some(r=>r.id===b.roomId)) b.roomId = '';
     if (!b.card) b.card = blankCard();
-
-    if (!Array.isArray(b.card.infoFields)) {
-      const old = b.card.info || {};
-      b.card.infoFields = [
-        { key: '性别', val: old.gender || '' }, { key: '年龄', val: old.age || '' },
-        { key: '职业', val: old.job || '' }, { key: '宗教', val: old.religion || '' },
-        { key: '星座', val: old.zodiac || '' },
-      ];
+    if (typeof b.gender !== 'string') b.gender = '';
+    if (typeof b.disposition !== 'string') b.disposition = '中立';
+    if (!Array.isArray(b.textAttrs)) {
+      b.textAttrs = [];
+      // 将旧的 infoFields、items、other 迁移到统一的 textAttrs
+      if (b.card.infoFields) {
+        b.card.infoFields.forEach(f => { if (f.key || f.val) b.textAttrs.push({ label: f.key, val: f.val }); });
+        delete b.card.infoFields;
+      }
+      if (b.card.items) { b.textAttrs.push({ label: '随身物品', val: b.card.items }); delete b.card.items; }
+      if (b.card.other) { b.textAttrs.push({ label: '其他背景', val: b.card.other }); delete b.card.other; }
     }
     b.card.info = { name: b.card.info?.name || '' };
     if (!b.card.vals||typeof b.card.vals!=='object') b.card.vals = {};
@@ -153,9 +150,23 @@ export function migrate(d) {
   });
   d.bg.length = d.players.length;
 
+  // npcs 迁移 (统一 NPC 数据结构)
+  d.npcs.forEach(n => {
+    if (typeof n.gender !== 'string') n.gender = '';
+    if (!Array.isArray(n.skills)) n.skills = [];
+    if (!Array.isArray(n.goals)) n.goals = [];
+    if (!Array.isArray(n.textAttrs)) {
+      n.textAttrs = [];
+      // 将旧的 dialogs 迁移到 textAttrs
+      if (n.dialogs) {
+        n.dialogs.forEach(d => { if (d.trigger || d.line) n.textAttrs.push({ label: d.trigger, val: d.line }); });
+        delete n.dialogs;
+      }
+    }
+  });
+
   // items 迁移
-  const n = d.players.length;
-  const fixAll = i => { fixItem(i); i.owners = i.owners.filter(o=>o>=0&&o<n); };
+  const fixAll = i => { fixItem(i); }; 
   d.rooms.forEach(r => r.items.forEach(fixAll));
   d.pool.forEach(fixAll);
 

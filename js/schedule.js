@@ -41,6 +41,32 @@ export function renderDays() {
   const mainEl = document.getElementById('dayMain');
   if (!navEl || !mainEl) return;
 
+  // ====== 💡 新增：强制应用左右布局样式 ======
+  const parent = navEl.parentElement;
+  if (parent) {
+    parent.style.display = 'flex';
+    parent.style.flexDirection = 'row';
+    parent.style.alignItems = 'stretch';
+    parent.style.height = '65vh'; // 设定高度以支持内部独立滚动
+    parent.style.minHeight = '400px';
+  }
+  
+  // 左侧导航栏样式
+  navEl.style.width = '220px';
+  navEl.style.flexShrink = '0';
+  navEl.style.overflowY = 'auto';
+  navEl.style.borderRight = '1px solid var(--line)';
+  navEl.style.paddingRight = '16px';
+  navEl.style.display = 'flex';
+  navEl.style.flexDirection = 'column';
+  navEl.style.gap = '8px';
+
+  // 右侧主内容区样式
+  mainEl.style.flex = '1';
+  mainEl.style.overflowY = 'auto';
+  mainEl.style.paddingLeft = '16px';
+  // ==========================================
+
   // ── 左侧 Day 标签列 ──
   navEl.innerHTML = D.days.map((d, i) => {
     const n = d.events.length, dn = d.events.filter(e => e.done).length;
@@ -49,20 +75,21 @@ export function renderDays() {
       ${uiState.edit ? `ondragover="window.handleCardDragOver(event)"
         ondragleave="window.handleCardDragLeave(event)"
         ondrop="window.handleCardDrop(event,'day',${i})"` : ''}
-      onclick="uiState.dayView=${i};renderDays()">
-      <div class="row" style="gap:4px">
+      onclick="uiState.dayView=${i};renderDays()"
+      style="padding:10px; cursor:pointer; border-radius:6px; transition:0.2s;">
+      <div class="row" style="gap:4px; display:flex; align-items:center;">
         ${uiState.edit ? `<span class="drag-handle" draggable="true"
           ondragstart="window.handleHandleDragStart(event,'day',${i})"
           ondragend="window.handleCardDragEnd(event)"
           onclick="event.stopPropagation()">⠿</span>` : ''}
-        <b style="font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        <b style="font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
           ${esc(dayLabel(i))}
         </b>
-        <span class="dtag">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span>
+        <span class="dtag" style="font-size:12px; color:var(--mute)">${i === D.curDay ? '🚩' : d.ended ? '✔' : ''}${n ? ` ${dn}/${n}` : ''}</span>
       </div>
     </div>`;
   }).join('') +
-  (uiState.edit ? `<button onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>` : '');
+  (uiState.edit ? `<button class="primary" onclick="addDay()" style="margin-top:6px;width:100%">＋ 新增一天</button>` : '');
 
   // ── 右侧当天详情 ──
   const d = D.days[uiState.dayView];
@@ -72,24 +99,25 @@ export function renderDays() {
 
   const evs = d.events.length
     ? d.events.map(e => uiState.edit ? evEditHtml(e) : evCompactHtml(e)).join('')
-    : '<p class="hint">这一天还没有事件</p>';
+    : '<p class="hint" style="text-align:center; margin-top:40px; color:var(--mute);">这一天还没有事件</p>';
 
   mainEl.innerHTML = `
-    <div class="dayhead">
+    <div class="dayhead" style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--line);">
       ${uiState.edit
         ? `<input type="text" class="nm"
-             style="width:220px;border-bottom:1px solid var(--accent);border-radius:4px"
+             style="width:200px;border-bottom:2px solid var(--accent);border-radius:4px;font-size:16px;font-weight:bold;padding:4px 8px;background:var(--bg);"
              value="${esc(dayLabel(uiState.dayView))}"
              placeholder="Day 名称"
              oninput="setDayTitle(${uiState.dayView},this.value)">`
-        : `<span class="nm" style="font-size:16px;font-weight:bold">${esc(dayLabel(uiState.dayView))}</span>`
+        : `<span class="nm" style="font-size:18px;font-weight:bold">${esc(dayLabel(uiState.dayView))}</span>`
       }
       ${isCur
-        ? '<span class="badge2 cur">当前日</span>'
+        ? '<span class="badge2 cur" style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;">当前日</span>'
         : d.ended
-          ? '<span class="badge2">已结束</span>'
-          : '<span class="badge2">未开始</span>'
+          ? '<span class="badge2" style="background:var(--mute);color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;">已结束</span>'
+          : '<span class="badge2" style="background:var(--bg-dark);color:var(--text);padding:2px 8px;border-radius:12px;font-size:12px;">未开始</span>'
       }
+      <div style="flex:1"></div>
       ${isCur
         ? `<button class="primary" onclick="endDay()">${esc(dayLabel(uiState.dayView))} 结束 ▶</button>`
         : `<button onclick="setCur(${uiState.dayView})">设为当前日</button>`
@@ -99,8 +127,10 @@ export function renderDays() {
         : ''
       }
     </div>
-    ${evs}
-    ${uiState.edit ? `<button class="primary" onclick="evAdd()" style="margin-top:6px">＋ 添加事件</button>` : ''}`;
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      ${evs}
+    </div>
+    ${uiState.edit ? `<button class="primary" onclick="evAdd()" style="margin-top:16px; width:100%; padding:10px;">＋ 添加事件</button>` : ''}`;
 
   mainEl.scrollTop = keep;
   updateDayBar();
@@ -112,44 +142,45 @@ export function renderDays() {
 function evEditHtml(e) {
   return `
     <div class="item${e.done ? ' done' : ''}" data-id="${e.id}"
+      style="padding:12px; background:var(--card); border:1px solid var(--line); border-radius:8px;"
       ondragover="window.handleCardDragOver(event)"
       ondragleave="window.handleCardDragLeave(event)"
       ondrop="window.handleCardDrop(event,'event','${e.id}')">
-      <div class="row">
+      <div class="row" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
         <span class="drag-handle" draggable="true"
           ondragstart="window.handleHandleDragStart(event,'event','${e.id}')"
           ondragend="window.handleCardDragEnd(event)"
           onclick="event.stopPropagation()">⠿</span>
-        <input type="checkbox" ${e.done ? 'checked' : ''} onchange="evDone('${e.id}',this.checked)">
-        <input type="text" style="width:85px;flex:none" value="${esc(e.time)}"
+        <input type="checkbox" style="width:18px;height:18px;cursor:pointer;" ${e.done ? 'checked' : ''} onchange="evDone('${e.id}',this.checked)">
+        <input type="text" style="width:85px;flex:none;padding:6px;border-radius:4px;border:1px solid var(--line);" value="${esc(e.time)}"
           placeholder="时间" oninput="evUpd('${e.id}','time',this.value)">
-        <input type="text" style="flex:1;font-weight:bold" value="${esc(e.title)}"
+        <input type="text" style="flex:1;font-weight:bold;padding:6px;border-radius:4px;border:1px solid var(--line);" value="${esc(e.title)}"
           placeholder="事件标题" oninput="evUpd('${e.id}','title',this.value)">
-        <button class="danger" onclick="evDel('${e.id}')">🗑</button>
+        <button class="danger" style="padding:6px 10px;" onclick="evDel('${e.id}')">✕</button>
       </div>
-      <label class="s">事件详情</label>
-      <textarea style="min-height:48px"
+      <textarea style="width:100%; min-height:60px; padding:8px; border-radius:4px; border:1px solid var(--line); resize:vertical; box-sizing:border-box;"
+        placeholder="事件详情..."
         oninput="evUpd('${e.id}','detail',this.value)">${esc(e.detail)}</textarea>
     </div>`;
 }
 
 function evCompactHtml(e) {
   return `
-    <div class="item compact${e.done ? ' consumed' : ''}" onclick="copyEventDetail('${e.id}')">
-      <div class="row">
+    <div class="item compact${e.done ? ' consumed' : ''}" onclick="copyEventDetail('${e.id}')"
+      style="padding:12px; background:var(--card); border:1px solid var(--line); border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:0.2s;">
+      <div class="row" style="display:flex; gap:12px; align-items:flex-start; flex:1;">
         <span class="tag static"
-          style="background:${e.done ? '#888' : 'var(--accent)'};color:#fff;min-width:36px;text-align:center">
+          style="background:${e.done ? '#888' : 'var(--accent)'};color:#fff;min-width:32px;height:32px;line-height:32px;text-align:center;border-radius:50%;display:inline-block;flex-shrink:0;">
           ${e.done ? '✔' : '📅'}
         </span>
-        <div class="memo">
-          <b>${esc(e.title) || '（未命名事件）'}</b>
-          ${e.time   ? `<span class="cd">🕐 ${esc(e.time)}</span>`         : ''}
-          ${e.detail ? `<span class="desc-p">${esc(e.detail)}</span>`       : ''}
+        <div class="memo" style="flex:1; display:flex; flex-direction:column; gap:4px;">
+          <b style="font-size:14.5px; color:${e.done ? 'var(--mute)' : 'var(--text)'}; text-decoration:${e.done ? 'line-through' : 'none'};">${esc(e.title) || '（未命名事件）'}</b>
+          ${e.time   ? `<span class="cd" style="font-size:12px; color:var(--accent);">🕐 ${esc(e.time)}</span>`         : ''}
+          ${e.detail ? `<span class="desc-p" style="font-size:13px; color:var(--mute); line-height:1.4;">${esc(e.detail)}</span>`       : ''}
         </div>
-        <span class="copyi">📋</span>
       </div>
-      <div class="status" onclick="event.stopPropagation()">
-        <button class="cbtn${e.done ? ' on' : ''}"
+      <div class="status" onclick="event.stopPropagation()" style="margin-left:12px; flex-shrink:0;">
+        <button class="cbtn${e.done ? ' on' : ''}" style="padding:6px 12px; border-radius:4px;"
           onclick="evDone('${e.id}',${!e.done});renderDays()">
           ${e.done ? '✔ 已完成' : '标记完成'}
         </button>

@@ -1,7 +1,8 @@
 // js/npc.js — NPC侧栏 + NPC资料库 + NPC详情 (ES6 Module)
 import { D, uid, esc, rname, pname } from './data.js';
-import { uiState, save, toast, copyText, addLog, roomSel, switchTab, switchLibTab } from './core.js';
-import { renderAttrChips, renderAttrEditRows } from './attr.js';
+// 💡 修复：引入了 parseText
+import { uiState, save, toast, copyText, addLog, roomSel, switchTab, switchLibTab, getAllItems, toggleItemOwner, parseText } from './core.js';
+import { renderAttrChips } from './attr.js';
 import { renderEntityCard } from './card.js';
 
 window.addEventListener('trpg-ui-update', () => {
@@ -15,8 +16,8 @@ window.addEventListener('trpg-lib-tab-changed', (e) => { if (e.detail.sub === 'n
 export function newNpc() {
   return {
     id: uid(), name: '新NPC', category: 'npc', disposition: '中立', color: '#b27cd8', roomId: '', desc: '', dmNote: '',
-    attrs: [{ id: uid(), name: 'HP', val: '10', show: true }, { id: uid(), name: 'AC', val: '10', show: true }],
-    dialogs: [{ id: uid(), trigger: '初次见面', line: '', used: false }]
+    gender: '', skills: [], goals: [], textAttrs: [],
+    attrs: [{ id: uid(), name: 'HP', val: '10', show: true }, { id: uid(), name: 'AC', val: '10', show: true }]
   };
 }
 
@@ -28,19 +29,10 @@ export function duplicateNpc(id) {
   const copy = JSON.parse(JSON.stringify(src));
   copy.id = uid(); copy.name = baseName + ' ' + suffix; copy.roomId = '';
   copy.attrs.forEach(a => a.id = uid());
-  copy.dialogs.forEach(d => { d.id = uid(); d.used = false; });
   const idx = D.npcs.findIndex(x => x.id === id);
   D.npcs.splice(idx + 1, 0, copy);
   uiState.selNpcId = copy.id;
   save(); toast(`📋 已复制为「${copy.name}」`);
-}
-
-function playerMagicKey(i) { return `p${i + 1}`; }
-function resolveDialogLine(line) {
-  return line.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-    const idx = D.players.findIndex((_, i) => playerMagicKey(i) === key || pname(i) === key);
-    return idx >= 0 ? pname(idx) : match;
-  });
 }
 
 export function renderNpcStrip() {
@@ -128,7 +120,7 @@ export function renderNpcLib() {
       onRoomChange: `npcSetRoom('${n.id}',this.value)`,
       onDuplicate: `duplicateNpc('${n.id}')`,
       onDelete: `deleteNpc('${n.id}')`,
-      onToggleDead: `toggleNpcDead('${n.id}')` // 传入死亡切换事件
+      onToggleDead: `toggleNpcDead('${n.id}')`
     });
   }).join('') : '<p class="hint npc-lib-empty">暂无NPC/怪物，点击左上角新增</p>';
     
@@ -148,68 +140,133 @@ export function deleteNpc(id) {
 
 export function renderNpcDetail() {
   const el = document.getElementById('npcLibDetail'); if (!el) return;
-  const n = D.npcs.find(x => x.id === uiState.selNpcId);
-  if (!n) { el.innerHTML = '<div class="npc-detail-empty">← 从左侧选择一个 NPC/怪物</div>'; return; }
+  
+  const nIdx = D.npcs.findIndex(x => x.id === uiState.selNpcId);
+  if (nIdx === -1) { el.innerHTML = '<div class="npc-detail-empty">← 从左侧选择一个 NPC/怪物</div>'; return; }
+  const n = D.npcs[nIdx];
 
-  const roomOpts = `<option value="">📍 未定位</option>` + D.rooms.map(r => `<option value="${r.id}"${r.id === n.roomId ? ' selected' : ''}>${esc(r.name || '未命名')} (${r.x},${r.y})</option>`).join('');
-  const attrsHtml = renderAttrEditRows('npc', n.id, n.attrs, 'npcAttrEdit', 'npcAttrDel');
+  if (n.textAttrs && n.textAttrs.some(t => t.label === '性别' || t.label === '姓名')) {
+    n.textAttrs = n.textAttrs.filter(t => t.label !== '性别' && t.label !== '姓名');
+  }
 
-  const dialogsHtml = (n.dialogs || []).map((d, i) => {
-    if (!uiState.edit) {
-      const resolved = resolveDialogLine(d.line);
-      return `<div class="item compact npc-dialog-copy${d.used ? ' used' : ''}" onclick="copyNpcDialog('${n.id}',${i})"><div class="row"><span class="tag static npc">${esc(d.trigger) || '对话'}</span><div class="memo"><span class="cd ${d.line.trim() ? '' : 'emp'}">${d.line.trim() ? esc(resolved) : '（暂无台词）'}</span></div><button class="dlg-used-btn${d.used ? ' on' : ''}" title="${d.used ? '已使用，点击撤销' : '标记为已使用'}" onclick="event.stopPropagation();npcDialogToggleUsed('${n.id}',${i})">${d.used ? '✅' : '○'}</button><span class="copyi">📋</span></div></div>`;
-    }
-    return `<div class="npc-dialog-row${d.used ? ' used' : ''}"><div class="npc-dialog-inner"><input value="${esc(d.trigger)}" placeholder="触发条件" class="npc-dialog-trigger" onchange="npcDialogEdit('${n.id}',${i},'trigger',this.value)"><textarea placeholder="台词内容…支持魔术字 {{玩家名}}" onchange="npcDialogEdit('${n.id}',${i},'line',this.value)">${esc(d.line)}</textarea></div><button class="dlg-used-btn${d.used ? ' on' : ''}" title="${d.used ? '已使用，点击撤销' : '标记为已使用'}" onclick="npcDialogToggleUsed('${n.id}',${i})">${d.used ? '✅' : '○'}</button><button onclick="npcDialogDel('${n.id}',${i})">✕</button></div>`;
-  }).join('');
+  const isEdit = uiState.edit;
+  
+  // 💡 修复：在这里使用 parseText(esc(val))，这样显示的是解析后的名字，this.innerText 复制的也是纯文本名字
+  const copyHtml = (val, fallback = '暂无') => `<div class="u-copy-text" onclick="copyText(this.innerText).then(ok=>toast(ok?'📋 已复制':'复制失败'))">${val ? parseText(esc(val)) : `<span class="hint">${fallback}</span>`}</div>`;
+  const copyListHtml = (arr, fallback = '暂无') => arr.length ? `<div class="u-copy-text" onclick="copyText(this.innerText).then(ok=>toast(ok?'📋 已复制':'复制失败'))">${parseText(esc(arr.join(' / ')))}</div>` : `<div class="hint" style="font-size:12px">${fallback}</div>`;
 
-  el.innerHTML = `<div class="npc-detail-form">
-    <div class="npc-detail-header">
-      <h3>${esc(n.name)}</h3>
-      <button onclick="duplicateNpc('${n.id}')" title="复制此NPC生成副本">⧉ 复制</button>
-      <button onclick="copyNpcDesc('${n.id}')">📋 复制描述</button>
-    </div>
-    <div class="npc-row">
-      <div class="npc-field"><label>名称</label>
-        <input value="${esc(n.name)}" onchange="npcEdit('${n.id}','name',this.value); window.dispatchEvent(new Event('trpg-ui-update'))">
+  el.innerHTML = `
+    <div class="u-panel">
+      <div class="u-col-left">
+        <div class="u-card">
+          <div class="u-card-title"><span>👤 基础信息</span></div>
+          <div class="u-grid-2">
+            <div class="u-field"><label>姓名</label><input class="u-input" value="${esc(n.name)}" onchange="npcEdit('${n.id}','name',this.value);window.dispatchEvent(new Event('trpg-ui-update'))" ${isEdit?'':'disabled'}></div>
+            <div class="u-field"><label>性别</label><input class="u-input" value="${esc(n.gender)}" onchange="npcEdit('${n.id}','gender',this.value)" ${isEdit?'':'disabled'}></div>
+            <div class="u-field"><label>身份类型</label>
+              <select class="u-select" onchange="npcEdit('${n.id}','category',this.value);window.dispatchEvent(new Event('trpg-ui-update'))" ${isEdit?'':'disabled'}>
+                <option value="npc" ${n.category==='npc'?'selected':''}>NPC</option>
+                <option value="monster" ${n.category==='monster'?'selected':''}>怪物</option>
+                <option value="other" ${n.category==='other'?'selected':''}>其他</option>
+              </select>
+            </div>
+            <div class="u-field"><label>立场</label><input class="u-input" value="${esc(n.disposition)}" onchange="npcEdit('${n.id}','disposition',this.value);window.dispatchEvent(new Event('trpg-ui-update'))" ${isEdit?'':'disabled'}></div>
+            <div class="u-field"><label>标记颜色</label><input class="u-input" type="color" value="${esc(n.color)}" onchange="npcEdit('${n.id}','color',this.value);window.dispatchEvent(new Event('trpg-ui-update'))" style="height:35px;padding:2px" ${isEdit?'':'disabled'}></div>
+            <div class="u-field"><label>当前所在房间</label><select class="u-select" onchange="npcSetRoom('${n.id}',this.value)">${roomSel(n.roomId)}</select></div>
+          </div>
+        </div>
+
+        <div class="u-card">
+          <div class="u-card-title"><span>📋 模组预设</span><span class="hint">由作者设定</span></div>
+          <div class="u-field"><label>身份背景/描述</label>
+            ${isEdit ? `<textarea class="u-textarea" onchange="npcEdit('${n.id}','desc',this.value)">${esc(n.desc)}</textarea>` : copyHtml(n.desc)}
+          </div>
+          <div class="u-field"><label>技能/道具 ${isEdit ? `<button class="u-btn-sm" onclick="D.npcs[${nIdx}].skills.push('');save();renderNpcDetail()">+ 添加</button>` : ''}</label>
+            ${isEdit 
+              ? n.skills.map((s, idx) => `<div class="u-row"><input class="u-input" value="${esc(s)}" onchange="D.npcs[${nIdx}].skills[${idx}]=this.value;save()"><button class="u-del-btn" onclick="D.npcs[${nIdx}].skills.splice(${idx},1);save();renderNpcDetail()">✕</button></div>`).join('')
+              : copyListHtml(n.skills)
+            }
+          </div>
+          <div class="u-field"><label>角色目的 ${isEdit ? `<button class="u-btn-sm" onclick="D.npcs[${nIdx}].goals.push('');save();renderNpcDetail()">+ 添加</button>` : ''}</label>
+            ${isEdit 
+              ? n.goals.map((g, idx) => `<div class="u-row"><input class="u-input" value="${esc(g)}" onchange="D.npcs[${nIdx}].goals[${idx}]=this.value;save()"><button class="u-del-btn" onclick="D.npcs[${nIdx}].goals.splice(${idx},1);save();renderNpcDetail()">✕</button></div>`).join('')
+              : copyListHtml(n.goals)
+            }
+          </div>
+        </div>
+
+        <div class="u-card">
+          <div class="u-card-title"><span>📊 数值属性</span>${isEdit ? `<button class="u-btn-sm" onclick="npcAttrAdd('${n.id}');renderNpcDetail()">+ 添加</button>` : ''}</div>
+          ${(n.attrs || []).map((a, idx) => `
+            <div class="u-row">
+              <input class="u-input" value="${esc(a.name)}" onchange="npcAttrEdit('${n.id}',${idx},'name',this.value)" style="flex:1" ${isEdit?'':'disabled'}>
+              <div class="u-num-ctrl">
+                <button onclick="window.onWheelAdj({isUp:false},'npc','${n.id}','${a.id}')">-</button>
+                <input value="${+a.val || 0}" onwheel="window.onWheelAdj(event,'npc','${n.id}','${a.id}')" onchange="npcAttrEdit('${n.id}',${idx},'val',this.value)">
+                <button onclick="window.onWheelAdj({isUp:true},'npc','${n.id}','${a.id}')">+</button>
+              </div>
+              ${isEdit ? `<button class="u-del-btn" onclick="npcAttrDel('${n.id}',${idx});renderNpcDetail()">✕</button>` : '<button class="u-del-btn" style="visibility:hidden">✕</button>'}
+            </div>
+          `).join('')}
+        </div>
       </div>
-      <div class="npc-field"><label>类型</label>
-        <select onchange="npcEdit('${n.id}','category',this.value); window.dispatchEvent(new Event('trpg-ui-update'))">
-          <option value="npc"${n.category === 'npc' ? ' selected' : ''}>NPC</option>
-          <option value="monster"${n.category === 'monster' ? ' selected' : ''}>怪物</option>
-          <option value="other"${n.category === 'other' ? ' selected' : ''}>其他</option>
-        </select>
+
+      <div class="u-col-right">
+        <div class="u-card">
+          <div class="u-card-title"><span>🔒 DM 备注</span><span class="hint">不计入导出</span></div>
+          ${isEdit 
+            ? `<textarea class="u-textarea" placeholder="DM 专属备注..." onchange="npcEdit('${n.id}','dmNote',this.value)">${esc(n.dmNote)}</textarea>`
+            : copyHtml(n.dmNote, '暂无备注')
+          }
+        </div>
+
+        <div class="u-card">
+          <div class="u-card-title"><span>📝 文本属性</span>${isEdit ? `<button class="u-btn-sm" onclick="D.npcs[${nIdx}].textAttrs.push({label:'',val:''});save();renderNpcDetail()">+ 添加</button>` : ''}</div>
+          <div style="display:flex; flex-direction:column;">
+            ${(n.textAttrs || []).map((t, idx) => `
+              ${isEdit ? `
+                <div class="u-text-attr-row">
+                  <input class="u-input" placeholder="类目" value="${esc(t.label)}" onchange="D.npcs[${nIdx}].textAttrs[${idx}].label=this.value;save()" style="width:70px; font-weight:bold; padding:4px 6px;">
+                  <textarea class="u-textarea" placeholder="内容..." onchange="D.npcs[${nIdx}].textAttrs[${idx}].val=this.value;save()" style="flex:1; min-height:28px; padding:4px 6px;">${esc(t.val || '')}</textarea>
+                  <button class="u-del-btn" onclick="D.npcs[${nIdx}].textAttrs.splice(${idx},1);save();renderNpcDetail()">✕</button>
+                </div>
+              ` : `
+                <div class="u-field" style="margin-bottom:8px;">
+                  <label>${esc(t.label)}</label>
+                  ${copyHtml(t.val)}
+                </div>
+              `}
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="u-card">
+          <div class="u-card-title"><span>🎒 线索/道具栏</span></div>
+          ${isEdit ? `
+          <select class="u-select" onchange="if(this.value){ toggleItemOwner(this.value, '${n.id}'); this.value=''; renderNpcDetail(); }">
+            <option value="">+ 分配现有物资给TA...</option>
+            ${getAllItems().map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('')}
+          </select>` : ''}
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            ${getAllItems().filter(it => it.owners.includes(n.id)).map(it => `
+              <div class="u-item-row" style="flex-direction:column; align-items:stretch; gap:6px; ${it.consumed ? 'opacity:0.6;' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-weight:bold; color:var(--${it.type==='clue'?'clue':'item'})">
+                    ${esc(it.name)} ${it.consumed ? '<span style="font-size:11px;color:var(--mute);font-weight:normal;">(已消耗)</span>' : ''}
+                  </span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="u-btn-sm" onclick="window.toggleConsumed('${it.id}')">${it.consumed ? '恢复' : '消耗'}</button>
+                    ${isEdit ? `<button class="u-btn-sm" onclick="toggleItemOwner('${it.id}', '${n.id}');">移除</button>` : ''}
+                  </div>
+                </div>
+                ${it.desc ? `<div style="font-size:12px; color:var(--mute); background:rgba(0,0,0,0.15); padding:6px 8px; border-radius:4px; white-space:pre-wrap; word-break:break-word;">${parseText(esc(it.desc))}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
       </div>
-      <div class="npc-field"><label>立场</label>
-        <select onchange="npcEdit('${n.id}','disposition',this.value); window.dispatchEvent(new Event('trpg-ui-update'))">
-          <option${n.disposition === '友好' ? ' selected' : ''}>友好</option>
-          <option${n.disposition === '中立' ? ' selected' : ''}>中立</option>
-          <option${n.disposition === '敌对' ? ' selected' : ''}>敌对</option>
-        </select>
-      </div>
     </div>
-    <div class="npc-row">
-      <div class="npc-field"><label>标记颜色</label>
-        <input type="color" value="${n.color || '#b27cd8'}" onchange="npcEdit('${n.id}','color',this.value); window.dispatchEvent(new Event('trpg-ui-update'))" class="npc-color-input">
-      </div>
-      <div class="npc-field npc-field-wide"><label>当前所在房间</label>
-        <select onchange="npcSetRoom('${n.id}',this.value)">${roomOpts}</select>
-      </div>
-    </div>
-    <div class="npc-field"><label>外观与描述</label>
-      <textarea rows="4" placeholder="外貌、气质、玩家可见描述…" onchange="npcEdit('${n.id}','desc',this.value)">${esc(n.desc)}</textarea>
-    </div>
-    <div class="npc-field"><label>DM 备注（玩家不可见）</label>
-      <textarea rows="3" placeholder="秘密动机、隐藏信息…" onchange="npcEdit('${n.id}','dmNote',this.value)">${esc(n.dmNote)}</textarea>
-    </div>
-    <div class="npc-field"><label>属性</label>
-      <div class="npc-attrs">${attrsHtml}</div>
-      <button class="npc-add-btn" onclick="npcAttrAdd('${n.id}')">＋ 添加属性</button>
-    </div>
-    <div class="npc-field"><label>预设对话</label>
-      <div class="npc-dialogs">${dialogsHtml}</div>
-      <button class="npc-add-btn" onclick="npcDialogAdd('${n.id}')">＋ 添加对话</button>
-    </div>
-  </div>`;
+  `;
 }
 
 export function npcEdit(id, field, val) { const n = D.npcs.find(x => x.id === id); if (!n) return; n[field] = val; save(); }
@@ -226,23 +283,16 @@ export function npcSetRoom(id, rid) {
 export function npcAttrEdit(id, idx, field, val) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.attrs[idx][field] = val; save(); }
 export function npcAttrAdd(id) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.attrs.push({ id: uid(), name: '新属性', val: '0', show: true }); save(); }
 export function npcAttrDel(id, idx) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.attrs.splice(idx, 1); save(); }
-export function npcDialogEdit(id, idx, field, val) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.dialogs[idx][field] = val; save(); }
-export function npcDialogAdd(id) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.dialogs.push({ id: uid(), trigger: '', line: '', used: false }); save(); }
-export function npcDialogDel(id, idx) { const n = D.npcs.find(x => x.id === id); if (!n) return; n.dialogs.splice(idx, 1); save(); }
-export function npcDialogToggleUsed(id, idx) { const n = D.npcs.find(x => x.id === id); if (!n) return; const d = n.dialogs[idx]; if (!d) return; d.used = !d.used; save(); toast(d.used ? '✅ 已标记为已使用' : '○ 已取消使用标记'); }
-export function copyNpcDesc(id) { const n = D.npcs.find(x => x.id === id); if (!n) return; if (!n.desc.trim()) { toast('该NPC还没有描述'); return; } copyText(n.desc).then(ok => toast(ok ? '📋 已复制描述' : '复制失败')); }
-export function copyNpcDialog(npcId, idx) { const n = D.npcs.find(x => x.id === npcId); if (!n) return; const d = n.dialogs[idx]; if (!d) return; if (!d.line.trim()) { toast('这条对话没有台词'); return; } const resolved = resolveDialogLine(d.line); copyText(resolved).then(ok => toast(ok ? '📋 已复制台词' : '复制失败')); }
 
 export function toggleNpcDead(id) { 
   const n = D.npcs.find(x => x.id === id); if (!n) return; 
   n.dead = !n.dead; 
   save(); 
   toast(n.dead ? `💀 ${n.name} 已标记死亡` : `✅ ${n.name} 已取消死亡标记`); 
-  window.dispatchEvent(new Event('trpg-ui-update')); // 触发全局刷新，卡片立刻变灰
+  window.dispatchEvent(new Event('trpg-ui-update'));
 }
 
 Object.assign(window, {
   goNpcDetail, openNpcStripCfg, npcVisToggle, npcStripCheckAll, selectNpc, addNpcToLib, deleteNpc, duplicateNpc,
-  npcEdit, npcSetRoom, npcAttrEdit, npcAttrAdd, npcAttrDel, npcDialogEdit, npcDialogAdd, npcDialogDel, npcDialogToggleUsed,
-  copyNpcDesc, copyNpcDialog, toggleNpcDead, renderNpcLib
+  npcEdit, npcSetRoom, npcAttrEdit, npcAttrAdd, npcAttrDel, toggleNpcDead, renderNpcLib
 });

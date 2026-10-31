@@ -286,7 +286,8 @@ export function relAutoLayout() {
         let dx = simPos[nodes[i].id].x - simPos[nodes[j].id].x;
         let dy = simPos[nodes[i].id].y - simPos[nodes[j].id].y;
         let dist = Math.hypot(dx, dy) || 1;
-        let f = 15000 / (dist * dist);
+        // 👇 修改点 1：增大斥力，让节点之间推得更远 (原为 15000)
+        let f = 45000 / (dist * dist);
         simPos[nodes[i].id].vx += (dx/dist)*f; simPos[nodes[i].id].vy += (dy/dist)*f;
         simPos[nodes[j].id].vx -= (dx/dist)*f; simPos[nodes[j].id].vy -= (dy/dist)*f;
       }
@@ -297,7 +298,8 @@ export function relAutoLayout() {
         if (!simPos[fk] || !simPos[tk]) return;
         let dx = simPos[tk].x - simPos[fk].x, dy = simPos[tk].y - simPos[fk].y;
         let dist = Math.hypot(dx, dy) || 1;
-        let f = (dist - 200) * 0.05; 
+        // 👇 修改点 2：增加连线理想长度，让线更长 (原为 200)
+        let f = (dist - 350) * 0.05; 
         simPos[fk].vx += (dx/dist)*f; simPos[fk].vy += (dy/dist)*f;
         simPos[tk].vx -= (dx/dist)*f; simPos[tk].vy -= (dy/dist)*f;
       });

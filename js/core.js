@@ -19,7 +19,6 @@ export const uiState = {
   hbMode: 'dm'         // 手册导出模式
 };
 
-// 统一的保存并触发 UI 更新
 export function save() {
   saveData(D);
   window.dispatchEvent(new CustomEvent('trpg-ui-update'));
@@ -68,20 +67,17 @@ export const chipHtml = i => {
   const ho = b?.ho?.trim();
   const pName = pname(i);
   
-  // 1. 鼠标悬浮时的提示文字
   let title = pName;
   if (cName) title = `${cName} (${pName})`;
   else if (ho) title = `${ho} (${pName})`;
   
-  // 2. 圆圈内的缩略字逻辑
   let text = '?';
   if (cName) {
-    text = [...cName][0]; // 有名字，取名字第一个字
+    text = [...cName][0]; 
   } else if (ho) {
-    // 没名字有身份，取身份（如果是 HO、HO1 这种短英文，最多显示2个字符避免撑出圆圈，否则取首字）
     text = ho.length <= 2 ? ho : [...ho][0]; 
   } else {
-    text = [...pName][0]; // 兜底用玩家名首字
+    text = [...pName][0]; 
   }
   
   return `<i class="chip" style="background:${pcolor(i)}" title="${esc(title)}">${esc(text)}</i>`;
@@ -104,6 +100,57 @@ export function roomSel(cur) {
     D.rooms.map(r =>
       `<option value="${r.id}" ${r.id === cur ? 'selected' : ''}>${esc(r.name) || '未命名'} (${r.x},${r.y})</option>`
     ).join('');
+}
+
+export function getAllItems() {
+  return [...D.pool, ...D.rooms.flatMap(r => r.items)];
+}
+
+export function toggleItemOwner(itemId, ownerId) {
+  const f = findItem(itemId);
+  if (!f) return;
+  const had = f.item.owners.includes(ownerId);
+  if (had) {
+    f.item.owners = f.item.owners.filter(x => x !== ownerId);
+  } else {
+    f.item.owners.push(ownerId);
+  }
+  save();
+  window.dispatchEvent(new CustomEvent('trpg-ui-update'));
+}
+
+// 💡 修复：取消模糊匹配，直接精准匹配“角色姓名 (玩家姓名)”这种完整结构
+export function parseText(text) {
+  if (!text) return '';
+  return String(text).replace(/\{\{(.*?)\}\}/g, (match, p1) => {
+    const target = p1.trim().toLowerCase();
+    
+    const idx = D.bg.findIndex((b, i) => {
+      const pName = (D.players[i] || '').trim();
+      const cName = (b.card?.name || '').trim();
+      const ho = (b.ho || '').trim();
+      
+      // 构造与左侧卡片完全一致的标签名：角色姓名 (玩家姓名)
+      const dispName = cName ? `${cName} (${pName})` : pName;
+      
+      // 严格匹配：身份、玩家名、角色名、或完整的标签名
+      return target === ho.toLowerCase() || 
+             target === pName.toLowerCase() || 
+             target === cName.toLowerCase() ||
+             target === dispName.toLowerCase();
+    });
+    
+    if (idx !== -1) {
+      const b = D.bg[idx];
+      const pName = (D.players[idx] || '').trim();
+      const cName = (b.card?.name || '').trim();
+      const dispName = cName ? `${cName} (${pName})` : pName;
+      // 替换为带颜色的完整标签名
+      return `<b style="color: ${b.color};">${esc(dispName)}</b>`;
+    }
+    
+    return match;
+  });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -141,7 +188,7 @@ export function renderLog() {
           `<div class="lg ${e.type}">
             <span class="ld">Day ${e.day}</span>
             <span class="lt">${logTime(e.ts)}</span>
-            <span class="lx">${e.color ? `<i class="cdot" style="background:${e.color}"></i>` : ''}${esc(e.text)}</span>
+            <span class="lx">${e.color ? `<i class="cdot" style="background:${e.color}"></i>` : ''}${parseText(esc(e.text))}</span>
           </div>`).join('')
       : '<p class="hint">暂无记录。</p>';
   }
@@ -181,7 +228,6 @@ export function switchTab(tab) {
     if (!active) {
       switchLibTab('bg');
     } else {
-      // 💡 修复：提取当前激活的子标签名 (如 'libTabBg' -> 'bg')，并调用正确的切换函数以触发渲染
       const sub = active.id.replace('libTab', '').toLowerCase();
       switchLibTab(sub);
     }
@@ -209,10 +255,8 @@ export function exportData() {
   const a = document.createElement('a');
   a.href = url;
   
-  // 💡 修复：模组名称的字段是 D.title 而不是 D.name
   const safeName = (D.title || '未命名模组').replace(/[\\/:*?"<>|]/g, '_');
   
-  // 生成时间水印 YYYYMMDD-HHMM
   const now = new Date();
   const timeStr = now.getFullYear().toString() +
                   (now.getMonth() + 1).toString().padStart(2, '0') +
@@ -229,7 +273,6 @@ export function exportData() {
 }
 
 export function importData(e) {
-  // 1. 直接从 HTML 传过来的事件中获取用户选择的文件
   const file = e?.target?.files?.[0];
   if (!file) return;
   
@@ -237,10 +280,7 @@ export function importData(e) {
   reader.onload = ev => {
     try {
       const parsed = JSON.parse(ev.target.result);
-      
-      // 2. 将新数据完整写入 localStorage
       saveData(parsed);
-      
       toast('✅ 数据已导入，正在刷新...');
       setTimeout(() => location.reload(), 500);
     } catch (err) {
@@ -249,17 +289,12 @@ export function importData(e) {
     }
   };
   
-  // 3. 读取文件内容
   reader.readAsText(file);
-  
-  // 4. 清空 input 的值，这样即使下次导入同一个文件也能触发 onchange
   if (e.target) e.target.value = '';
 }
 
-
 export function resetData() {
   if (confirm('⚠️ 确定要重置所有数据吗？此操作不可恢复！')) {
-    // 💡 修复4：清除的键名必须与 data.js 中的 KEY ('trpg_module_v1') 保持一致
     localStorage.removeItem('trpg_module_v1');
     location.reload();
   }
@@ -271,17 +306,13 @@ export function resetData() {
 export function toggleMode() {
   uiState.edit = !uiState.edit;
   
-  // 更新按钮外观
   const btn = document.getElementById('modeBtn');
   if (btn) {
     btn.textContent = uiState.edit ? '✏️ 编辑模式' : '👁️ 带团模式';
     btn.classList.toggle('on', uiState.edit);
   }
   
-  // 更新 body 的 class，方便 CSS 控制全局样式
   document.body.classList.toggle('edit', uiState.edit);
-  
-  // 保存并触发全局 UI 刷新
   save(); 
 }
 
@@ -291,10 +322,7 @@ export function toggleMode() {
 window.addEventListener('trpg-data-loaded', () => {
   const titleInput = document.getElementById('modTitle');
   if (titleInput) {
-    // 1. 页面加载时，将底层数据填入输入框
     titleInput.value = D.title || '未命名模组';
-    
-    // 2. 当用户修改输入框并失去焦点时，同步到底层数据并保存
     titleInput.onchange = (e) => {
       D.title = e.target.value.trim() || '未命名模组';
       save();
@@ -302,6 +330,7 @@ window.addEventListener('trpg-data-loaded', () => {
     };
   }
 });
+
 // ════════════════════════════════════════════════════════════
 // 10. 模组库 (Module Library)
 // ════════════════════════════════════════════════════════════
@@ -315,7 +344,6 @@ export async function openModLib() {
   listEl.innerHTML = '<p class="hint" style="padding:20px;text-align:center">🔄 正在加载模组列表...</p>';
 
   try {
-    // 💡 修复：按照你的实际目录结构，请求 modules/index.json
     const res = await fetch('modules/index.json');
     if (!res.ok) throw new Error('无法获取模组列表');
     const mods = await res.json();
@@ -350,12 +378,10 @@ export async function loadModuleFromLib(fileUrl) {
   
   try {
     toast('🔄 正在下载模组数据...');
-    // 根据 JSON 中配置的 file 路径（如 "modules/寄生者之间by猫鸟.json"）去请求
     const res = await fetch(fileUrl);
     if (!res.ok) throw new Error('无法下载模组文件');
     const parsed = await res.json();
     
-    // 使用 data.js 提供的 saveData 彻底覆盖并保存
     saveData(parsed);
     
     toast('✅ 模组载入成功，正在刷新...');
@@ -380,6 +406,9 @@ Object.assign(window, {
   copyLog,
   clearLog,
   toggleMode,
-  openModLib,          // 👈 新增：打开模组库弹窗
-  loadModuleFromLib    // 👈 新增：点击载入模组
+  openModLib,
+  loadModuleFromLib,
+  getAllItems,
+  toggleItemOwner,
+  parseText // 👈 导出供其他文件使用
 });

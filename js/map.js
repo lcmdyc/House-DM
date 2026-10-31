@@ -110,7 +110,8 @@ export function renderMap() {
       const btn = (cls, dx, dy) => at(x + dx, y + dy) ? '' :
         `<button class="add ${cls}" onclick="event.stopPropagation();addRoom('${r.id}',${dx},${dy})">+</button>`;
       
-      const roomNpcs = D.npcs.filter(n => n.roomId === r.id);
+      const roomNpcs = (D.npcs || []).filter(n => n.roomId === r.id);
+      
       const npcsHtml = roomNpcs.length
         ? `<div class="room-npcs">${roomNpcs.map(n =>
             `<i class="npc-chip" style="background:${n.color || '#b27cd8'}" title="${esc(n.name)}">${esc([...n.name][0] || '?')}</i>`

@@ -1,58 +1,99 @@
-
-
 /* ==========================================================================
-   11. strip.css — 玩家侧栏卡片 + NPC侧栏卡片
+   11. strip.css — 玩家侧栏卡片 + NPC侧栏卡片 (自动换列 + 对齐修复 + 极限压缩版)
    ========================================================================== */
-.sthead { display: flex; align-items: center; font-size: 14px; font-weight: bold; color: var(--accent); margin-bottom: 6px; }
-.sthead button { padding: 4px 8px; font-size: 11.5px; margin-left: auto; }
 
+/* 🌟 核心布局：高度占满，超出自动向右换列，挤开右侧内容 */
+#strip, #npcStrip {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  height: 100%; 
+  /* 顶部留出 32px 的空间给绝对定位的标题，保证所有卡片列顶部完美对齐 */
+  padding: 32px 10px 12px 10px; 
+  gap: 6px; /* 卡片上下的间距，进一步缩小 */
+  column-gap: 10px; /* 列与列之间的间距 */
+  overflow-x: auto; 
+  overflow-y: hidden; 
+  box-sizing: border-box;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  position: relative; /* 为标题的绝对定位做参照 */
+}
+
+/* 隐藏或美化横向滚动条 */
+#strip::-webkit-scrollbar, #npcStrip::-webkit-scrollbar { height: 6px; }
+#strip::-webkit-scrollbar-thumb, #npcStrip::-webkit-scrollbar-thumb { background: var(--mute); border-radius: 3px; }
+
+/* 🌟 标题头：绝对定位，脱离文档流，解决后续列不对齐的问题 */
+.sthead { 
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  width: 135px; /* 与下方卡片同宽 */
+  display: flex; 
+  align-items: center; 
+  font-size: 12px; 
+  font-weight: bold; 
+  color: var(--accent); 
+  margin-bottom: 0; 
+}
+.sthead button { padding: 2px 4px; font-size: 10px; margin-left: auto; }
+
+/* ================== 玩家卡片 ================== */
 .pc {
-  background: var(--card); border-radius: var(--radius-md); border-top: 4px solid #888;
-  padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
-  transition: var(--transition); box-shadow: var(--shadow-sm); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  width: 135px; /* 进一步收窄 */
+  flex: none; 
+  background: var(--card); border-radius: 5px; border: 1px solid var(--line); border-top: 3px solid #888;
+  padding: 4px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; /* 减小内边距和间距 */
+  transition: var(--transition); box-shadow: var(--shadow-sm);
 }
 .pc:hover { background: var(--card-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); border-color: var(--mute); }
 .pc.dead  { opacity: .6; filter: grayscale(0.8); }
 
-.pc .pn-row { display: flex; align-items: center; gap: 8px; }
-.pc .pn-row .pn { flex: 1; font-weight: bold; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
-.pc .pn-row select.prm { flex-shrink: 0; max-width: 90px; font-size: 11px; padding: 2px 6px; background: var(--bg); border: 1px solid var(--line); color: var(--mute); border-radius: var(--radius-sm); transition: var(--transition); }
+.pc .pn-row { display: flex; align-items: center; gap: 4px; }
+.pc .pn-row .pn { flex: 1; font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.pc .pn-row select.prm { flex-shrink: 0; width: 50px; font-size: 10px; padding: 0 2px; height: 18px; background: var(--bg); border: 1px solid var(--line); color: var(--mute); border-radius: 3px; transition: var(--transition); }
 .pc .pn-row select.prm:focus { border-color: var(--accent); color: var(--text); }
 
-.pc .as { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 8px; font-size: 11.5px; margin-top: 2px; }
-.pc .as span { display: flex; justify-content: space-between; align-items: center; color: var(--mute); padding: 2px 6px; border-radius: 3px; transition: var(--transition); }
+.pc .as { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 4px; font-size: 10px; margin-top: 1px; }
+.pc .as span { display: flex; justify-content: space-between; align-items: center; color: var(--mute); padding: 1px 2px; border-radius: 2px; transition: var(--transition); }
 .pc .as span:hover { background: rgba(var(--accent-rgb), .15); color: var(--accent); cursor: ns-resize; }
 .pc .as span:hover b { color: var(--accent); font-weight: bold; }
 .pc .as span b { color: var(--text); font-weight: 500; transition: var(--transition); }
 .pc .as span.z b { opacity: .4; }
 
-.dead-badge { font-size: 11px; color: var(--danger); margin-left: 4px; font-weight: bold; }
+.dead-badge { font-size: 10px; color: var(--danger); margin-left: 2px; font-weight: bold; }
 
+/* ================== NPC 卡片 ================== */
 .nc {
-  background: var(--card); border-radius: var(--radius-md); border-left: 4px solid var(--npc);
-  padding: 8px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
-  transition: var(--transition); box-shadow: var(--shadow-sm); border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  width: 135px; 
+  flex: none;
+  background: var(--card); border-radius: 5px; border: 1px solid var(--line); border-left: 3px solid var(--npc);
+  padding: 4px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+  transition: var(--transition); box-shadow: var(--shadow-sm);
 }
 .nc:hover { background: var(--card-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); border-color: var(--mute); }
-.nc .pn { font-weight: bold; font-size: 14px; color: var(--text); }
-.nc .cn { font-size: 12px; color: var(--mute); }
-.nc select.prm { font-size: 12px; padding: 4px 8px; background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: var(--radius-sm); width: 100%; transition: var(--transition); }
+.nc .pn { font-weight: bold; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc .cn { font-size: 10px; color: var(--mute); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nc select.prm { font-size: 10px; padding: 0 2px; height: 18px; background: var(--bg); border: 1px solid var(--line); color: var(--text); border-radius: 3px; width: 100%; transition: var(--transition); }
 .nc select.prm:focus { border-color: var(--accent); }
 
-.nc .as { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 8px; font-size: 11.5px; margin-top: 4px; }
-.nc .as span { display: flex; justify-content: space-between; align-items: center; color: var(--mute); padding: 2px 6px; border-radius: 3px; transition: var(--transition); }
+.nc .as { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 4px; font-size: 10px; margin-top: 1px; }
+.nc .as span { display: flex; justify-content: space-between; align-items: center; color: var(--mute); padding: 1px 2px; border-radius: 2px; transition: var(--transition); }
 .nc .as span:hover { background: rgba(178, 124, 216, .15); color: var(--npc); cursor: ns-resize; }
 .nc .as span b { color: var(--text); font-weight: 500; }
 .nc .as span.z b { opacity: .4; }
 
-.npc-strip-empty { font-size: 12px; text-align: center; margin-top: 12px; color: var(--mute); }
-.npc-cfg-empty   { padding: 10px; color: var(--mute); font-size: 12px; text-align: center; }
-.npc-vis-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; transition: var(--transition); }
+/* 其他配置项 */
+.npc-strip-empty { width: 135px; font-size: 11px; text-align: center; margin-top: 6px; color: var(--mute); }
+.npc-cfg-empty   { padding: 6px; color: var(--mute); font-size: 11px; text-align: center; }
+.npc-vis-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer; transition: var(--transition); }
 .npc-vis-row:hover .npc-vis-label { color: var(--text); }
-.npc-vis-chk { margin: 0; cursor: pointer; accent-color: var(--npc); width: 14px; height: 14px; }
-.npc-vis-label { border-left: 3px solid; padding-left: 8px; font-size: 13px; color: var(--mute); transition: var(--transition); }
-.npc-vis-type  { color: var(--mute); margin-left: 6px; font-size: 11.5px; }
+.npc-vis-chk { margin: 0; cursor: pointer; accent-color: var(--npc); width: 12px; height: 12px; }
+.npc-vis-label { border-left: 2px solid; padding-left: 5px; font-size: 11px; color: var(--mute); transition: var(--transition); }
+.npc-vis-type  { color: var(--mute); margin-left: 4px; font-size: 10px; }
 
-.nc-vis-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mute); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: var(--transition); }
+.nc-vis-toggle { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--mute); cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: var(--transition); }
 .nc-vis-toggle:hover { background: var(--card-hover); color: var(--text); }
-.nc-vis-toggle input { margin: 0; cursor: pointer; accent-color: var(--npc); width: 14px; height: 14px; }
+.nc-vis-toggle input { margin: 0; cursor: pointer; accent-color: var(--npc); width: 12px; height: 12px; }
