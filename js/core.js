@@ -178,8 +178,13 @@ export function switchTab(tab) {
   
   if (tab === 'library') {
     const active = document.querySelector('.lib-tab.on');
-    if (!active) switchLibTab('bg');
-    else window.dispatchEvent(new CustomEvent('trpg-tab-changed', { detail: { tab: active.id } }));
+    if (!active) {
+      switchLibTab('bg');
+    } else {
+      // 💡 修复：提取当前激活的子标签名 (如 'libTabBg' -> 'bg')，并调用正确的切换函数以触发渲染
+      const sub = active.id.replace('libTab', '').toLowerCase();
+      switchLibTab(sub);
+    }
   }
 }
 
@@ -204,8 +209,8 @@ export function exportData() {
   const a = document.createElement('a');
   a.href = url;
   
-  // 获取模组名称并清理非法字符，防止作为文件名时报错
-  const safeName = (D.name || '未命名模组').replace(/[\\/:*?"<>|]/g, '_');
+  // 💡 修复：模组名称的字段是 D.title 而不是 D.name
+  const safeName = (D.title || '未命名模组').replace(/[\\/:*?"<>|]/g, '_');
   
   // 生成时间水印 YYYYMMDD-HHMM
   const now = new Date();
@@ -223,38 +228,45 @@ export function exportData() {
   toast('✅ 备份已导出');
 }
 
-export function importData() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const parsed = JSON.parse(ev.target.result);
-        Object.assign(D, parsed);
-        save();
-        toast('✅ 数据已导入，正在刷新...');
-        setTimeout(() => location.reload(), 500);
-      } catch (err) {
-        alert('导入失败：文件格式不正确');
-      }
-    };
-    reader.readAsText(file);
+export function importData(e) {
+  // 1. 直接从 HTML 传过来的事件中获取用户选择的文件
+  const file = e?.target?.files?.[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      
+      // 2. 将新数据完整写入 localStorage
+      saveData(parsed);
+      
+      toast('✅ 数据已导入，正在刷新...');
+      setTimeout(() => location.reload(), 500);
+    } catch (err) {
+      console.error("导入解析失败:", err);
+      alert('导入失败：文件格式不正确');
+    }
   };
-  input.click();
+  
+  // 3. 读取文件内容
+  reader.readAsText(file);
+  
+  // 4. 清空 input 的值，这样即使下次导入同一个文件也能触发 onchange
+  if (e.target) e.target.value = '';
 }
+
 
 export function resetData() {
   if (confirm('⚠️ 确定要重置所有数据吗？此操作不可恢复！')) {
-    localStorage.removeItem('trpg_data');
+    // 💡 修复4：清除的键名必须与 data.js 中的 KEY ('trpg_module_v1') 保持一致
+    localStorage.removeItem('trpg_module_v1');
     location.reload();
   }
 }
+
 // ════════════════════════════════════════════════════════════
-// 8. 模式切换 (Mode Toggle)
+// 7. 模式切换 (Mode Toggle)
 // ════════════════════════════════════════════════════════════
 export function toggleMode() {
   uiState.edit = !uiState.edit;
@@ -272,8 +284,9 @@ export function toggleMode() {
   // 保存并触发全局 UI 刷新
   save(); 
 }
+
 // ════════════════════════════════════════════════════════════
-// 7. 挂载全局函数 (供 HTML 中的 onclick 直接调用)
+// 8. 挂载全局函数 (供 HTML 中的 onclick 直接调用)
 // ════════════════════════════════════════════════════════════
 Object.assign(window, {
   exportData,
@@ -284,6 +297,22 @@ Object.assign(window, {
   openLog,
   copyLog,
   clearLog,
-  toggleMode // 👈 把这个加进去
+  toggleMode
 });
-
+// ════════════════════════════════════════════════════════════
+// 9. 顶部模组名称双向绑定
+// ════════════════════════════════════════════════════════════
+window.addEventListener('trpg-data-loaded', () => {
+  const titleInput = document.getElementById('modTitle');
+  if (titleInput) {
+    // 1. 页面加载时，将底层数据填入输入框
+    titleInput.value = D.title || '未命名模组';
+    
+    // 2. 当用户修改输入框并失去焦点时，同步到底层数据并保存
+    titleInput.onchange = (e) => {
+      D.title = e.target.value.trim() || '未命名模组';
+      save();
+      toast('✅ 模组名称已保存');
+    };
+  }
+});

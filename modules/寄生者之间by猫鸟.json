@@ -1,13 +1,13 @@
 {
   "title": "寄生者之间",
   "players": [
-    "养子",
-    "暴徒",
-    "警察",
-    "疯子",
-    "祭品",
-    "神秘学家",
-    "小偷"
+    "HO1养子",
+    "HO2暴徒",
+    "HO3警察",
+    "HO4疯子",
+    "HO5祭品",
+    "HO6神秘学家",
+    "HO7小偷"
   ],
   "rooms": [
     {
@@ -1422,7 +1422,9 @@
         "vals": {
           "bykjset": 0,
           "61gvg4g": 0,
-          "gvrif9z": 0
+          "gvrif9z": 0,
+          "9dv3u1a": 0,
+          "g5nf0zs": 0
         },
         "items": "",
         "other": "",
@@ -1447,25 +1449,20 @@
             "key": "星座",
             "val": ""
           }
-        ]
+        ],
+        "name": "约克"
       },
-      "color": "#e0605e",
-      "roomId": "",
+      "color": "#da5f5d",
+      "roomId": "xjt9smv",
       "customFields": [],
       "dead": false,
       "dmNote": "",
       "presetAttrs": [
         {
-          "key": "",
-          "val": 20,
-          "name": "HP",
-          "show": true
-        },
-        {
           "id": "61cjna4",
           "name": "饥饿",
           "val": 10,
-          "show": false
+          "show": true
         },
         {
           "id": "wv1mgck",
@@ -1486,7 +1483,9 @@
         "vals": {
           "bykjset": 0,
           "yc32x6d": 0,
-          "gvrif9z": 0
+          "gvrif9z": 0,
+          "61gvg4g": 0,
+          "9dv3u1a": 0
         },
         "items": "",
         "other": "",
@@ -1514,7 +1513,94 @@
         ]
       },
       "color": "#e8a13a",
-      "roomId": "",
+      "roomId": "xjt9smv",
+      "customFields": [],
+      "dead": false,
+      "dmNote": "",
+      "presetAttrs": []
+    },
+    {
+      "identity": "",
+      "skills": [],
+      "goals": [],
+      "card": {
+        "info": {
+          "name": ""
+        },
+        "vals": {
+          "gvrif9z": 0,
+          "g5nf0zs": 0
+        },
+        "items": "",
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
+      },
+      "color": "#e6d24a",
+      "roomId": "xjt9smv",
+      "customFields": [],
+      "dead": false,
+      "dmNote": "",
+      "presetAttrs": []
+    },
+    {
+      "identity": "",
+      "skills": [],
+      "goals": [],
+      "card": {
+        "info": {
+          "name": ""
+        },
+        "vals": {
+          "gvrif9z": 0
+        },
+        "items": "",
+        "other": "",
+        "infoFields": [
+          {
+            "key": "性别",
+            "val": ""
+          },
+          {
+            "key": "年龄",
+            "val": ""
+          },
+          {
+            "key": "职业",
+            "val": ""
+          },
+          {
+            "key": "宗教",
+            "val": ""
+          },
+          {
+            "key": "星座",
+            "val": ""
+          }
+        ]
+      },
+      "color": "#8bc34a",
+      "roomId": "xjt9smv",
       "customFields": [],
       "dead": false,
       "dmNote": "",
@@ -1554,93 +1640,12 @@
           }
         ]
       },
-      "color": "#e6d24a",
-      "roomId": "",
-      "customFields": [],
-      "dead": false,
-      "dmNote": ""
-    },
-    {
-      "identity": "",
-      "skills": [],
-      "goals": [],
-      "card": {
-        "info": {
-          "name": ""
-        },
-        "vals": {
-          "gvrif9z": 0
-        },
-        "items": "",
-        "other": "",
-        "infoFields": [
-          {
-            "key": "性别",
-            "val": ""
-          },
-          {
-            "key": "年龄",
-            "val": ""
-          },
-          {
-            "key": "职业",
-            "val": ""
-          },
-          {
-            "key": "宗教",
-            "val": ""
-          },
-          {
-            "key": "星座",
-            "val": ""
-          }
-        ]
-      },
-      "color": "#8bc34a",
-      "roomId": "",
-      "customFields": [],
-      "dead": false,
-      "dmNote": ""
-    },
-    {
-      "identity": "",
-      "skills": [],
-      "goals": [],
-      "card": {
-        "info": {
-          "name": ""
-        },
-        "vals": {},
-        "items": "",
-        "other": "",
-        "infoFields": [
-          {
-            "key": "性别",
-            "val": ""
-          },
-          {
-            "key": "年龄",
-            "val": ""
-          },
-          {
-            "key": "职业",
-            "val": ""
-          },
-          {
-            "key": "宗教",
-            "val": ""
-          },
-          {
-            "key": "星座",
-            "val": ""
-          }
-        ]
-      },
       "color": "#4cc9a0",
-      "roomId": "",
+      "roomId": "xjt9smv",
       "customFields": [],
       "dead": false,
-      "dmNote": ""
+      "dmNote": "",
+      "presetAttrs": []
     },
     {
       "identity": "",
@@ -1677,10 +1682,11 @@
         ]
       },
       "color": "#4aa8d8",
-      "roomId": "",
+      "roomId": "xjt9smv",
       "customFields": [],
       "dead": false,
-      "dmNote": ""
+      "dmNote": "",
+      "presetAttrs": []
     },
     {
       "identity": "",
@@ -1717,10 +1723,11 @@
         ]
       },
       "color": "#6c7be0",
-      "roomId": "",
+      "roomId": "xjt9smv",
       "customFields": [],
       "dead": false,
-      "dmNote": ""
+      "dmNote": "",
+      "presetAttrs": []
     }
   ],
   "days": [
@@ -1816,27 +1823,876 @@
   "ui": {
     "strip": true,
     "showChar": true,
-    "npcVisible": [],
-    "npcStrip": true
+    "npcVisible": [
+      "199miwz",
+      "whincor",
+      "ggcwq5j",
+      "n0iwopv"
+    ],
+    "npcStrip": true,
+    "relPositions": {
+      "p_0": {
+        "x": 873.6883125931782,
+        "y": 443.6375858628024
+      },
+      "p_1": {
+        "x": 708.7971017415306,
+        "y": 318.8742804382618
+      },
+      "p_2": {
+        "x": 689.0356308110864,
+        "y": 509.17979198681894
+      },
+      "p_3": {
+        "x": 764.4258600217441,
+        "y": 419.2340104180199
+      },
+      "p_4": {
+        "x": 792.7477107850507,
+        "y": 276.0687260408142
+      },
+      "p_5": {
+        "x": 751.252637093175,
+        "y": 586.5508680342721
+      },
+      "p_6": {
+        "x": 546.1167401284015,
+        "y": 378.9850693533027
+      },
+      "n_199miwz": {
+        "x": 585.9360068258335,
+        "y": 491.4696678657081
+      },
+      "n_whincor": {
+        "x": 943.6887383232744,
+        "y": 310.29875615687473
+      }
+    },
+    "relHidden": {
+      "n_whincor": true,
+      "p_3": false,
+      "n_199miwz": false,
+      "p_0": false
+    }
   },
   "log": [
     {
-      "id": "9xmmsow",
-      "ts": 1793358566546,
+      "id": "bnoxgzj",
+      "ts": 1793362973270,
       "day": 1,
-      "type": "sys",
-      "text": "导入存档「寄生者之间-2026-10-30.json」",
-      "color": ""
+      "type": "attr",
+      "text": "养子 · 理智：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "8r56k46",
+      "ts": 1793362973369,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "xcth9i2",
+      "ts": 1793362973817,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "5ckypac",
+      "ts": 1793362974483,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "7kmes2e",
+      "ts": 1793364546637,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 勇气：0 → 1",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "7vyt807",
+      "ts": 1793364546879,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 勇气：1 → 2",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "jqga519",
+      "ts": 1793364547204,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 勇气：2 → 1",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "j93d13v",
+      "ts": 1793364547238,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 勇气：1 → 0",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "sk6qa3a",
+      "ts": 1793364823931,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "fdp2yab",
+      "ts": 1793364823964,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "dqipe2a",
+      "ts": 1793364823980,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：2 → 3",
+      "color": "#e0605e"
+    },
+    {
+      "id": "yurpnk8",
+      "ts": 1793364824449,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：3 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "0zb66bg",
+      "ts": 1793364824498,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "ifsmg50",
+      "ts": 1793364825052,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 勇气：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "o5opqme",
+      "ts": 1793364971303,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 口才：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "z407oyo",
+      "ts": 1793364971377,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 口才：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "wfry4hh",
+      "ts": 1793364971826,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 口才：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "lfdbx8t",
+      "ts": 1793364972220,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 口才：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "q1qszjw",
+      "ts": 1793365160294,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "rarsi5d",
+      "ts": 1793365160710,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：10 → 11",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "9ljm7ik",
+      "ts": 1793365160910,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：11 → 12",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "7ppyb9p",
+      "ts": 1793365161177,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：12 → 11",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "xiv70u1",
+      "ts": 1793365161277,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：11 → 10",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "2kxf104",
+      "ts": 1793365164730,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：10 → 11",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "jv6cwmz",
+      "ts": 1793365164814,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：11 → 12",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "inkmvqn",
+      "ts": 1793365165161,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：12 → 11",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "ayo7azf",
+      "ts": 1793365165414,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]安奈林 A · HP：11 → 10",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "wznmmf8",
+      "ts": 1793365166198,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "ma7kmjw",
+      "ts": 1793365166222,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：2 → 3",
+      "color": "#e0605e"
+    },
+    {
+      "id": "nsyd8i4",
+      "ts": 1793365166669,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：3 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "3sfml48",
+      "ts": 1793365166766,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "g2q1co1",
+      "ts": 1793365167202,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "m9wm3im",
+      "ts": 1793365172835,
+      "day": 1,
+      "type": "attr",
+      "text": "警察 · 技巧：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "3ene50c",
+      "ts": 1793365173176,
+      "day": 1,
+      "type": "attr",
+      "text": "警察 · 技巧：0 → 1",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "2z70wmw",
+      "ts": 1793365173796,
+      "day": 1,
+      "type": "attr",
+      "text": "警察 · 技巧：1 → 2",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "wqqyi53",
+      "ts": 1793365173988,
+      "day": 1,
+      "type": "attr",
+      "text": "警察 · 技巧：2 → 1",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "xk3in21",
+      "ts": 1793365174189,
+      "day": 1,
+      "type": "attr",
+      "text": "警察 · 技巧：1 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "nrr0igj",
+      "ts": 1793365187601,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 理智：0 → 1",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "2230bk4",
+      "ts": 1793365187818,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 理智：1 → 2",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "7pischx",
+      "ts": 1793365188157,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 理智：2 → 1",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "vhe8bve",
+      "ts": 1793365188234,
+      "day": 1,
+      "type": "attr",
+      "text": "暴徒 · 理智：1 → 0",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "kz60d0o",
+      "ts": 1793365811427,
+      "day": 1,
+      "type": "move",
+      "text": "养子：未定位 → 熏黑的房间",
+      "color": "#e0605e"
+    },
+    {
+      "id": "o10lvif",
+      "ts": 1793365813637,
+      "day": 1,
+      "type": "move",
+      "text": "养子：熏黑的房间 → 未定位",
+      "color": "#e0605e"
+    },
+    {
+      "id": "w2ssze6",
+      "ts": 1793365880127,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "5931i42",
+      "ts": 1793365880280,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "ne90hqi",
+      "ts": 1793365880690,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "xubnotr",
+      "ts": 1793365880760,
+      "day": 1,
+      "type": "attr",
+      "text": "养子 · 理智：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "6d58ktx",
+      "ts": 1793367332688,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：10 → 11",
+      "color": "#e0605e"
+    },
+    {
+      "id": "aaky3ie",
+      "ts": 1793367332720,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：11 → 12",
+      "color": "#e0605e"
+    },
+    {
+      "id": "ip8jxij",
+      "ts": 1793367333116,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：12 → 11",
+      "color": "#e0605e"
+    },
+    {
+      "id": "7cnbuww",
+      "ts": 1793367333204,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：11 → 10",
+      "color": "#e0605e"
+    },
+    {
+      "id": "nhg60ho",
+      "ts": 1793367337475,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：10 → 11",
+      "color": "#e0605e"
+    },
+    {
+      "id": "e8ybx4t",
+      "ts": 1793367337581,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：11 → 12",
+      "color": "#e0605e"
+    },
+    {
+      "id": "jcq2ti9",
+      "ts": 1793367337797,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：12 → 11",
+      "color": "#e0605e"
+    },
+    {
+      "id": "r2uidig",
+      "ts": 1793367337875,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：11 → 10",
+      "color": "#e0605e"
+    },
+    {
+      "id": "7gvnh81",
+      "ts": 1793367338655,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · ？？：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "1vigigl",
+      "ts": 1793367338721,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · ？？：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "ldlpeay",
+      "ts": 1793367339162,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · ？？：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "njkj8xd",
+      "ts": 1793367339636,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · ？？：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "bqn0t38",
+      "ts": 1793367342996,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "9r27x33",
+      "ts": 1793367343080,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：1 → 2",
+      "color": "#e0605e"
+    },
+    {
+      "id": "bcc9t66",
+      "ts": 1793367343443,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：2 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "3vr3ewu",
+      "ts": 1793367343591,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "9ta09v0",
+      "ts": 1793367487113,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：10 → 11",
+      "color": "#e0605e"
+    },
+    {
+      "id": "m81xc4r",
+      "ts": 1793367487524,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：11 → 10",
+      "color": "#e0605e"
+    },
+    {
+      "id": "owv27xu",
+      "ts": 1793367488049,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 口才：0 → 1",
+      "color": "#e0605e"
+    },
+    {
+      "id": "p8o3kqs",
+      "ts": 1793367488653,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 口才：1 → 0",
+      "color": "#e0605e"
+    },
+    {
+      "id": "fy8gfqv",
+      "ts": 1793371132898,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：0 → 1",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "7e3ztyn",
+      "ts": 1793371133113,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：1 → 2",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "tsj0chq",
+      "ts": 1793371133546,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：2 → 1",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "ddm2t7s",
+      "ts": 1793371133730,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 力量：1 → 0",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "jekuyn6",
+      "ts": 1793371346337,
+      "day": 1,
+      "type": "move",
+      "text": "HO1养子：未定位 → 庄园",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "yxpzxp4",
+      "ts": 1793371346606,
+      "day": 1,
+      "type": "move",
+      "text": "HO2暴徒：未定位 → 庄园",
+      "color": "#e8a13a"
+    },
+    {
+      "id": "abqfeyu",
+      "ts": 1793371346930,
+      "day": 1,
+      "type": "move",
+      "text": "HO3警察：未定位 → 庄园",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "976cpu0",
+      "ts": 1793371347313,
+      "day": 1,
+      "type": "move",
+      "text": "HO6神秘学家：未定位 → 庄园",
+      "color": "#4aa8d8"
+    },
+    {
+      "id": "rpcxktl",
+      "ts": 1793371347654,
+      "day": 1,
+      "type": "move",
+      "text": "HO5祭品：未定位 → 庄园",
+      "color": "#4cc9a0"
+    },
+    {
+      "id": "cfb9rd9",
+      "ts": 1793371348006,
+      "day": 1,
+      "type": "move",
+      "text": "HO4疯子：未定位 → 庄园",
+      "color": "#8bc34a"
+    },
+    {
+      "id": "9vayyoz",
+      "ts": 1793371348346,
+      "day": 1,
+      "type": "move",
+      "text": "HO7小偷：未定位 → 庄园",
+      "color": "#6c7be0"
+    },
+    {
+      "id": "4tmezin",
+      "ts": 1793375095498,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 勇气：0 → 1",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "uwn9t16",
+      "ts": 1793375095827,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 勇气：1 → 2",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "qj4wnxc",
+      "ts": 1793375096230,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 勇气：2 → 1",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "qo5upp6",
+      "ts": 1793375096649,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 勇气：1 → 0",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "gl09fql",
+      "ts": 1793375176586,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：10 → 9",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "t1ejol8",
+      "ts": 1793375177337,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 饥饿：9 → 10",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "yv57a71",
+      "ts": 1793375178254,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 理智：0 → 1",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "cuar4gs",
+      "ts": 1793375178755,
+      "day": 1,
+      "type": "attr",
+      "text": "HO1养子 · 理智：1 → 0",
+      "color": "#da5f5d"
+    },
+    {
+      "id": "elakbbx",
+      "ts": 1793375182025,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]幽灵 · 新属性：0 → 1",
+      "color": "#919191"
+    },
+    {
+      "id": "w5xtade",
+      "ts": 1793375182541,
+      "day": 1,
+      "type": "attr",
+      "text": "[NPC]幽灵 · 新属性：1 → 0",
+      "color": "#919191"
+    },
+    {
+      "id": "thiocfq",
+      "ts": 1793375184194,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "fovhh86",
+      "ts": 1793375184292,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "5a9kp18",
+      "ts": 1793375202442,
+      "day": 1,
+      "type": "move",
+      "text": "HO6神秘学家：庄园 → 崩塌的房间",
+      "color": "#4aa8d8"
+    },
+    {
+      "id": "ha5mnhn",
+      "ts": 1793375203598,
+      "day": 1,
+      "type": "move",
+      "text": "HO6神秘学家：崩塌的房间 → 未定位",
+      "color": "#4aa8d8"
+    },
+    {
+      "id": "h2s929g",
+      "ts": 1793375206456,
+      "day": 1,
+      "type": "move",
+      "text": "HO6神秘学家：未定位 → 庄园",
+      "color": "#4aa8d8"
+    },
+    {
+      "id": "ulfnaw5",
+      "ts": 1793375229647,
+      "day": 1,
+      "type": "move",
+      "text": "[NPC]安奈林：未定位 → 庄园",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "r4isttd",
+      "ts": 1793377724212,
+      "day": 1,
+      "type": "move",
+      "text": "安奈林：庄园 → 墓地",
+      "color": "#b27cd8"
+    },
+    {
+      "id": "v176j4k",
+      "ts": 1793378019154,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "bww0ey3",
+      "ts": 1793378019220,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "wcow5u4",
+      "ts": 1793378019303,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "1nlz7mf",
+      "ts": 1793378019353,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 0",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "nbkrarm",
+      "ts": 1793378020241,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：0 → 1",
+      "color": "#e6d24a"
+    },
+    {
+      "id": "qualqc0",
+      "ts": 1793378020804,
+      "day": 1,
+      "type": "attr",
+      "text": "HO3警察 · 口才：1 → 0",
+      "color": "#e6d24a"
     }
   ],
   "npcs": [
     {
       "id": "199miwz",
-      "name": "安奈林 A",
+      "name": "安奈林",
       "category": "npc",
       "disposition": "友好",
       "color": "#b27cd8",
-      "roomId": "",
+      "roomId": "0a4v9wb",
       "desc": "",
       "dmNote": "",
       "attrs": [
@@ -1888,6 +2744,70 @@
           "id": "4yfpb5p",
           "trigger": "初次见面",
           "line": ""
+        }
+      ],
+      "dead": false,
+      "customFields": []
+    },
+    {
+      "id": "ggcwq5j",
+      "name": "幽灵 A",
+      "category": "monster",
+      "disposition": "敌对",
+      "color": "#919191",
+      "roomId": "",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "6dgshuf",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "jos102e",
+          "name": "新属性",
+          "val": "0"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "0dobm7q",
+          "trigger": "初次见面",
+          "line": "",
+          "used": false
+        }
+      ],
+      "dead": false,
+      "customFields": []
+    },
+    {
+      "id": "n0iwopv",
+      "name": "幽灵 B",
+      "category": "monster",
+      "disposition": "敌对",
+      "color": "#919191",
+      "roomId": "",
+      "desc": "",
+      "dmNote": "",
+      "attrs": [
+        {
+          "id": "gjoavkj",
+          "name": "HP",
+          "val": "10"
+        },
+        {
+          "id": "uy4atb8",
+          "name": "新属性",
+          "val": "0"
+        }
+      ],
+      "dialogs": [
+        {
+          "id": "deda999",
+          "trigger": "初次见面",
+          "line": "",
+          "used": false
         }
       ],
       "dead": false,
@@ -1978,6 +2898,16 @@
       "label": "十年前的师生",
       "style": "normal",
       "dir": "both"
+    },
+    {
+      "id": "u34waur",
+      "fromType": "npc",
+      "fromId": "199miwz",
+      "toType": "player",
+      "toId": 3,
+      "label": "",
+      "style": "family",
+      "dir": "one"
     }
   ]
 }
